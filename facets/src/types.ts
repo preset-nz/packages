@@ -109,7 +109,8 @@ export type FieldDef = BuiltinFieldDef | CustomFieldDef
 
 export interface PropertyGroupDef {
   id: string
-  title: string
+  /** Omit to render the group without a header (e.g. when the host already labels it). */
+  title?: string
   rows: Array<FieldDef | FieldDef[]>
   description?: string
   collapsible?: boolean

@@ -71,16 +71,20 @@ function PropertyGroup({
 }) {
   return (
     <section className="flex flex-col gap-3 px-3 py-3">
-      <header>
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {group.title}
-        </h3>
-        {group.description && (
-          <p className="mt-1 text-xs text-muted-foreground">
-            {group.description}
-          </p>
-        )}
-      </header>
+      {(group.title || group.description) && (
+        <header>
+          {group.title && (
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.title}
+            </h3>
+          )}
+          {group.description && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              {group.description}
+            </p>
+          )}
+        </header>
+      )}
       <div className="flex flex-col gap-3">
         {group.rows.map((row, idx) => {
           const fields = Array.isArray(row) ? row : [row]
