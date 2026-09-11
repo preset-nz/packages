@@ -1,11 +1,11 @@
 {
-  "name": "@preset.nz/property-editors",
+  "name": "@preset.nz/facets",
   "version": "0.1.0",
   "description": "Schema-as-data property/inspector panels for React: FieldDef schemas, a scope registry, an open field-renderer registry, and a generic PropertyPanel.",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/property-editors.git"
+    "url": "git+https://github.com/preset-nz/facets.git"
   },
   "type": "module",
   "sideEffects": false,

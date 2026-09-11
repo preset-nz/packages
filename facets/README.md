@@ -1,4 +1,4 @@
-# @preset.nz/property-editors
+# @preset.nz/facets
 
 Shared substrate for inspector/properties panels across preset.nz apps: schema-as-data `FieldDef`s, a `Scope` that bundles schema+read+write, an open field-renderer registry keyed by `kind`, and a generic `<PropertyPanel>` that renders whatever scope is active. No app owns the panel's layout logic; each host contributes scopes and (optionally) custom field kinds. See the architecture writeup in the preset.nz guidance repo (`design/property-editors.md`) for the full rationale and the extraction discipline this package follows.
 
