@@ -1,0 +1,5 @@
+# pnpm 10+ reads settings from here, not .npmrc.
+# Do not materialise the `react` peer in this package. `tsc` needs only
+# @types/react, and a real React in these node_modules is a second copy a
+# consumer could resolve through the file: symlink.
+autoInstallPeers: false
