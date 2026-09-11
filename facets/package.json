@@ -1,15 +1,23 @@
 {
   "name": "@preset.nz/property-editors",
   "version": "0.1.0",
-  "private": true,
-  "license": "Apache-2.0",
+  "description": "Schema-as-data property/inspector panels for React: FieldDef schemas, a scope registry, an open field-renderer registry, and a generic PropertyPanel.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/preset-nz/property-editors.git"
+  },
   "type": "module",
+  "sideEffects": false,
   "exports": {
     ".": "./src/index.ts"
   },
   "files": [
     "src"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "peerDependencies": {
     "react": "^19"
   },
