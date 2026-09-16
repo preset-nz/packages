@@ -137,6 +137,8 @@ function FieldSlot({
       return v === cond.equals
     if (Object.prototype.hasOwnProperty.call(cond, "notEquals"))
       return v !== cond.notEquals
+    if (cond.in) return cond.in.includes(v)
+    if (cond.notIn) return !cond.notIn.includes(v)
     return false
   })()
 

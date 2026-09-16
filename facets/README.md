@@ -178,8 +178,13 @@ an otherwise editable panel:
   disabledWhen: { path: "mode", equals: "auto" } }
 ```
 
-`equals` and `notEquals` are supported, against another field's value. `equals`
-wins if you pass both.
+The condition reads one other field's value. Set one operator:
+
+- `equals` / `notEquals` — compare against a single value.
+- `in` / `notIn` — compare against a list, e.g. a param only some enum choices
+  use: `disabledWhen: { path: "pattern", notIn: ["dashes", "stipple"] }`.
+
+If several are set, the first in that order wins.
 
 ---
 

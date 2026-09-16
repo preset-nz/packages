@@ -15,7 +15,22 @@ export interface BaseField {
   id: string
   label?: string
   path: string
-  disabledWhen?: { path: string; equals?: unknown; notEquals?: unknown }
+  disabledWhen?: DisabledWhen
+}
+
+/**
+ * Disables a field based on one other field's value. Exactly one operator is
+ * meant to be set; if several are, the first present in the order
+ * `equals`, `notEquals`, `in`, `notIn` wins. `in`/`notIn` match a list of
+ * values (e.g. "only these enum choices use this param") and are still a
+ * single-path condition — composable AND/OR belongs in a later DSL.
+ */
+export interface DisabledWhen {
+  path: string
+  equals?: unknown
+  notEquals?: unknown
+  in?: readonly unknown[]
+  notIn?: readonly unknown[]
 }
 
 // A custom field is any BaseField whose `kind` is not one of the built-ins.
