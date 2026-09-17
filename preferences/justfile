@@ -8,9 +8,11 @@ default:
 [group('setup')]
 install:
     cargo fetch
+    pnpm install
 
 [group('quality')]
 check:
     cargo check --all-features
     cargo test --all-features
     cargo clippy --all-features -- -D warnings
+    ./node_modules/.bin/tsc --noEmit

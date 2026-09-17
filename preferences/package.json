@@ -1,0 +1,32 @@
+{
+  "name": "@preset.nz/preferences",
+  "version": "0.1.0",
+  "description": "Hooks, the Cmd+, Settings window (rendered via @preset.nz/facets) and usePersistedState for preset.nz Tauri apps, over the preset-preferences Rust crate.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/preset-nz/preferences.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src-ts/index.ts"
+  },
+  "files": [
+    "src-ts"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@preset.nz/facets": "*",
+    "@tauri-apps/api": "^2",
+    "react": "^19"
+  },
+  "devDependencies": {
+    "@preset.nz/facets": "file:../facets",
+    "@tauri-apps/api": "^2.11.1",
+    "@types/react": "^19",
+    "typescript": "^5.8.3"
+  }
+}
