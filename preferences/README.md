@@ -161,6 +161,16 @@ resolve: {
 }
 ```
 
+Tailwind 4 does not scan outside your project, and a path-linked package
+lives outside it, so name the packages in your CSS or their classes never
+reach the build:
+
+```css
+@import "tailwindcss";
+@source "../../../packages/facets/src";
+@source "../../../packages/preferences/src-ts";
+```
+
 The window renders through facets, so the same five shadcn-shaped primitives
 facets needs must exist at `@/components/ui/{input,label,checkbox,separator,select}`.
 See the facets README for the exact exports. Nothing else is imported from
