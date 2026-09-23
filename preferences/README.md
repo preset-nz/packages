@@ -22,7 +22,7 @@ Both ship as source. The crate is an ordinary Cargo dependency. The npm
 package is unbuilt TypeScript that your bundler and `tsc` compile with your
 own code, the same way `facets` works.
 
-**Status:** 0.1.0, on crates.io and npm, consumed by Strata. The crate and
+**Status:** on crates.io and npm, consumed by Strata. The crate and
 the npm package share one version and one `vX.Y.Z` tag. The TypeScript types
 mirror the serde shape by hand, so use matching versions of both.
 

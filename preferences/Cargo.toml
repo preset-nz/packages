@@ -1,6 +1,6 @@
 [package]
 name = "preset-preferences"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 description = "Typed, versioned TOML preferences for the preset.nz desktop apps: schema with defaults, validated load, atomic save, Tauri commands and change event."

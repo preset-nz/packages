@@ -1,6 +1,6 @@
 {
   "name": "@preset.nz/preferences",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Hooks, the Cmd+, Settings window (rendered via @preset.nz/facets) and usePersistedState for preset.nz Tauri apps, over the preset-preferences Rust crate.",
   "license": "MIT",
   "repository": {
