@@ -45,6 +45,18 @@ So you need an `@/*` alias pointing at your `src/`, those five modules present,
 and Tailwind with shadcn's theme tokens (`muted-foreground`, `border` and
 friends are used throughout).
 
+The panel's own layout (group headers, rows, help text) is Tailwind classes in
+this package's source. Tailwind 4 does not scan `node_modules`, so name the
+package in your CSS. From `src/index.css`:
+
+```css
+@import "tailwindcss";
+@source "../node_modules/@preset.nz/facets/src";
+```
+
+Nothing fails when this line is missing. The build succeeds and the panel
+renders unstyled.
+
 The upside is that `facets` inherits whatever primitive library you already
 chose — Base UI, Radix, or your own — instead of dragging in a second one and
 making your panels look foreign inside your own app.
