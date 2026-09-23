@@ -171,15 +171,18 @@ resolve: {
 }
 ```
 
-Tailwind 4 does not scan outside your project, and a path-linked package
-lives outside it, so name the packages in your CSS or their classes never
-reach the build:
+Tailwind 4 does not scan `node_modules`, and both packages ship their
+Tailwind classes as source there, so name them in your CSS or their classes
+never reach the build. From `src/index.css`:
 
 ```css
 @import "tailwindcss";
-@source "../../../packages/facets/src";
-@source "../../../packages/preferences/src-ts";
+@source "../node_modules/@preset.nz/facets/src";
+@source "../node_modules/@preset.nz/preferences/src-ts";
 ```
+
+Nothing fails when these lines are missing. The build succeeds and the
+Settings window renders unstyled.
 
 The window renders through facets, so the same five shadcn-shaped primitives
 facets needs must exist at `@/components/ui/{input,label,checkbox,separator,select}`.
