@@ -19,7 +19,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@preset.nz/facets": "*",
+    "@preset.nz/facets": "^0.1.0",
     "@tauri-apps/api": "^2",
     "react": "^19"
   },
