@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@preset.nz/facets':
-        specifier: file:../facets
-        version: file:../facets
+        specifier: ^0.1.0
+        version: 0.1.0
       '@tauri-apps/api':
         specifier: ^2.11.1
         version: 2.11.1
@@ -23,8 +23,8 @@ importers:
 
 packages:
 
-  '@preset.nz/facets@file:../facets':
-    resolution: {directory: ../facets, type: directory}
+  '@preset.nz/facets@0.1.0':
+    resolution: {integrity: sha512-MDm9eFC1AC3GjS/+FgaM0KH44DdTwN1NsS5vylL2N/D1fuVE6mcMtJBLKkoigIasfcnNiQIPYypiMlb+dGEvlQ==}
     peerDependencies:
       react: ^19
 
@@ -44,7 +44,7 @@ packages:
 
 snapshots:
 
-  '@preset.nz/facets@file:../facets': {}
+  '@preset.nz/facets@0.1.0': {}
 
   '@tauri-apps/api@2.11.1': {}
 

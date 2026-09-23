@@ -24,7 +24,7 @@
     "react": "^19"
   },
   "devDependencies": {
-    "@preset.nz/facets": "file:../facets",
+    "@preset.nz/facets": "^0.1.0",
     "@tauri-apps/api": "^2.11.1",
     "@types/react": "^19",
     "typescript": "^5.8.3"

@@ -22,10 +22,9 @@ Both ship as source. The crate is an ordinary Cargo dependency. The npm
 package is unbuilt TypeScript that your bundler and `tsc` compile with your
 own code, the same way `facets` works.
 
-**Status:** 0.1.0, consumed by Strata as a path dependency. Not yet on
-crates.io or npm. Until `@preset.nz/facets` is published, a clean clone of
-this repo cannot `pnpm install`, because the dev dependency on facets is a
-`file:../facets` link. That is the blocker for the first release.
+**Status:** 0.1.0, on crates.io and npm, consumed by Strata. The crate and
+the npm package share one version and one `vX.Y.Z` tag. The TypeScript types
+mirror the serde shape by hand, so use matching versions of both.
 
 ---
 
@@ -53,6 +52,17 @@ theme = "system"
   older build does not erase what a newer one wrote.
 - `version` is the file version. Bump it when a stored value changes meaning.
 - Saves write a sibling `.tmp` and rename over the target.
+
+## Rust: installing
+
+```toml
+# src-tauri/Cargo.toml
+[dependencies]
+preset-preferences = { version = "0.1", features = ["tauri"] }
+```
+
+The `tauri` feature adds the commands and the change event. Without it the
+crate is the schema and the store, with no Tauri dependency.
 
 ## Rust: declaring
 
@@ -148,7 +158,7 @@ pnpm add @preset.nz/preferences @preset.nz/facets
 
 Peers: React 19, `@tauri-apps/api` 2, `@preset.nz/facets`.
 
-Because the package is unbuilt and (for now) path-linked, your Vite config
+Because the package is unbuilt, your Vite config
 must pin the shared runtime to your app's copies. Without this, Rollup
 resolves `react` from the package's real location and fails, and two copies
 of facets would mean two renderer registries:
