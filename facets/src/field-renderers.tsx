@@ -28,6 +28,7 @@ import type {
   TextareaFieldDef,
   FileFieldDef,
   LabelFieldDef,
+  PanelView,
   SeparatorFieldDef,
   VectorFieldDef,
 } from "./types"
@@ -46,11 +47,26 @@ function Empty() {
 
 function FieldShell({
   label,
+  view,
   children,
 }: {
   label?: string
+  view?: PanelView
   children: React.ReactNode
 }) {
+  // Collapsed: the field shares a line with others, so the label goes inline.
+  if (view === "collapsed") {
+    return (
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        {label && (
+          <Label className="shrink-0 text-[11px] font-medium text-muted-foreground tracking-wide">
+            {label}
+          </Label>
+        )}
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    )
+  }
   return (
     <div className="flex flex-col gap-1">
       {label && (
@@ -76,10 +92,11 @@ const TextRenderer: FieldRenderer<TextFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const display = formatPrimitive(value)
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
         <Input
           aria-label={field.label ?? field.id}
@@ -104,15 +121,16 @@ const TextareaRenderer: FieldRenderer<TextareaFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const display = formatPrimitive(value)
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
         <textarea
           aria-label={field.label ?? field.id}
           value={display}
-          rows={field.rows ?? 3}
+          rows={view === "collapsed" ? 1 : (field.rows ?? 3)}
           disabled={disabled}
           placeholder={field.placeholder}
           onChange={(e) => onChange(e.target.value)}
@@ -136,6 +154,7 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const num =
     typeof value === "number"
@@ -146,7 +165,7 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
   const display =
     num != null && Number.isFinite(num) ? num.toLocaleString() : ""
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
         <Input
           type="number"
@@ -174,10 +193,11 @@ const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const num = typeof value === "number" ? value : Number(value ?? 0)
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
         <input
           type="range"
@@ -205,6 +225,7 @@ const SelectRenderer: FieldRenderer<SelectFieldDef> = ({
   disabled,
   onChange,
   ctx,
+  view,
 }) => {
   const options = useMemo(
     () => (field.optionsProvider ? field.optionsProvider(ctx) : (field.options ?? [])),
@@ -214,7 +235,7 @@ const SelectRenderer: FieldRenderer<SelectFieldDef> = ({
   const matched = options.find((o) => o.value === current)
   if (!onChange) {
     return (
-      <FieldShell label={field.label ?? field.id}>
+      <FieldShell label={field.label ?? field.id} view={view}>
         <ReadOnlyText>
           {matched ? matched.label : current ? current : <Empty />}
         </ReadOnlyText>
@@ -222,7 +243,7 @@ const SelectRenderer: FieldRenderer<SelectFieldDef> = ({
     )
   }
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       <Select
         value={current}
         onValueChange={(v) => onChange(v)}
@@ -250,10 +271,11 @@ const ColorRenderer: FieldRenderer<ColorFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const hex = typeof value === "string" && value.length > 0 ? value : null
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       <div className="flex items-center gap-2">
         {hex ? (
           <span
@@ -288,11 +310,12 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const checked = Boolean(value)
   if (!onChange) {
     return (
-      <FieldShell label={field.label ?? field.id}>
+      <FieldShell label={field.label ?? field.id} view={view}>
         <ReadOnlyText>{checked ? "Yes" : "No"}</ReadOnlyText>
       </FieldShell>
     )
@@ -314,10 +337,11 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
 const FileRenderer: FieldRenderer<FileFieldDef> = ({
   field,
   value,
+  view,
 }) => {
   const asset = value as { name?: string } | null | undefined
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       <ReadOnlyText>
         {asset?.name ? asset.name : <Empty />}
       </ReadOnlyText>
@@ -351,6 +375,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   value,
   disabled,
   onChange,
+  view,
 }) => {
   const arity = field.components.length
   const values = toNumberArray(value, arity)
@@ -358,7 +383,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
 
   if (!onChange) {
     return (
-      <FieldShell label={field.label ?? field.id}>
+      <FieldShell label={field.label ?? field.id} view={view}>
         <div
           className="grid gap-x-3 gap-y-1"
           style={{ gridTemplateColumns: `repeat(${arity}, minmax(0, 1fr))` }}
@@ -390,7 +415,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   }
 
   return (
-    <FieldShell label={field.label ?? field.id}>
+    <FieldShell label={field.label ?? field.id} view={view}>
       <div
         className="grid gap-x-2"
         style={{ gridTemplateColumns: `repeat(${arity}, minmax(0, 1fr))` }}
@@ -430,8 +455,8 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   )
 }
 
-const SeparatorRenderer: FieldRenderer<SeparatorFieldDef> = ({ field }) =>
-  field.label ? (
+const SeparatorRenderer: FieldRenderer<SeparatorFieldDef> = ({ field, view }) =>
+  view === "collapsed" ? null : field.label ? (
     <div className="my-1 flex items-center gap-2">
       <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
         {field.label}

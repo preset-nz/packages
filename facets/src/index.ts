@@ -6,5 +6,5 @@ export {
   registerFieldRenderer,
   getFieldRenderer,
 } from "./registry"
-export { PropertyPanel } from "./panel"
+export { PropertyPanel, promotedFields, showsIn } from "./panel"
 export { registerBuiltinRenderers } from "./field-renderers"

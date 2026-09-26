@@ -11,8 +11,11 @@ import {
 import {
   PropertyPanel,
   getFieldRenderer,
+  promotedFields,
   registerScope,
   type CheckboxFieldDef,
+  type PanelView,
+  type PromoteLevel,
   type PropertySchema,
 } from "../../src"
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror"
@@ -21,7 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { CATALOGUE, DISABLED_WHEN_DOC, GROUP_DOC, type Doc, type KindEntry } from "./catalogue"
+import { CATALOGUE, DISABLED_WHEN_DOC, GROUP_DOC, PROMOTE_DOC, type Doc, type KindEntry } from "./catalogue"
 import { DEFAULT_STARTER, STARTERS, pretty, type Starter } from "./defaults"
 import { JsonPane } from "./json-pane"
 import { load, save } from "./storage"
@@ -183,6 +186,20 @@ export function App() {
     setValueText(pretty(values))
   }
 
+  // Promotes the field at the caret (or the last field). The same level
+  // again takes the promotion off.
+  const togglePromote = (level: PromoteLevel) => {
+    if (!schemaParse.ok) return
+    const schema = structuredClone(schemaParse.value)
+    const fields = schemaFields(schema)
+    const at = target()
+    const field = (at?.field && fields.find((f) => f.id === at.field!.id)) || fields.at(-1)
+    if (!field) return
+    if (field.promote === level) delete field.promote
+    else field.promote = level
+    applySchema(schema, field.id)
+  }
+
   const loadStarter = (next: Starter) => {
     setStarter(next.id)
     setSchemaText(pretty(next.schema))
@@ -273,6 +290,19 @@ export function App() {
           >
             disabledWhen
           </button>
+          <PaneTitle>Views</PaneTitle>
+          <ul className="py-1">
+            {(["collapsed", "card"] as const).map((level) => (
+              <li key={level}>
+                <PaletteButton
+                  label={`promote: ${level}`}
+                  disabled={!schemaParse.ok}
+                  onClick={() => togglePromote(level)}
+                  onHover={() => setHovered(PROMOTE_DOC)}
+                />
+              </li>
+            ))}
+          </ul>
           </div>
           <KindCard entry={hovered} />
         </aside>
@@ -354,15 +384,36 @@ export function App() {
                 those fields.
               </p>
             )}
-            <div className="w-80 border border-border bg-background shadow-sm">
-              <PanelBoundary resetKey={schemaText}>
-                <PropertyPanel
-                  scopeKey={SCOPE}
-                  selection={lastValues}
-                  ctx={null}
+            <div className="flex flex-wrap items-start gap-6">
+              <div className="flex w-64 flex-col gap-6">
+                <ViewPreview
+                  view="card"
+                  schema={lastSchema}
+                  schemaText={schemaText}
+                  values={lastValues}
                   readOnly={readOnly}
                 />
-              </PanelBoundary>
+                <ViewPreview
+                  view="collapsed"
+                  schema={lastSchema}
+                  schemaText={schemaText}
+                  values={lastValues}
+                  readOnly={readOnly}
+                />
+              </div>
+              <figure className="flex flex-col gap-1.5">
+                <ViewCaption>Inspector</ViewCaption>
+                <div className="w-80 border border-border bg-background shadow-sm">
+                  <PanelBoundary resetKey={schemaText}>
+                    <PropertyPanel
+                      scopeKey={SCOPE}
+                      selection={lastValues}
+                      ctx={null}
+                      readOnly={readOnly}
+                    />
+                  </PanelBoundary>
+                </div>
+              </figure>
             </div>
           </div>
           {showLog && <WriteLog log={log} onClear={() => setLog([])} />}
@@ -370,6 +421,58 @@ export function App() {
 
       </main>
     </div>
+  )
+}
+
+const VIEW_HINT: Record<Exclude<PanelView, "inspector">, string> = {
+  card: 'Nothing promoted. Add "promote": "card" or "collapsed" to a field.',
+  collapsed: 'Nothing promoted to "collapsed".',
+}
+
+/** The same scope drawn as a card, or folded shut to one line. */
+function ViewPreview({
+  view,
+  schema,
+  schemaText,
+  values,
+  readOnly,
+}: {
+  view: Exclude<PanelView, "inspector">
+  schema: PropertySchema
+  schemaText: string
+  values: Record<string, unknown>
+  readOnly: boolean
+}) {
+  const empty = promotedFields(schema, view).length === 0
+  return (
+    <figure className="flex flex-col gap-1.5">
+      <ViewCaption>{view === "card" ? "Card" : "Collapsed"}</ViewCaption>
+      <div className="border border-border bg-background shadow-sm">
+        {view === "collapsed" && (
+          <div className="flex h-7 items-center gap-1 border-b border-border px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+            <svg aria-hidden viewBox="0 0 16 16" className="size-3 -rotate-90">
+              <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            Folded scope
+          </div>
+        )}
+        {empty ? (
+          <p className="p-3 text-xs text-muted-foreground">{VIEW_HINT[view]}</p>
+        ) : (
+          <PanelBoundary resetKey={schemaText}>
+            <PropertyPanel scopeKey={SCOPE} selection={values} ctx={null} readOnly={readOnly} view={view} />
+          </PanelBoundary>
+        )}
+      </div>
+    </figure>
+  )
+}
+
+function ViewCaption({ children }: { children: ReactNode }) {
+  return (
+    <figcaption className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+      {children}
+    </figcaption>
   )
 }
 
@@ -449,8 +552,9 @@ function KindCard({ entry }: { entry: Doc | null }) {
         </pre>
       )}
       <p className="mt-2 text-muted-foreground">
-        Every field also takes <span className="font-mono">label</span> and{" "}
-        <span className="font-mono">disabledWhen</span>.
+        Every field also takes <span className="font-mono">label</span>,{" "}
+        <span className="font-mono">disabledWhen</span> and{" "}
+        <span className="font-mono">promote</span>.
       </p>
     </div>
   )

@@ -102,6 +102,13 @@
         }
       }
     },
+    "promote": {
+      "enum": [
+        "collapsed",
+        "card"
+      ],
+      "description": "Where the field shows besides the inspector, like a parm promoted to a Houdini asset's interface. \"collapsed\": in a closed group's header, in a folded scope and on the card. \"card\": on the card only. Omit for inspector-only."
+    },
     "selectOption": {
       "type": "object",
       "required": [
@@ -403,6 +410,9 @@
         "placeholder": {
           "type": "string",
           "description": "Shown while empty."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -441,6 +451,9 @@
         "rows": {
           "type": "number",
           "description": "Visible lines. Default 3."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -483,6 +496,9 @@
         "step": {
           "type": "number",
           "description": "Increment. Default 1."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -525,6 +541,9 @@
         "step": {
           "type": "number",
           "description": "Increment. Default 1."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -562,6 +581,9 @@
           "items": {
             "$ref": "#/definitions/selectOption"
           }
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -599,6 +621,9 @@
             "type": "string"
           },
           "description": "Hex strings. Declared in 0.1; the built-in renderer does not draw them."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -629,6 +654,9 @@
         },
         "disabledWhen": {
           "$ref": "#/definitions/disabledWhen"
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -667,6 +695,9 @@
         "helperText": {
           "type": "string",
           "description": "A hint. Declared in 0.1; the built-in renderer does not draw it."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -713,6 +744,9 @@
         "precision": {
           "type": "number",
           "description": "Decimals shown when read-only."
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -738,6 +772,9 @@
         },
         "disabledWhen": {
           "$ref": "#/definitions/disabledWhen"
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -764,6 +801,9 @@
         },
         "disabledWhen": {
           "$ref": "#/definitions/disabledWhen"
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       },
       "additionalProperties": false
@@ -794,6 +834,9 @@
         },
         "disabledWhen": {
           "$ref": "#/definitions/disabledWhen"
+        },
+        "promote": {
+          "$ref": "#/definitions/promote"
         }
       }
     }

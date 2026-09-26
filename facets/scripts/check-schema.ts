@@ -150,6 +150,7 @@ const valid: Array<[string, unknown]> = [
   ...STARTERS.map((s): [string, unknown] => [`starter "${s.id}"`, s.schema]),
   ["a $schema key", { $schema: schema.$id, version: 1, groups: [] }],
   ["a custom kind with extra props", wrap({ kind: "palette-strip", id: "p", path: "p", colours: ["#000"] })],
+  ["promote on a field and a separator", { version: 1, groups: [{ id: "g", rows: [{ kind: "slider", id: "a", path: "a", promote: "collapsed" }, { kind: "separator", id: "s", promote: "card" }] }] }],
   ["a paired row", { version: 1, groups: [{ id: "g", rows: [[{ kind: "text", id: "a", path: "a" }, { kind: "checkbox", id: "b", path: "b" }]] }] }],
 ]
 const invalid: Array<[string, unknown]> = [
@@ -159,6 +160,7 @@ const invalid: Array<[string, unknown]> = [
   ["label without its text", wrap({ kind: "label", id: "l" })],
   ["vector without components", wrap({ kind: "vector", id: "v", path: "v" })],
   ["an unknown disabledWhen operator", wrap({ kind: "text", id: "t", path: "t", disabledWhen: { path: "x", equal: 1 } })],
+  ["an unknown promote level", wrap({ kind: "text", id: "t", path: "t", promote: "toolbar" })],
   ["a custom kind without path", wrap({ kind: "palette-strip", id: "p" })],
   ["a field without kind", wrap({ id: "x", path: "x" })],
   ["a group without rows", { version: 1, groups: [{ id: "g" }] }],

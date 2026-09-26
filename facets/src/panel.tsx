@@ -3,7 +3,9 @@ import { Separator } from "@/components/ui/separator"
 import { getFieldRenderer, getScope } from "./registry"
 import type {
   FieldDef,
+  PanelView,
   PropertyGroupDef,
+  PropertySchema,
   ScopeContext,
 } from "./types"
 
@@ -13,6 +15,32 @@ interface PropertyPanelProps {
   ctx: ScopeContext
   readOnly?: boolean
   emptyState?: React.ReactNode
+  /** Defaults to `"inspector"`, every field. See `PanelView`. */
+  view?: PanelView
+}
+
+type Row = Array<FieldDef | FieldDef[]>[number]
+
+/** Whether a field shows in a view. The levels nest: collapsed ⊂ card ⊂ inspector. */
+export function showsIn(field: FieldDef, view: PanelView): boolean {
+  if (view === "inspector") return true
+  if (view === "card") return field.promote === "card" || field.promote === "collapsed"
+  return field.promote === "collapsed"
+}
+
+/** The fields a view draws, in schema order, with paired rows flattened. */
+export function promotedFields(schema: PropertySchema, view: PanelView): FieldDef[] {
+  return schema.groups
+    .flatMap((g) => g.rows)
+    .flatMap((row) => (Array.isArray(row) ? row : [row]))
+    .filter((f) => showsIn(f, view))
+}
+
+/** A group's rows kept to one view: fields filtered, empty rows dropped. */
+function rowsIn(rows: Row[], view: PanelView): FieldDef[][] {
+  return rows
+    .map((row) => (Array.isArray(row) ? row : [row]).filter((f) => showsIn(f, view)))
+    .filter((fields) => fields.length > 0)
 }
 
 export function PropertyPanel({
@@ -21,6 +49,7 @@ export function PropertyPanel({
   ctx,
   readOnly = false,
   emptyState,
+  view = "inspector",
 }: PropertyPanelProps) {
   const scope = getScope(scopeKey)
 
@@ -39,6 +68,28 @@ export function PropertyPanel({
   const onChange = readOnly || !scope.write
     ? undefined
     : (path: string, val: unknown) => scope.write!(path, val, selection, ctx)
+
+  // Card: the promoted fields, flat, no group chrome (a card has its own
+  // header). Collapsed: the "collapsed" ones on one line. Either draws
+  // nothing when nothing is promoted.
+  if (view !== "inspector") {
+    const rows = scope.schema.groups.flatMap((g) => rowsIn(g.rows, view))
+    if (rows.length === 0) return null
+    if (view === "collapsed") {
+      return (
+        <div className="flex items-center gap-3 px-3 py-2">
+          {rows.flat().map((f) => (
+            <FieldSlot key={f.id} field={f} values={values} ctx={ctx} onChange={onChange} view="collapsed" />
+          ))}
+        </div>
+      )
+    }
+    return (
+      <div className="flex flex-col gap-3 px-3 py-3">
+        <Rows rows={rows} values={values} ctx={ctx} onChange={onChange} view="card" />
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col">
@@ -76,6 +127,8 @@ function PropertyGroup({
     collapsible && Boolean(group.defaultCollapsed),
   )
   const bodyId = useId()
+  // A closed group keeps its "collapsed" fields in the header row.
+  const headerFields = collapsible && collapsed ? rowsIn(group.rows, "collapsed").flat() : []
   const titleClass =
     "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
 
@@ -85,13 +138,17 @@ function PropertyGroup({
         <header>
           {group.title &&
             (collapsible ? (
-              <h3 className={titleClass}>
+              <div className="flex items-center gap-3">
+              <h3 className={titleClass + (headerFields.length ? " shrink-0" : " flex-1")}>
                 <button
                   type="button"
                   aria-expanded={!collapsed}
                   aria-controls={bodyId}
                   onClick={() => setCollapsed((c) => !c)}
-                  className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-1 px-1 text-left uppercase hover:text-foreground"
+                  className={
+                    "-mx-1 flex items-center gap-1 px-1 text-left uppercase hover:text-foreground " +
+                    (headerFields.length ? "" : "w-[calc(100%+0.5rem)]")
+                  }
                 >
                   <svg
                     aria-hidden
@@ -106,6 +163,14 @@ function PropertyGroup({
                   {group.title}
                 </button>
               </h3>
+              {headerFields.length > 0 && (
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  {headerFields.map((f) => (
+                    <FieldSlot key={f.id} field={f} values={values} ctx={ctx} onChange={onChange} view="collapsed" />
+                  ))}
+                </div>
+              )}
+              </div>
             ) : (
               <h3 className={titleClass}>{group.title}</h3>
             ))}
@@ -117,31 +182,49 @@ function PropertyGroup({
         </header>
       )}
       <div id={bodyId} hidden={collapsible && collapsed} className="flex flex-col gap-3">
-        {group.rows.map((row, idx) => {
-          const fields = Array.isArray(row) ? row : [row]
-          return (
-            <div
-              key={idx}
-              className={
-                fields.length > 1 ? "grid grid-cols-2 gap-2" : undefined
-              }
-            >
-              {fields.map((f) => (
-                <FieldSlot
-                  key={f.id}
-                  field={f}
-                  values={values}
-                  ctx={ctx}
-                  onChange={onChange}
-                />
-              ))}
-            </div>
-          )
-        })}
+        <Rows
+          rows={rowsIn(group.rows, "inspector")}
+          values={values}
+          ctx={ctx}
+          onChange={onChange}
+          view="inspector"
+        />
       </div>
       {!isLast && <Separator className="mt-1" />}
     </section>
   )
+}
+
+function Rows({
+  rows,
+  values,
+  ctx,
+  onChange,
+  view,
+}: {
+  rows: FieldDef[][]
+  values: Record<string, unknown>
+  ctx: ScopeContext
+  onChange?: (path: string, val: unknown) => void
+  view: PanelView
+}) {
+  return rows.map((fields, idx) => (
+    <div
+      key={idx}
+      className={fields.length > 1 ? "grid grid-cols-2 gap-2" : undefined}
+    >
+      {fields.map((f) => (
+        <FieldSlot
+          key={f.id}
+          field={f}
+          values={values}
+          ctx={ctx}
+          onChange={onChange}
+          view={view}
+        />
+      ))}
+    </div>
+  ))
 }
 
 function FieldSlot({
@@ -149,11 +232,13 @@ function FieldSlot({
   values,
   ctx,
   onChange,
+  view,
 }: {
   field: FieldDef
   values: Record<string, unknown>
   ctx: ScopeContext
   onChange?: (path: string, val: unknown) => void
+  view: PanelView
 }) {
   const renderer = getFieldRenderer(field.kind)
   if (!renderer) {
@@ -182,5 +267,6 @@ function FieldSlot({
     onChange:
       onChange && path !== undefined ? (val) => onChange(path, val) : undefined,
     ctx,
+    view,
   })
 }

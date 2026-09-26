@@ -19,7 +19,23 @@ export interface BaseField {
   label?: string
   path: string
   disabledWhen?: DisabledWhen
+  promote?: PromoteLevel
 }
+
+/**
+ * Where a field shows besides the inspector, like a parm promoted to a
+ * Houdini asset's interface. The levels nest: `"collapsed"` fields show in a
+ * closed group's header, in a folded scope and on the card; `"card"` fields
+ * show on the card only. Leave it out and the field is inspector-only.
+ */
+export type PromoteLevel = "collapsed" | "card"
+
+/**
+ * How `PropertyPanel` draws a scope. `"inspector"` is every field in its
+ * groups; `"card"` the promoted fields, flat; `"collapsed"` the fields
+ * promoted to `"collapsed"`, on one line.
+ */
+export type PanelView = "inspector" | "card" | "collapsed"
 
 /**
  * Disables a field based on one other field's value. Exactly one operator is
@@ -124,6 +140,7 @@ export interface SeparatorFieldDef {
   id: string
   label?: string
   disabledWhen?: DisabledWhen
+  promote?: PromoteLevel
 }
 
 /** Static text: a hint, a note, a sub-heading. The text is `label`. */
@@ -132,6 +149,7 @@ export interface LabelFieldDef {
   id: string
   label: string
   disabledWhen?: DisabledWhen
+  promote?: PromoteLevel
 }
 
 export type BuiltinFieldDef =
@@ -185,6 +203,11 @@ export interface FieldRendererProps<F extends FieldDef = FieldDef> {
   disabled: boolean
   onChange?: (next: unknown) => void
   ctx: ScopeContext
+  /**
+   * The view the field is drawn in. In `"collapsed"` it shares a line with
+   * others, so built-ins draw compact. Optional: a renderer may ignore it.
+   */
+  view?: PanelView
 }
 
 export type FieldRenderer<F extends FieldDef = FieldDef> = React.FC<

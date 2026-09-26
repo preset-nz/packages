@@ -43,9 +43,10 @@ const simple: Starter = {
             max: 1,
             step: 0.01,
             disabledWhen: { path: "visible", equals: false },
+            promote: "collapsed",
           },
           [
-            { kind: "color", id: "fill", path: "fill", label: "Fill" },
+            { kind: "color", id: "fill", path: "fill", label: "Fill", promote: "card" },
             { kind: "select", id: "blend", path: "blend", label: "Blend", options: blendOptions },
           ],
         ],
@@ -152,7 +153,7 @@ const everything: Starter = {
               label: "Palette",
               colours: ["#111010", "#2b7c76", "#d4ecea", "#c2410c", "#f2ede6"],
             },
-            { kind: "rating", id: "rating", path: "rating", label: "Rating", max: 5 },
+            { kind: "rating", id: "rating", path: "rating", label: "Rating", max: 5, promote: "collapsed" },
           ],
         ],
       },
@@ -175,7 +176,47 @@ const everything: Starter = {
   },
 }
 
-export const STARTERS: Starter[] = [empty, simple, everything]
+// A synth operator, to show promotion: the same scope drawn as an
+// inspector, a card and a collapsed line. Output starts closed, so its
+// header shows its "collapsed" field.
+const filterTypes = [
+  { value: "lowpass", label: "Low-pass" },
+  { value: "highpass", label: "High-pass" },
+  { value: "bandpass", label: "Band-pass" },
+]
+const operator: Starter = {
+  id: "operator",
+  name: "Operator (promote)",
+  schema: {
+    version: 1,
+    groups: [
+      {
+        id: "filter",
+        title: "Filter",
+        collapsible: true,
+        rows: [
+          { kind: "select", id: "type", path: "type", label: "Type", options: filterTypes, promote: "card" },
+          { kind: "slider", id: "cutoff", path: "cutoff", label: "Cutoff", min: 20, max: 20000, step: 1, promote: "collapsed" },
+          { kind: "slider", id: "resonance", path: "resonance", label: "Resonance", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+      {
+        id: "output",
+        title: "Output",
+        collapsible: true,
+        defaultCollapsed: true,
+        rows: [
+          { kind: "slider", id: "master", path: "master", label: "Master", min: 0, max: 1, step: 0.01, promote: "collapsed" },
+          { kind: "slider", id: "pan", path: "pan", label: "Pan", min: -1, max: 1, step: 0.01, promote: "card" },
+          { kind: "slider", id: "width", path: "width", label: "Width", min: 0, max: 1, step: 0.01 },
+        ],
+      },
+    ],
+  },
+  values: { type: "lowpass", cutoff: 1200, resonance: 0.3, master: 0.8, pan: 0, width: 1 },
+}
+
+export const STARTERS: Starter[] = [empty, simple, operator, everything]
 export const DEFAULT_STARTER = simple
 
 export const pretty = (v: unknown) => JSON.stringify(v, null, 2)
