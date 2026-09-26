@@ -17,11 +17,13 @@ import {
 } from "../../src"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { CATALOGUE, DISABLED_WHEN_DOC, GROUP_DOC, type Doc, type KindEntry } from "./catalogue"
 import { DEFAULT_STARTER, STARTERS, pretty, type Starter } from "./defaults"
 import { JsonPane } from "./json-pane"
 import { load, save } from "./storage"
+import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
 import { fieldKeys, parseSchema, parseValues, schemaFields } from "./parse"
 import { ResizeHandle, useColumnWidths } from "./resize"
 
@@ -272,22 +274,35 @@ export function App() {
               <Checkbox checked={showLog} onCheckedChange={(c) => setShowLog(Boolean(c))} />
               Write log
             </Label>
-            <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
               <span>Start from</span>
-              {STARTERS.map((st) => (
-                <button
-                  key={st.id}
-                  type="button"
-                  onClick={() => loadStarter(st)}
-                  title={`Replace the schema and values with "${st.name}"`}
-                  className={cn(
-                    "px-1.5 py-0.5 hover:text-foreground",
-                    st.id === starter && "bg-accent text-foreground",
-                  )}
-                >
-                  {st.name}
-                </button>
-              ))}
+              <Select
+                value={starter}
+                items={STARTERS.map((st) => ({ value: st.id, label: st.name }))}
+                onValueChange={(id) => {
+                  const next = STARTERS.find((st) => st.id === id)
+                  if (next) loadStarter(next)
+                }}
+              >
+                <SelectTrigger size="sm" className="min-w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STARTERS.map((st) => (
+                    <SelectItem key={st.id} value={st.id}>
+                      {st.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <button
+                type="button"
+                onClick={() => loadStarter(STARTERS.find((st) => st.id === starter) ?? DEFAULT_STARTER)}
+                title="Replace the schema and values with the selected starter"
+                className="flex items-center gap-1 hover:text-foreground"
+              >
+                <ArrowCounterClockwiseIcon className="size-3.5" /> Reset
+              </button>
             </div>
           </div>
           <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-6">
