@@ -229,7 +229,9 @@ const SelectRenderer: FieldRenderer<SelectFieldDef> = ({
         disabled={disabled}
       >
         <SelectTrigger>
-          <SelectValue />
+          {/* Children, not the primitive's own lookup: Base UI's Value shows
+              the raw value unless it's told the label. */}
+          <SelectValue>{matched ? matched.label : current}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {options.map((o) => (
