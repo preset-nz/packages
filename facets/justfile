@@ -17,6 +17,12 @@ install:
 [group('quality')]
 check:
     ./node_modules/.bin/tsc --noEmit
+    node scripts/check-licenses.mjs
+
+# Licence gate only (also part of `check`): permissive allowlist, see script header
+[group('quality')]
+licenses:
+    node scripts/check-licenses.mjs
 
 # Playground dev server (facets.preset.nz), importing ../src directly
 [group('dev')]
@@ -34,4 +40,4 @@ playground-build:
 # Outward-facing: publishes facets.preset.nz. Ask before running.
 [group('build')]
 playground-deploy: playground-build
-    cd playground && ./node_modules/.bin/wrangler deploy
+    cd playground && pnpm dlx wrangler@4 deploy
