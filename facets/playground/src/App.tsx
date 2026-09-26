@@ -13,8 +13,10 @@ import {
   getFieldRenderer,
   registerScope,
   type CheckboxFieldDef,
-  type FieldDef,
+  type PropertySchema,
 } from "../../src"
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror"
+import { cursorTarget, idOffset } from "./cursor"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -59,6 +61,20 @@ export function App() {
   const lastSchema = useLastGood(schemaParse, DEFAULT_STARTER.schema)
   const lastValues = useLastGood(valueParse, DEFAULT_STARTER.values)
 
+  const caret = useRef(-1)
+  const schemaEditor = useRef<ReactCodeMirrorRef>(null)
+  const pendingFocus = useRef<string | null>(null)
+  useEffect(() => {
+    const id = pendingFocus.current
+    const view = schemaEditor.current?.view
+    if (!id || !view) return
+    pendingFocus.current = null
+    const offset = idOffset(view.state.doc.toString(), id)
+    if (offset < 0) return
+    view.dispatch({ selection: { anchor: offset }, scrollIntoView: true })
+    view.focus()
+  }, [schemaText])
+
   const valuesRef = useRef(lastValues)
   valuesRef.current = lastValues
   const logCount = useRef(0)
@@ -91,13 +107,25 @@ export function App() {
     [lastSchema],
   )
 
+  // Palette clicks insert at the schema caret (see cursor.ts), then move the
+  // caret onto what was inserted, so the next step is editing it.
+  const target = () =>
+    schemaParse.ok ? cursorTarget(schemaParse.value, schemaText, caret.current) : null
+
+  const applySchema = (schema: PropertySchema, focusId: string) => {
+    setSchemaText(pretty(schema))
+    pendingFocus.current = focusId
+  }
+
   const addField = (entry: KindEntry) => {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
-    const made = makeUnique(entry, schemaFields(schema))
+    const at = target()
+    const made = makeUnique(entry, schema)
     if (schema.groups.length === 0) schema.groups.push({ id: "group", title: "Group", rows: [] })
-    schema.groups[schema.groups.length - 1].rows.push(made.field)
-    setSchemaText(pretty(schema))
+    const group = schema.groups[at?.group ?? schema.groups.length - 1]
+    group.rows.splice(at?.row != null ? at.row + 1 : group.rows.length, 0, made.field)
+    applySchema(schema, made.field.id)
     if ("path" in made.field) {
       setValueText(pretty({ ...valuesRef.current, [made.field.path]: made.value }))
     }
@@ -106,40 +134,44 @@ export function App() {
   const addGroup = () => {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
-    const ids = new Set(schema.groups.map((g) => g.id))
+    const at = target()
+    const ids = new Set([...schema.groups.map((g) => g.id), ...schemaFields(schema).map((f) => f.id)])
     let n = schema.groups.length + 1
     while (ids.has(`group${n}`)) n++
-    schema.groups.push({ id: `group${n}`, title: `Group ${n}`, collapsible: true, rows: [] })
-    setSchemaText(pretty(schema))
+    const group = { id: `group${n}`, title: `Group ${n}`, collapsible: true, rows: [] }
+    schema.groups.splice(at?.group != null ? at.group + 1 : schema.groups.length, 0, group)
+    applySchema(schema, group.id)
   }
 
-  // Makes the last field depend on the nearest checkbox before it. If there
-  // is none, a checkbox is inserted just above the field first.
+  // Makes the field at the caret (or the last field) depend on the nearest
+  // checkbox above it. If there is none, a checkbox is inserted just above.
   const addDisabledWhen = () => {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
     const fields = schemaFields(schema)
-    const target = fields.at(-1)
-    if (!target) return
+    const at = target()
+    // Re-find the caret's field in the clone, by id.
+    const target_ = (at?.field && fields.find((f) => f.id === at.field!.id)) || fields.at(-1)
+    if (!target_) return
     let values = valuesRef.current
     let driver = fields
-      .slice(0, -1)
+      .slice(0, fields.indexOf(target_))
       .reverse()
       .find((f): f is CheckboxFieldDef => f.kind === "checkbox")
     if (!driver) {
-      const made = makeUnique(CATALOGUE.find((e) => e.kind === "checkbox")!, fields)
+      const made = makeUnique(CATALOGUE.find((e) => e.kind === "checkbox")!, schema)
       driver = made.field as CheckboxFieldDef
       for (const group of schema.groups) {
-        const at = group.rows.findIndex((row) => (Array.isArray(row) ? row.includes(target) : row === target))
-        if (at >= 0) {
-          group.rows.splice(at, 0, driver)
+        const i = group.rows.findIndex((row) => (Array.isArray(row) ? row.includes(target_) : row === target_))
+        if (i >= 0) {
+          group.rows.splice(i, 0, driver)
           break
         }
       }
       values = { ...values, [driver.path]: made.value }
     }
-    target.disabledWhen = { path: driver.path, equals: false }
-    setSchemaText(pretty(schema))
+    target_.disabledWhen = { path: driver.path, equals: false }
+    applySchema(schema, target_.id)
     setValueText(pretty(values))
   }
 
@@ -252,6 +284,8 @@ export function App() {
             title="schema.json"
             text={schemaText}
             onText={setSchemaText}
+            onCursor={(offset) => (caret.current = offset)}
+            editorRef={schemaEditor}
             error={schemaParse.ok ? null : schemaParse.error}
             dark={dark}
           />
@@ -332,9 +366,12 @@ export function App() {
   )
 }
 
-/** The entry's field, numbered so its id and path don't clash with any in `fields`. */
-function makeUnique(entry: KindEntry, fields: FieldDef[]) {
-  const taken = new Set(fields.flatMap(fieldKeys))
+/** The entry's field, numbered so its id and path clash with nothing in the schema. */
+function makeUnique(entry: KindEntry, schema: PropertySchema) {
+  const taken = new Set([
+    ...schemaFields(schema).flatMap(fieldKeys),
+    ...schema.groups.map((g) => g.id),
+  ])
   let n = 1
   let made = entry.make(n)
   while (fieldKeys(made.field).some((k) => taken.has(k))) made = entry.make(++n)
@@ -378,7 +415,7 @@ function KindCard({ entry }: { entry: Doc | null }) {
   if (!entry) {
     return (
       <p className="border-t border-border p-3 text-xs text-muted-foreground">
-        Click a kind to add it to the last group. Hover over one to see its props.
+        Click a kind to add it after the row your caret is in, or to the last group. Hover over one to see its props.
       </p>
     )
   }

@@ -1,5 +1,5 @@
-import { useState } from "react"
-import CodeMirror from "@uiw/react-codemirror"
+import { useState, type Ref } from "react"
+import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror"
 import { json } from "@codemirror/lang-json"
 import { CheckIcon, CopyIcon } from "@phosphor-icons/react"
 
@@ -11,12 +11,17 @@ export function JsonPane({
   onText,
   error,
   dark,
+  onCursor,
+  editorRef,
 }: {
   title: string
   text: string
   onText: (text: string) => void
   error: string | null
   dark: boolean
+  /** Called with the caret's offset whenever it moves. */
+  onCursor?: (offset: number) => void
+  editorRef?: Ref<ReactCodeMirrorRef>
 }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
@@ -40,7 +45,11 @@ export function JsonPane({
       <div className="min-h-0 flex-1 overflow-auto text-xs">
         <CodeMirror
           value={text}
+          ref={editorRef}
           onChange={onText}
+          onUpdate={(u) => {
+            if (onCursor && (u.selectionSet || u.docChanged)) onCursor(u.state.selection.main.head)
+          }}
           extensions={extensions}
           theme={dark ? "dark" : "light"}
           basicSetup={{ autocompletion: false }}
