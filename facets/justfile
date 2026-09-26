@@ -17,6 +17,7 @@ install:
 [group('quality')]
 check:
     ./node_modules/.bin/tsc --noEmit
+    node scripts/check-schema.ts
     node scripts/check-licenses.mjs
 
 # Licence gate only (also part of `check`): permissive allowlist, see script header

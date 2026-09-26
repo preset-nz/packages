@@ -11,10 +11,12 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema/v0.1.json": "./schema/v0.1.json"
   },
   "files": [
-    "src"
+    "src",
+    "schema"
   ],
   "publishConfig": {
     "access": "public"

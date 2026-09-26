@@ -185,6 +185,30 @@ the group, so it resets when the panel remounts.
 
 ---
 
+## JSON Schema
+
+A schema for editors and agents is published at
+`https://facets.preset.nz/schema/v0.1.json`, and ships in the package as
+`@preset.nz/facets/schema/v0.1.json`. Point a JSON file at it:
+
+```json
+{
+  "$schema": "https://facets.preset.nz/schema/v0.1.json",
+  "version": 1,
+  "groups": []
+}
+```
+
+Built-in kinds are checked strictly: a misspelt prop or a missing `path` is an
+error. Any other kind passes as a custom kind, so a misspelt *kind* is not
+caught here; the panel logs a warning and skips the field. `optionsProvider` is
+code, so it has no JSON form.
+
+One file covers every 0.1.x release. Patches may add kinds and props to it,
+never remove or tighten them.
+
+---
+
 ## Read-only
 
 Omit `write`, or pass `readOnly`, and no change handler reaches the renderers.
