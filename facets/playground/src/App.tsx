@@ -32,6 +32,7 @@ import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
 import { fieldKeys, parseSchema, parseValues, schemaFields } from "./parse"
 import { ResizeHandle, useColumnWidths } from "./resize"
 import { schemaWarnings } from "./validate"
+import { FACETS } from "./facets-version"
 
 // One stable scope key. Its registration is replaced whenever the schema
 // changes; `read` hands the panel the values object as the selection.
@@ -218,6 +219,7 @@ export function App() {
       <header className="flex h-10 shrink-0 items-center gap-3 border-b border-border px-4">
         <h1 className="font-mono text-sm font-medium">@preset.nz/facets</h1>
         <span className="text-xs text-muted-foreground">playground</span>
+        <LibVersion />
         <nav className="ml-auto flex gap-4 text-xs text-muted-foreground">
           <a className="hover:text-foreground" href="https://preset.nz">
             preset.nz
@@ -497,6 +499,32 @@ function ViewPreview({
       </button>
       {!folded ? panel("inspector") : shut ? hint("collapsed") : panel("collapsed")}
     </div>
+  )
+}
+
+/** Which facets the preview draws with: a release, or unreleased source. */
+function LibVersion() {
+  const { version, released, sha, dirty, changed } = FACETS
+  if (released) {
+    return (
+      <a
+        href={`https://www.npmjs.com/package/@preset.nz/facets/v/${version}`}
+        className="font-mono text-xs text-muted-foreground hover:text-foreground"
+      >
+        v{version}
+      </a>
+    )
+  }
+  const detail = sha
+    ? `${changed} file${changed === 1 ? "" : "s"} in src/ or schema/ differ from v${version}, at ${sha}${dirty ? " with uncommitted changes" : ""}.`
+    : `Couldn't compare against the v${version} tag.`
+  return (
+    <span
+      title={detail}
+      className="border border-amber-500/50 bg-amber-500/10 px-1.5 font-mono text-[11px] text-amber-700 dark:text-amber-400"
+    >
+      v{version} + unreleased{sha ? ` · ${sha}${dirty ? "*" : ""}` : ""}
+    </span>
   )
 }
 
