@@ -142,7 +142,7 @@ const everything: Starter = {
         collapsible: true,
         defaultCollapsed: true,
         rows: [
-          { kind: "textarea", id: "notes", path: "notes", label: "Notes", rows: 3 },
+          { kind: "textarea", id: "notes", path: "notes", label: "Notes", rows: 3, promote: "collapsed" },
           { kind: "file", id: "source", path: "source", label: "Source" },
           { kind: "label", id: "custom", label: "Custom kinds, registered by this playground:" },
           [
@@ -153,7 +153,7 @@ const everything: Starter = {
               label: "Palette",
               colours: ["#111010", "#2b7c76", "#d4ecea", "#c2410c", "#f2ede6"],
             },
-            { kind: "rating", id: "rating", path: "rating", label: "Rating", max: 5, promote: "collapsed" },
+            { kind: "rating", id: "rating", path: "rating", label: "Rating", max: 5 },
           ],
         ],
       },
