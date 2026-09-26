@@ -109,14 +109,14 @@ function PropertyGroup({
             ) : (
               <h3 className={titleClass}>{group.title}</h3>
             ))}
-          {group.description && !collapsed && (
+          {group.description && !(collapsible && collapsed) && (
             <p className="mt-1 text-xs text-muted-foreground">
               {group.description}
             </p>
           )}
         </header>
       )}
-      <div id={bodyId} hidden={collapsed} className="flex flex-col gap-3">
+      <div id={bodyId} hidden={collapsible && collapsed} className="flex flex-col gap-3">
         {group.rows.map((row, idx) => {
           const fields = Array.isArray(row) ? row : [row]
           return (
