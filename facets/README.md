@@ -172,7 +172,7 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 | `color` | hex string | `presets`; shows a swatch |
 | `vector` | number array | N scalars in one row — Houdini's `float3` / `int2`. `components` sets arity and per-slot label, suffix and range |
 | `file` | `{ name }` | display only |
-| `separator` | none | a horizontal rule. No `path` |
+| `separator` | none | a horizontal rule, with `label` as an optional caption. No `path` |
 | `label` | none | static text: a hint or a sub-heading. The text is `label`. No `path` |
 
 Groups take `collapsible: true` to fold under their title, and

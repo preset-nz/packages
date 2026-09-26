@@ -115,10 +115,14 @@ export interface FileFieldDef extends BaseField {
 // Display-only rows: they show something but hold no value, so they have no
 // `path`. Houdini's Separator and Label parameter types.
 
-/** A horizontal rule between rows. */
+/**
+ * A horizontal rule between rows, with an optional caption. Every kind keeps
+ * `label` so hosts can read `field.label` on any FieldDef without narrowing.
+ */
 export interface SeparatorFieldDef {
   kind: "separator"
   id: string
+  label?: string
   disabledWhen?: DisabledWhen
 }
 

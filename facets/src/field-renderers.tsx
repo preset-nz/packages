@@ -428,9 +428,17 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   )
 }
 
-const SeparatorRenderer: FieldRenderer<SeparatorFieldDef> = () => (
-  <Separator className="my-1" />
-)
+const SeparatorRenderer: FieldRenderer<SeparatorFieldDef> = ({ field }) =>
+  field.label ? (
+    <div className="my-1 flex items-center gap-2">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+        {field.label}
+      </span>
+      <Separator className="flex-1" />
+    </div>
+  ) : (
+    <Separator className="my-1" />
+  )
 
 // The same in every mode: there is nothing to edit. Greys out under
 // disabledWhen so a hint can follow the field it describes.
