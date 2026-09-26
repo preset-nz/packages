@@ -77,3 +77,25 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* react-colorful, squared off to match the controls. */
+.facets-colorful .react-colorful {
+  width: 196px;
+  height: 196px;
+}
+.facets-colorful .react-colorful__saturation {
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+.facets-colorful .react-colorful__hue {
+  height: 16px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 0;
+}
+.facets-colorful .react-colorful__pointer {
+  width: 14px;
+  height: 14px;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px var(--foreground);
+}

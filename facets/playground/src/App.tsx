@@ -1,5 +1,6 @@
 import {
   Component,
+  type CSSProperties,
   useEffect,
   useMemo,
   useRef,
@@ -16,11 +17,12 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { CATALOGUE, type KindEntry } from "./catalogue"
+import { CATALOGUE, DISABLED_WHEN_DOC, type Doc, type KindEntry } from "./catalogue"
 import { DEFAULT_SCHEMA, DEFAULT_VALUES, pretty } from "./defaults"
 import { JsonPane } from "./json-pane"
 import { clear, load, save } from "./storage"
 import { parseSchema, parseValues, schemaFields } from "./parse"
+import { ResizeHandle, useColumnWidths } from "./resize"
 
 // One stable scope key. Its registration is replaced whenever the schema
 // changes; `read` hands the panel the values object as the selection.
@@ -43,8 +45,9 @@ export function App() {
   const [readOnly, setReadOnly] = useState(initial.readOnly ?? false)
   const [showLog, setShowLog] = useState(false)
   const [log, setLog] = useState<LogEntry[]>([])
-  const [hovered, setHovered] = useState<KindEntry | null>(null)
+  const [hovered, setHovered] = useState<Doc | null>(null)
   const dark = usePrefersDark()
+  const cols = useColumnWidths()
 
   // While either pane holds invalid JSON, keep showing the last good version.
   const schemaParse = useMemo(() => parseSchema(schemaText), [schemaText])
@@ -97,6 +100,37 @@ export function App() {
     setValueText(pretty({ ...valuesRef.current, [made.field.path]: made.value }))
   }
 
+  // Makes the last field depend on the nearest checkbox before it. If there
+  // is none, a checkbox is inserted just above the field first.
+  const addDisabledWhen = () => {
+    if (!schemaParse.ok) return
+    const schema = structuredClone(schemaParse.value)
+    const fields = schemaFields(schema)
+    const target = fields.at(-1)
+    if (!target) return
+    let values = valuesRef.current
+    let driver = fields.slice(0, -1).reverse().find((f) => f.kind === "checkbox")
+    if (!driver) {
+      const entry = CATALOGUE.find((e) => e.kind === "checkbox")!
+      const taken = new Set(fields.flatMap((f) => [f.id, f.path]))
+      let n = 1
+      let made = entry.make(n)
+      while (taken.has(made.field.id) || taken.has(made.field.path)) made = entry.make(++n)
+      driver = made.field
+      for (const group of schema.groups) {
+        const at = group.rows.findIndex((row) => (Array.isArray(row) ? row.includes(target) : row === target))
+        if (at >= 0) {
+          group.rows.splice(at, 0, driver)
+          break
+        }
+      }
+      values = { ...values, [driver.path]: made.value }
+    }
+    target.disabledWhen = { path: driver.path, equals: false }
+    setSchemaText(pretty(schema))
+    setValueText(pretty(values))
+  }
+
   const reset = () => {
     clear()
     setSchemaText(pretty(DEFAULT_SCHEMA))
@@ -120,9 +154,18 @@ export function App() {
         </nav>
       </header>
 
-      <main className="grid min-h-0 flex-1 grid-cols-1 overflow-auto md:grid-cols-[13rem_minmax(0,1fr)_minmax(22rem,38%)] md:overflow-hidden">
+      <main
+        className="grid min-h-0 flex-1 grid-cols-1 overflow-auto md:grid-cols-(--cols) md:overflow-hidden"
+        style={{ "--cols": `${cols.widths.palette}px ${cols.widths.json}px minmax(0,1fr)` } as CSSProperties}
+      >
         {/* Palette */}
-        <aside className="flex min-h-0 flex-col border-b border-border bg-card md:border-r md:border-b-0">
+        <aside className="relative flex min-h-0 flex-col border-b border-border bg-card md:border-r md:border-b-0">
+          <ResizeHandle
+            label="Resize field kinds"
+            width={cols.widths.palette}
+            onWidth={(px) => cols.set("palette", px)}
+            onReset={() => cols.reset("palette")}
+          />
           <PaneTitle>Field kinds</PaneTitle>
           <ul className="min-h-0 flex-1 overflow-auto py-1">
             {CATALOGUE.map((entry) => (
@@ -143,11 +186,45 @@ export function App() {
               </li>
             ))}
           </ul>
+          <PaneTitle>Conditions</PaneTitle>
+          <button
+            type="button"
+            disabled={!schemaParse.ok}
+            onClick={addDisabledWhen}
+            onMouseEnter={() => setHovered(DISABLED_WHEN_DOC)}
+            onFocus={() => setHovered(DISABLED_WHEN_DOC)}
+            className="flex w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
+          >
+            disabledWhen
+          </button>
           <KindCard entry={hovered} />
         </aside>
 
+        {/* JSON */}
+        <section className="relative flex min-h-[40rem] flex-col border-b border-border md:min-h-0 md:border-r md:border-b-0">
+          <ResizeHandle
+            label="Resize JSON"
+            width={cols.widths.json}
+            onWidth={(px) => cols.set("json", px)}
+            onReset={() => cols.reset("json")}
+          />
+          <JsonPane
+            title="schema.json"
+            text={schemaText}
+            onText={setSchemaText}
+            error={schemaParse.ok ? null : schemaParse.error}
+            dark={dark}
+          />
+          <JsonPane
+            title="value.json"
+            text={valueText}
+            onText={setValueText}
+            error={valueParse.ok ? null : valueParse.error}
+            dark={dark}
+          />
+        </section>
         {/* Preview */}
-        <section className="flex min-h-0 flex-col border-b border-border md:border-r md:border-b-0">
+        <section className="flex min-h-0 flex-col">
           <div className="flex h-8 shrink-0 items-center gap-4 border-b border-border px-3">
             <Label className="text-xs text-muted-foreground">
               <Checkbox checked={readOnly} onCheckedChange={(c) => setReadOnly(Boolean(c))} />
@@ -168,13 +245,13 @@ export function App() {
           </div>
           <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-6">
             {unknownKinds.length > 0 && (
-              <p className="mx-auto mb-3 w-80 text-xs text-destructive">
+              <p className="mb-3 w-80 text-xs text-destructive">
                 No renderer registered for{" "}
                 {unknownKinds.map((k) => `"${k}"`).join(", ")}. The panel skips
                 those fields.
               </p>
             )}
-            <div className="mx-auto w-80 border border-border bg-background shadow-sm">
+            <div className="w-80 border border-border bg-background shadow-sm">
               <PanelBoundary resetKey={schemaText}>
                 <PropertyPanel
                   scopeKey={SCOPE}
@@ -188,23 +265,6 @@ export function App() {
           {showLog && <WriteLog log={log} onClear={() => setLog([])} />}
         </section>
 
-        {/* JSON */}
-        <section className="flex min-h-[40rem] flex-col md:min-h-0">
-          <JsonPane
-            title="schema.json"
-            text={schemaText}
-            onText={setSchemaText}
-            error={schemaParse.ok ? null : schemaParse.error}
-            dark={dark}
-          />
-          <JsonPane
-            title="value.json"
-            text={valueText}
-            onText={setValueText}
-            error={valueParse.ok ? null : valueParse.error}
-            dark={dark}
-          />
-        </section>
       </main>
     </div>
   )
@@ -218,7 +278,7 @@ function PaneTitle({ children }: { children: ReactNode }) {
   )
 }
 
-function KindCard({ entry }: { entry: KindEntry | null }) {
+function KindCard({ entry }: { entry: Doc | null }) {
   if (!entry) {
     return (
       <p className="border-t border-border p-3 text-xs text-muted-foreground">
@@ -226,8 +286,11 @@ function KindCard({ entry }: { entry: KindEntry | null }) {
       </p>
     )
   }
+  // Kinds show the exact field a click would add; conditions carry their own.
+  const example =
+    entry.example ?? ("make" in entry ? pretty((entry as KindEntry).make(1).field) : null)
   return (
-    <div className="border-t border-border p-3 text-xs">
+    <div className="max-h-[50%] overflow-auto border-t border-border p-3 text-xs">
       <p className="font-mono font-medium">{entry.kind}</p>
       <p className="mt-1 text-muted-foreground">{entry.blurb}</p>
       {entry.props.length > 0 && (
@@ -239,6 +302,11 @@ function KindCard({ entry }: { entry: KindEntry | null }) {
             </div>
           ))}
         </dl>
+      )}
+      {example && (
+        <pre className="mt-2 overflow-x-auto bg-muted p-2 font-mono text-[11px] select-text">
+          {example}
+        </pre>
       )}
       <p className="mt-2 text-muted-foreground">
         Every field also takes <span className="font-mono">label</span> and{" "}

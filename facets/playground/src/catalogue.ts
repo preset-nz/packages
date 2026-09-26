@@ -162,3 +162,27 @@ export const CATALOGUE: KindEntry[] = [
 ]
 
 export const KNOWN_KINDS = new Set(CATALOGUE.map((e) => e.kind))
+
+export interface Doc {
+  kind: string
+  blurb: string
+  props: Array<[name: string, doc: string]>
+  example?: string
+}
+
+export const DISABLED_WHEN_DOC: Doc = {
+  kind: "disabledWhen",
+  blurb:
+    "Greys a field out depending on another field's value. Click to make the last field depend on the nearest checkbox (one is added if there isn't one).",
+  props: [
+    ["path", "the field to watch"],
+    ["equals", "disabled when it equals this"],
+    ["notEquals", "disabled unless it equals this"],
+    ["in", "disabled when it's one of a list"],
+    ["notIn", "disabled unless it's one of a list"],
+  ],
+  example: `"disabledWhen": {
+  "path": "blend",
+  "in": ["multiply", "screen"]
+}`,
+}
