@@ -28,6 +28,7 @@ import { load, save } from "./storage"
 import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
 import { fieldKeys, parseSchema, parseValues, schemaFields } from "./parse"
 import { ResizeHandle, useColumnWidths } from "./resize"
+import { schemaWarnings } from "./validate"
 
 // One stable scope key. Its registration is replaced whenever the schema
 // changes; `read` hands the panel the values object as the selection.
@@ -58,6 +59,13 @@ export function App() {
   // While either pane holds invalid JSON, keep showing the last good version.
   const schemaParse = useMemo(() => parseSchema(schemaText), [schemaText])
   const valueParse = useMemo(() => parseValues(valueText), [valueText])
+  const warnings = useMemo(() => {
+    try {
+      return schemaWarnings(JSON.parse(schemaText))
+    } catch {
+      return [] // invalid JSON: the parse error is already shown
+    }
+  }, [schemaText])
   const lastSchema = useLastGood(schemaParse, DEFAULT_STARTER.schema)
   const lastValues = useLastGood(valueParse, DEFAULT_STARTER.values)
 
@@ -282,6 +290,7 @@ export function App() {
             text={schemaText}
             onText={setSchemaText}
             onCursor={setCaret}
+            warnings={warnings}
             status={schemaParse.ok ? describeTarget(schemaParse.value, cursorTarget(schemaParse.value, schemaText, caret)) : null}
             editorRef={schemaEditor}
             error={schemaParse.ok ? null : schemaParse.error}

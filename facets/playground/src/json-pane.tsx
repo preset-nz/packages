@@ -14,6 +14,7 @@ export function JsonPane({
   onCursor,
   editorRef,
   status,
+  warnings = [],
 }: {
   title: string
   text: string
@@ -25,6 +26,8 @@ export function JsonPane({
   editorRef?: Ref<ReactCodeMirrorRef>
   /** A quiet line under the editor, e.g. where the next insert lands. */
   status?: string | null
+  /** Schema-validation messages: shown, but they don't block the panel. */
+  warnings?: string[]
 }) {
   const [copied, setCopied] = useState(false)
   const prettify = () => {
@@ -77,6 +80,13 @@ export function JsonPane({
           className="h-full [&_.cm-editor]:h-full [&_.cm-editor]:bg-transparent! [&_.cm-gutters]:bg-transparent!"
         />
       </div>
+      {warnings.length > 0 && !error && (
+        <ul className="shrink-0 border-t border-amber-500/30 bg-amber-500/10 px-3 py-1.5 font-mono text-[11px] text-amber-700 dark:text-amber-400">
+          {warnings.map((w) => (
+            <li key={w}>{w}</li>
+          ))}
+        </ul>
+      )}
       {status && !error && (
         <p className="shrink-0 border-t border-border px-3 py-1 text-[11px] text-muted-foreground">
           {status}
