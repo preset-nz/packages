@@ -54,16 +54,14 @@ function FieldShell({
   view?: PanelView
   children: React.ReactNode
 }) {
-  // Collapsed: the field shares a line with others, so the label goes inline.
+  // Collapsed: one compact row, label in a fixed column beside the control.
   if (view === "collapsed") {
     return (
-      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        {label && (
-          <Label className="shrink-0 text-[11px] font-medium text-muted-foreground tracking-wide">
-            {label}
-          </Label>
-        )}
-        <div className="min-w-0 flex-1">{children}</div>
+      <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
+        <Label className="truncate text-[11px] font-medium text-muted-foreground tracking-wide">
+          {label}
+        </Label>
+        <div className="min-w-0">{children}</div>
       </div>
     )
   }
@@ -317,6 +315,18 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
     return (
       <FieldShell label={field.label ?? field.id} view={view}>
         <ReadOnlyText>{checked ? "Yes" : "No"}</ReadOnlyText>
+      </FieldShell>
+    )
+  }
+  // Collapsed rows keep the label in their column, like every other kind.
+  if (view === "collapsed") {
+    return (
+      <FieldShell label={field.label ?? field.id} view={view}>
+        <Checkbox
+          checked={checked}
+          disabled={disabled}
+          onCheckedChange={(next) => onChange(Boolean(next))}
+        />
       </FieldShell>
     )
   }

@@ -26,6 +26,7 @@ const simple: Starter = {
   name: "Simple",
   schema: {
     version: 1,
+    title: "Layer",
     groups: [
       {
         id: "layer",
@@ -63,6 +64,7 @@ const everything: Starter = {
   name: "One of everything",
   schema: {
     version: 1,
+    title: "Map layer",
     groups: [
       {
         id: "layer",
@@ -176,10 +178,10 @@ const everything: Starter = {
   },
 }
 
-// A synth operator, to show promotion: the same scope drawn as an
-// inspector, a card and a collapsed line. Type is promoted to collapsed
-// only, so a closed Filter says what it is without crowding the card.
-// Output starts closed, so its header shows Master.
+// A synth operator, to show promotion: the same scope as an inspector, as
+// a card, and folded shut. Type is promoted to collapsed only, so a closed
+// Filter says what it is without crowding the card. Output starts closed,
+// so it still shows Master.
 const filterTypes = [
   { value: "lowpass", label: "Low-pass" },
   { value: "highpass", label: "High-pass" },
@@ -190,6 +192,7 @@ const operator: Starter = {
   name: "Operator (promote)",
   schema: {
     version: 1,
+    title: "Filter",
     groups: [
       {
         id: "filter",

@@ -52,7 +52,10 @@ export function App() {
     initial.valueText ?? pretty(DEFAULT_STARTER.values),
   )
   const [readOnly, setReadOnly] = useState(initial.readOnly ?? false)
-  const [view, setView] = useState<PanelView>(initial.view ?? "inspector")
+  // The toggle picks inspector or card; folding is a click on the
+  // inspector's title bar. An older save may hold "collapsed".
+  const [view, setView] = useState<TopView>(initial.view === "card" ? "card" : "inspector")
+  const [folded, setFolded] = useState(initial.folded ?? false)
   const [starter, setStarter] = useState(initial.starter ?? DEFAULT_STARTER.id)
   const [showLog, setShowLog] = useState(false)
   const [log, setLog] = useState<LogEntry[]>([])
@@ -108,8 +111,8 @@ export function App() {
   )
 
   useEffect(() => {
-    save({ schemaText, valueText, readOnly, starter, view })
-  }, [schemaText, valueText, readOnly, starter, view])
+    save({ schemaText, valueText, readOnly, starter, view, folded })
+  }, [schemaText, valueText, readOnly, starter, view, folded])
 
   const unknownKinds = useMemo(
     () =>
@@ -198,7 +201,7 @@ export function App() {
     if (!field) return
     const rest = (field.promote ?? []).filter((v) => v !== target_)
     const next = rest.length < (field.promote ?? []).length ? rest : [...rest, target_]
-    if (next.length) field.promote = VIEWS.filter((v): v is PromoteView => next.includes(v as PromoteView))
+    if (next.length) field.promote = PROMOTE_ORDER.filter((v) => next.includes(v))
     else delete field.promote
     applySchema(schema, field.id)
   }
@@ -390,6 +393,8 @@ export function App() {
             )}
             <ViewPreview
               view={view}
+              folded={folded}
+              onFolded={setFolded}
               schema={lastSchema}
               schemaText={schemaText}
               values={lastValues}
@@ -404,15 +409,12 @@ export function App() {
   )
 }
 
-// Inspector first, then folding down: the order the toggle steps through.
-const VIEWS: PanelView[] = ["inspector", "card", "collapsed"]
-const VIEW_NAME: Record<PanelView, string> = {
-  inspector: "Inspector",
-  card: "Card",
-  collapsed: "Collapsed",
-}
+type TopView = Exclude<PanelView, "collapsed">
+const VIEWS: TopView[] = ["inspector", "card"]
+const VIEW_NAME: Record<TopView, string> = { inspector: "Inspector", card: "Card" }
+const PROMOTE_ORDER: PromoteView[] = ["card", "collapsed"]
 
-function ViewToggle({ view, onView }: { view: PanelView; onView: (v: PanelView) => void }) {
+function ViewToggle({ view, onView }: { view: TopView; onView: (v: TopView) => void }) {
   return (
     <div role="radiogroup" aria-label="View" className="flex border border-border text-xs">
       {VIEWS.map((v) => (
@@ -435,42 +437,65 @@ function ViewToggle({ view, onView }: { view: PanelView; onView: (v: PanelView) 
 }
 
 /**
- * The scope in one view. The box stays the same width in every view, so
- * stepping through them shows what folds away.
+ * The scope as a card, or as an inspector the playground folds from a title
+ * bar, the way a host would: open, it's every group; shut, it's the fields
+ * promoted to "collapsed".
  */
 function ViewPreview({
   view,
+  folded,
+  onFolded,
   schema,
   schemaText,
   values,
   readOnly,
 }: {
-  view: PanelView
+  view: TopView
+  folded: boolean
+  onFolded: (folded: boolean) => void
   schema: PropertySchema
   schemaText: string
   values: Record<string, unknown>
   readOnly: boolean
 }) {
-  const empty = view !== "inspector" && promotedFields(schema, view).length === 0
+  const panel = (v: PanelView) => (
+    <PanelBoundary resetKey={schemaText}>
+      <PropertyPanel scopeKey={SCOPE} selection={values} ctx={null} readOnly={readOnly} view={v} />
+    </PanelBoundary>
+  )
+  const hint = (v: PromoteView) => (
+    <p className="p-3 text-xs text-muted-foreground">
+      Nothing promoted to {v}. Add <span className="font-mono">"promote": ["{v}"]</span> to a field.
+    </p>
+  )
+  if (view === "card") {
+    const empty = promotedFields(schema, "card").length === 0
+    return (
+      <div className="w-64 border border-border bg-background shadow-sm">
+        {panel("card")}
+        {empty && hint("card")}
+      </div>
+    )
+  }
+  const shut = folded && promotedFields(schema, "collapsed").length === 0
   return (
     <div className="w-80 border border-border bg-background shadow-sm">
-      {view === "collapsed" && (
-        <div className="flex h-7 items-center gap-1 border-b border-border px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-          <svg aria-hidden viewBox="0 0 16 16" className="size-3 -rotate-90">
-            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-          </svg>
-          Folded scope
-        </div>
-      )}
-      {empty ? (
-        <p className="p-3 text-xs text-muted-foreground">
-          Nothing promoted to {view}. Add <span className="font-mono">"promote": ["{view}"]</span> to a field.
-        </p>
-      ) : (
-        <PanelBoundary resetKey={schemaText}>
-          <PropertyPanel scopeKey={SCOPE} selection={values} ctx={null} readOnly={readOnly} view={view} />
-        </PanelBoundary>
-      )}
+      <button
+        type="button"
+        aria-expanded={!folded}
+        onClick={() => onFolded(!folded)}
+        className="flex h-8 w-full items-center gap-1.5 border-b border-border px-3 text-left text-xs font-semibold hover:bg-accent/50"
+      >
+        <svg
+          aria-hidden
+          viewBox="0 0 16 16"
+          className={cn("size-3 shrink-0 transition-transform", folded && "-rotate-90")}
+        >
+          <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+        {schema.title ?? <span className="text-muted-foreground">Untitled scope</span>}
+      </button>
+      {!folded ? panel("inspector") : shut ? hint("collapsed") : panel("collapsed")}
     </div>
   )
 }

@@ -180,6 +180,8 @@ export interface PropertyGroupDef {
 
 export interface PropertySchema {
   version: number
+  /** What the scope is called, e.g. "Filter". Heads the card; `PropertyPanel`'s `title` overrides it. */
+  title?: string
   groups: PropertyGroupDef[]
 }
 

@@ -166,7 +166,7 @@ const invalid: Array<[string, unknown]> = [
   ["a custom kind without path", wrap({ kind: "palette-strip", id: "p" })],
   ["a field without kind", wrap({ id: "x", path: "x" })],
   ["a group without rows", { version: 1, groups: [{ id: "g" }] }],
-  ["an unknown top-level key", { version: 1, groups: [], title: "x" }],
+  ["an unknown top-level key", { version: 1, groups: [], name: "x" }],
 ]
 for (const [name, doc] of valid) {
   if (!validate(doc)) fail(`should pass, fails: ${name}: ${validate.errors?.[0]?.instancePath} ${validate.errors?.[0]?.message}`)

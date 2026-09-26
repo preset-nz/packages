@@ -17,6 +17,8 @@ interface PropertyPanelProps {
   emptyState?: React.ReactNode
   /** Defaults to `"inspector"`, every field. See `PanelView`. */
   view?: PanelView
+  /** The card's heading. Overrides the schema's `title`; neither means no heading. */
+  title?: React.ReactNode
 }
 
 type Row = Array<FieldDef | FieldDef[]>[number]
@@ -48,6 +50,7 @@ export function PropertyPanel({
   readOnly = false,
   emptyState,
   view = "inspector",
+  title,
 }: PropertyPanelProps) {
   const scope = getScope(scopeKey)
 
@@ -67,24 +70,37 @@ export function PropertyPanel({
     ? undefined
     : (path: string, val: unknown) => scope.write!(path, val, selection, ctx)
 
-  // Card: the fields promoted to it, flat, no group chrome (a card has its
-  // own header). Collapsed: the fields promoted to it, on one line. Either draws
-  // nothing when nothing is promoted.
-  if (view !== "inspector") {
-    const rows = scope.schema.groups.flatMap((g) => rowsIn(g.rows, view))
-    if (rows.length === 0) return null
-    if (view === "collapsed") {
-      return (
-        <div className="flex items-center gap-3 px-3 py-2">
-          {rows.flat().map((f) => (
-            <FieldSlot key={f.id} field={f} values={values} ctx={ctx} onChange={onChange} view="collapsed" />
-          ))}
-        </div>
-      )
-    }
+  // Collapsed: what a folded scope still shows, one compact row per field.
+  // The host draws the title bar that folds it. Nothing when nothing is
+  // promoted.
+  if (view === "collapsed") {
+    const fields = promotedFields(scope.schema, "collapsed")
+    if (fields.length === 0) return null
     return (
-      <div className="flex flex-col gap-3 px-3 py-3">
-        <Rows rows={rows} values={values} ctx={ctx} onChange={onChange} view="card" />
+      <div className="px-3 py-2">
+        <CompactRows fields={fields} values={values} ctx={ctx} onChange={onChange} />
+      </div>
+    )
+  }
+
+  // Card: an optional heading, then the fields promoted to it, with no group
+  // chrome.
+  if (view === "card") {
+    const rows = scope.schema.groups.flatMap((g) => rowsIn(g.rows, "card"))
+    const heading = title ?? scope.schema.title
+    if (rows.length === 0 && !heading) return null
+    return (
+      <div className="flex flex-col">
+        {heading && (
+          <header className="border-b border-border px-3 py-2 text-xs font-semibold">
+            {heading}
+          </header>
+        )}
+        {rows.length > 0 && (
+          <div className="flex flex-col gap-3 px-3 py-3">
+            <Rows rows={rows} values={values} ctx={ctx} onChange={onChange} view="card" />
+          </div>
+        )}
       </div>
     )
   }
@@ -125,7 +141,7 @@ function PropertyGroup({
     collapsible && Boolean(group.defaultCollapsed),
   )
   const bodyId = useId()
-  // A closed group keeps its "collapsed" fields in the header row.
+  // A closed group keeps its "collapsed" fields, as compact rows under its title.
   const headerFields = collapsible && collapsed ? rowsIn(group.rows, "collapsed").flat() : []
   const titleClass =
     "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
@@ -136,17 +152,13 @@ function PropertyGroup({
         <header>
           {group.title &&
             (collapsible ? (
-              <div className="flex items-center gap-3">
-              <h3 className={titleClass + (headerFields.length ? " shrink-0" : " flex-1")}>
+              <h3 className={titleClass}>
                 <button
                   type="button"
                   aria-expanded={!collapsed}
                   aria-controls={bodyId}
                   onClick={() => setCollapsed((c) => !c)}
-                  className={
-                    "-mx-1 flex items-center gap-1 px-1 text-left uppercase hover:text-foreground " +
-                    (headerFields.length ? "" : "w-[calc(100%+0.5rem)]")
-                  }
+                  className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-1 px-1 text-left uppercase hover:text-foreground"
                 >
                   <svg
                     aria-hidden
@@ -161,14 +173,6 @@ function PropertyGroup({
                   {group.title}
                 </button>
               </h3>
-              {headerFields.length > 0 && (
-                <div className="flex min-w-0 flex-1 items-center gap-3">
-                  {headerFields.map((f) => (
-                    <FieldSlot key={f.id} field={f} values={values} ctx={ctx} onChange={onChange} view="collapsed" />
-                  ))}
-                </div>
-              )}
-              </div>
             ) : (
               <h3 className={titleClass}>{group.title}</h3>
             ))}
@@ -178,6 +182,9 @@ function PropertyGroup({
             </p>
           )}
         </header>
+      )}
+      {headerFields.length > 0 && (
+        <CompactRows fields={headerFields} values={values} ctx={ctx} onChange={onChange} />
       )}
       <div id={bodyId} hidden={collapsible && collapsed} className="flex flex-col gap-3">
         <Rows
@@ -190,6 +197,27 @@ function PropertyGroup({
       </div>
       {!isLast && <Separator className="mt-1" />}
     </section>
+  )
+}
+
+/** One field per row, label and control side by side: the collapsed views. */
+function CompactRows({
+  fields,
+  values,
+  ctx,
+  onChange,
+}: {
+  fields: FieldDef[]
+  values: Record<string, unknown>
+  ctx: ScopeContext
+  onChange?: (path: string, val: unknown) => void
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {fields.map((f) => (
+        <FieldSlot key={f.id} field={f} values={values} ctx={ctx} onChange={onChange} view="collapsed" />
+      ))}
+    </div>
   )
 }
 

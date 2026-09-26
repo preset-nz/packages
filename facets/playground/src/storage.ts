@@ -10,6 +10,7 @@ export interface Saved {
   readOnly: boolean
   starter: string
   view: PanelView
+  folded: boolean
 }
 
 export function load(): Partial<Saved> {

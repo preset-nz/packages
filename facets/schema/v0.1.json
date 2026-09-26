@@ -18,6 +18,10 @@
       "type": "number",
       "description": "The host's own version of this schema. Bump it when the shape changes."
     },
+    "title": {
+      "type": "string",
+      "description": "What the scope is called, e.g. \"Filter\". Heads the card; the host can override it."
+    },
     "groups": {
       "type": "array",
       "description": "Rendered top to bottom, with a rule between groups.",
