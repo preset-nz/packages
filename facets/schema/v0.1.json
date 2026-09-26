@@ -1,0 +1,801 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://facets.preset.nz/schema/v0.1.json",
+  "title": "@preset.nz/facets PropertySchema, 0.1",
+  "description": "An inspector panel as data: groups of rows of fields. Valid for every 0.1.x release; later 0.1 patches only add kinds and props. Playground: https://facets.preset.nz",
+  "type": "object",
+  "required": [
+    "version",
+    "groups"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "This file's URL, for editors."
+    },
+    "version": {
+      "type": "number",
+      "description": "The host's own version of this schema. Bump it when the shape changes."
+    },
+    "groups": {
+      "type": "array",
+      "description": "Rendered top to bottom, with a rule between groups.",
+      "items": {
+        "$ref": "#/definitions/group"
+      }
+    }
+  },
+  "definitions": {
+    "group": {
+      "type": "object",
+      "required": [
+        "id",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema."
+        },
+        "title": {
+          "type": "string",
+          "description": "The heading. Omit it to render the group without one."
+        },
+        "description": {
+          "type": "string",
+          "description": "A line under the title."
+        },
+        "collapsible": {
+          "type": "boolean",
+          "description": "Fold under the title. Needs a title."
+        },
+        "defaultCollapsed": {
+          "type": "boolean",
+          "description": "Start folded."
+        },
+        "rows": {
+          "type": "array",
+          "description": "A field is a full-width row; an array of fields is one row laid out as a grid (usually two).",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/field"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/field"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "disabledWhen": {
+      "type": "object",
+      "description": "Greys the field out depending on another field's value. Set one operator; if several are set, the first of equals, notEquals, in, notIn wins.",
+      "required": [
+        "path"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "The field value to watch, by path."
+        },
+        "equals": {
+          "description": "Disabled when the value equals this."
+        },
+        "notEquals": {
+          "description": "Disabled unless the value equals this."
+        },
+        "in": {
+          "type": "array",
+          "description": "Disabled when the value is one of these."
+        },
+        "notIn": {
+          "type": "array",
+          "description": "Disabled unless the value is one of these."
+        }
+      }
+    },
+    "selectOption": {
+      "type": "object",
+      "required": [
+        "value",
+        "label"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "string",
+          "description": "Stored in the value record."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown to the user."
+        }
+      }
+    },
+    "vectorComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Shown above the slot."
+        },
+        "suffix": {
+          "type": "string",
+          "description": "Unit after the number, e.g. px or °."
+        },
+        "min": {
+          "type": "number",
+          "description": "Lower bound."
+        },
+        "max": {
+          "type": "number",
+          "description": "Upper bound."
+        },
+        "step": {
+          "type": "number",
+          "description": "Increment. Default 1."
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "description": "One field. kind picks the renderer: a built-in kind is checked strictly; any other kind is a custom kind registered by the host, which may carry extra props.",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "The renderer to use. Built in: text, textarea, number, slider, select, color, checkbox, file, vector, separator, label. Anything else must be registered by the host with registerFieldRenderer().",
+          "examples": [
+            "text",
+            "textarea",
+            "number",
+            "slider",
+            "select",
+            "color",
+            "checkbox",
+            "file",
+            "vector",
+            "separator",
+            "label"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "text"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/text"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "textarea"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/textarea"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "number"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/number"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "slider"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/slider"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "select"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/select"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "color"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/color"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "checkbox"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/checkbox"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "file"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/file"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "vector"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/vector"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "separator"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/separator"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "const": "label"
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/label"
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "not": {
+                  "enum": [
+                    "text",
+                    "textarea",
+                    "number",
+                    "slider",
+                    "select",
+                    "color",
+                    "checkbox",
+                    "file",
+                    "vector",
+                    "separator",
+                    "label"
+                  ]
+                }
+              }
+            }
+          },
+          "then": {
+            "$ref": "#/definitions/custom"
+          }
+        }
+      ]
+    },
+    "text": {
+      "type": "object",
+      "description": "A single line of text. Value: string.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "text"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Shown while empty."
+        }
+      },
+      "additionalProperties": false
+    },
+    "textarea": {
+      "type": "object",
+      "description": "Several lines of text. Value: string.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "textarea"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Shown while empty."
+        },
+        "rows": {
+          "type": "number",
+          "description": "Visible lines. Default 3."
+        }
+      },
+      "additionalProperties": false
+    },
+    "number": {
+      "type": "object",
+      "description": "A number typed into a box. Value: number.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "number"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "min": {
+          "type": "number",
+          "description": "Lower bound."
+        },
+        "max": {
+          "type": "number",
+          "description": "Upper bound."
+        },
+        "step": {
+          "type": "number",
+          "description": "Increment. Default 1."
+        }
+      },
+      "additionalProperties": false
+    },
+    "slider": {
+      "type": "object",
+      "description": "A number dragged along a range. Value: number.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "slider"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "min": {
+          "type": "number",
+          "description": "Lower bound."
+        },
+        "max": {
+          "type": "number",
+          "description": "Upper bound."
+        },
+        "step": {
+          "type": "number",
+          "description": "Increment. Default 1."
+        }
+      },
+      "additionalProperties": false
+    },
+    "select": {
+      "type": "object",
+      "description": "One choice from a list. Value: the chosen option's value (string). Options can also come from optionsProvider(ctx), a function, which is set in code and has no JSON form.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "select"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "options": {
+          "type": "array",
+          "description": "The choices.",
+          "items": {
+            "$ref": "#/definitions/selectOption"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "color": {
+      "type": "object",
+      "description": "A colour as a hex string, e.g. \"#2b7c76\". Value: string.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "color"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "presets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hex strings. Declared in 0.1; the built-in renderer does not draw them."
+        }
+      },
+      "additionalProperties": false
+    },
+    "checkbox": {
+      "type": "object",
+      "description": "On or off. Value: boolean.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "checkbox"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        }
+      },
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "description": "Shows a file's name; always read-only. Value: { \"name\": string }.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "file"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "accept": {
+          "type": "string",
+          "description": "File types, as on <input>. Declared in 0.1; the built-in renderer ignores it."
+        },
+        "helperText": {
+          "type": "string",
+          "description": "A hint. Declared in 0.1; the built-in renderer does not draw it."
+        }
+      },
+      "additionalProperties": false
+    },
+    "vector": {
+      "type": "object",
+      "description": "Several numbers in one row: position, size, RGB, LCh. Value: number[], one per component.",
+      "required": [
+        "kind",
+        "id",
+        "path",
+        "components"
+      ],
+      "properties": {
+        "kind": {
+          "const": "vector"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        },
+        "components": {
+          "type": "array",
+          "description": "One entry per slot; sets the arity.",
+          "items": {
+            "$ref": "#/definitions/vectorComponent"
+          }
+        },
+        "integer": {
+          "type": "boolean",
+          "description": "Truncate to whole numbers."
+        },
+        "precision": {
+          "type": "number",
+          "description": "Decimals shown when read-only."
+        }
+      },
+      "additionalProperties": false
+    },
+    "separator": {
+      "type": "object",
+      "description": "A horizontal rule between rows, with label as an optional caption. Holds no value, so it has no path.",
+      "required": [
+        "kind",
+        "id"
+      ],
+      "properties": {
+        "kind": {
+          "const": "separator"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        }
+      },
+      "additionalProperties": false
+    },
+    "label": {
+      "type": "object",
+      "description": "Static text: a hint, a note, a sub-heading. The text is label. Holds no value, so it has no path.",
+      "required": [
+        "kind",
+        "id",
+        "label"
+      ],
+      "properties": {
+        "kind": {
+          "const": "label"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        }
+      },
+      "additionalProperties": false
+    },
+    "custom": {
+      "type": "object",
+      "description": "A custom kind. The host's renderer decides which extra props it reads.",
+      "required": [
+        "kind",
+        "id",
+        "path"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "description": "Unique within the schema. Keys the field in the panel."
+        },
+        "label": {
+          "type": "string",
+          "description": "Shown above the field. Defaults to id."
+        },
+        "path": {
+          "type": "string",
+          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+        },
+        "disabledWhen": {
+          "$ref": "#/definitions/disabledWhen"
+        }
+      }
+    }
+  }
+}
