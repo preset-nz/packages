@@ -14,7 +14,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ColorPicker } from "@/components/ui/color-picker"
 import { registerFieldRenderer } from "./registry"
 import type {
   CheckboxFieldDef,
@@ -251,13 +250,7 @@ const ColorRenderer: FieldRenderer<ColorFieldDef> = ({
   return (
     <FieldShell label={field.label ?? field.id}>
       <div className="flex items-center gap-2">
-        {onChange ? (
-          <ColorPicker
-            color={hex ?? "#000000"}
-            onChange={onChange}
-            disabled={disabled}
-          />
-        ) : hex ? (
+        {hex ? (
           <span
             aria-hidden
             className="inline-block size-4 shrink-0 border border-border"

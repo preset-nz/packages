@@ -39,10 +39,9 @@ the conventional shadcn path, and your bundler's `@` alias resolves it:
 | `@/components/ui/label` | `Label` |
 | `@/components/ui/checkbox` | `Checkbox` |
 | `@/components/ui/separator` | `Separator` |
-| `@/components/ui/color-picker` | `ColorPicker`, taking `{ color, onChange, disabled? }` with a hex `color`, and rendering a swatch that opens a picker |
 | `@/components/ui/select` | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem` |
 
-So you need an `@/*` alias pointing at your `src/`, those six modules present,
+So you need an `@/*` alias pointing at your `src/`, those five modules present,
 and Tailwind with shadcn's theme tokens (`muted-foreground`, `border` and
 friends are used throughout).
 
