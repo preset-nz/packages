@@ -13,6 +13,9 @@
 - disabledWhen: { path, equals | notEquals | in | notIn }, reading one other field's value.
 - Read-only (no `write`, or `readOnly` on the panel): renderers get no onChange and draw values as text.
 - select `options: [{ value, label }]` in JSON; `optionsProvider(ctx)` is code only.
+- Views (from 0.1.4): `<PropertyPanel view="inspector" | "card" | "collapsed">`, default "inspector". A field's `promote: ["card", "collapsed"]` lists the views it shows in besides the inspector. The two are independent, not nested. Omit `promote` for inspector-only.
+- "card": promoted fields with no group chrome, headed by the schema's root `title` or the panel's `title` prop. "collapsed": one compact row per promoted field, for a scope folded shut; the host draws the fold bar. A closed collapsible group shows its "collapsed" fields under its title.
+- Renderers get `view` as an optional prop; built-ins draw compact in "collapsed".
 
 ## Host setup (all four; the first three fail silently)
 
@@ -29,4 +32,4 @@
 
 ## Try it
 
-- [Playground](https://facets.preset.nz): field palette, schema JSON, live panel, schema warnings.
+- [Playground](https://facets.preset.nz): field palette, schema JSON, live panel as inspector or card, schema warnings.

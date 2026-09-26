@@ -160,7 +160,7 @@ Built-ins register through the same call you would use, with no special casing.
 
 **`PropertyPanel`** — looks up the scope, calls `read`, walks the groups, hands
 each field to its renderer. Props: `scopeKey`, `selection`, `ctx`, plus optional
-`readOnly` and `emptyState`.
+`readOnly`, `emptyState`, `view` and `title` (see [Views](#views-inspector-card-collapsed)).
 
 `ctx` is yours. The package treats it as opaque and passes it through to every
 `read`, `write`, renderer and options provider. Put your app's API in it.
@@ -194,6 +194,59 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 Groups take `collapsible: true` to fold under their title, and
 `defaultCollapsed: true` to start folded. The open or closed state belongs to
 the group, so it resets when the panel remounts.
+
+---
+
+## Views: inspector, card, collapsed
+
+One scope draws three ways. `view` on `PropertyPanel` picks one:
+
+- **`"inspector"`**, the default: every group and field.
+- **`"card"`**: the fields promoted to the card, with no group chrome. The
+  schema's `title` heads it. The panel's `title` prop overrides that, for an
+  instance name such as "Filter 2".
+- **`"collapsed"`**: the fields promoted to collapsed, one compact row each.
+  This is a scope folded shut. The host draws the title bar that folds it and
+  holds the open or closed state.
+
+A field lists the views it shows in besides the inspector, the way a Houdini
+asset promotes a parm to its interface:
+
+```ts
+const FILTER: PropertySchema = {
+  version: 1,
+  title: "Filter",
+  groups: [
+    {
+      id: "filter",
+      title: "Filter",
+      collapsible: true,
+      rows: [
+        { kind: "select", id: "type", path: "type", options: TYPES, promote: ["collapsed"] },
+        { kind: "slider", id: "master", path: "master", promote: ["card", "collapsed"] },
+        { kind: "slider", id: "resonance", path: "resonance" },
+        { kind: "slider", id: "pan", path: "pan", promote: ["card"] },
+      ],
+    },
+  ],
+};
+```
+
+```tsx
+<PropertyPanel scopeKey="filter" selection={node} ctx={ctx} view="card" title={node.name} />
+```
+
+The card shows master and pan. Folded, the scope shows type and master.
+Resonance is inspector-only. The views are independent: `["collapsed"]` is not
+on the card.
+
+A closed collapsible group shows its `collapsed` fields under its title, so
+folding a group still leaves its main value in reach.
+
+Renderers receive the view as an optional `view` prop. The built-ins draw a
+compact row in `"collapsed"`. A custom renderer may ignore it.
+`promotedFields(schema, view)` returns the fields a view draws, in schema
+order, for a host that wants to skip an empty card.
 
 ---
 
@@ -268,6 +321,10 @@ registerFieldRenderer("palette-swatches", ({ field, value, onChange, ctx }) => (
   <SwatchStrip colours={value as string[]} onPick={onChange} />
 ));
 ```
+
+A renderer receives `field`, `value`, `disabled`, `onChange`, `ctx` and `view`.
+Pick what it uses rather than spreading the props onto a DOM element, where
+React warns about the unknown ones.
 
 A field whose kind is not built in may carry any extra props it likes; the
 renderer reads what it needs. **The type system will not check those props**, so
