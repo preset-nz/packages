@@ -66,7 +66,7 @@ const everything: Starter = {
       {
         id: "layer",
         title: "Layer",
-        description: "A map layer, roughly as Map & Territory would show it.",
+        description: "A map layer.",
         collapsible: true,
         rows: [
           [

@@ -98,7 +98,7 @@ export const CATALOGUE: KindEntry[] = [
   },
   {
     kind: "checkbox",
-    blurb: "On or off. A good driver for `disabledWhen` on other fields.",
+    blurb: "On or off. Often the value a `disabledWhen` watches.",
     props: [],
     make: (n) => ({
       field: { kind: "checkbox", id: id("checkbox", n), path: id("checkbox", n), label: "Enabled" },
@@ -197,7 +197,7 @@ export interface Doc {
 export const DISABLED_WHEN_DOC: Doc = {
   kind: "disabledWhen",
   blurb:
-    "Greys a field out depending on another field's value. Click to make the last field depend on the nearest checkbox (one is added if there isn't one).",
+    "Greys a field out depending on another field's value. A click makes the field at the caret (or the last field) depend on the nearest checkbox above it, adding one if there is none.",
   props: [
     ["path", "the field to watch"],
     ["equals", "disabled when it equals this"],
@@ -213,7 +213,7 @@ export const DISABLED_WHEN_DOC: Doc = {
 
 export const GROUP_DOC: Doc = {
   kind: "group",
-  blurb: "Starts a new group at the end. Fields you add after that go into it.",
+  blurb: "A new group after the one at the caret, or at the end.",
   props: [
     ["title", "the heading; omit for none"],
     ["description", "a line under the title"],
