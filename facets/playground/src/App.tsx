@@ -254,7 +254,7 @@ export function App() {
                   type="button"
                   disabled={!schemaParse.ok}
                   onClick={() => addField(entry)}
-                  onMouseEnter={() => setHovered(entry)}
+                  onPointerMove={() => setHovered(entry)}
                   onFocus={() => setHovered(entry)}
                   className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
                 >
@@ -292,7 +292,7 @@ export function App() {
             type="button"
             disabled={!schemaParse.ok}
             onClick={addDisabledWhen}
-            onMouseEnter={() => setHovered(DISABLED_WHEN_DOC)}
+            onPointerMove={() => setHovered(DISABLED_WHEN_DOC)}
             onFocus={() => setHovered(DISABLED_WHEN_DOC)}
             className="flex w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
           >
@@ -556,7 +556,7 @@ function PaletteButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      onMouseEnter={onHover}
+      onPointerMove={onHover}
       onFocus={onHover}
       className="flex w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
     >
@@ -573,10 +573,15 @@ function PaneTitle({ children }: { children: ReactNode }) {
   )
 }
 
+// A fixed height, so the palette above never moves as the help changes.
+// Hover is read from pointer movement, not mouseenter: scrolling the list
+// under a still pointer then leaves the help alone.
+const HELP_BOX = "h-64 shrink-0 overflow-auto border-t border-border p-3 text-xs"
+
 function KindCard({ entry }: { entry: Doc | null }) {
   if (!entry) {
     return (
-      <p className="border-t border-border p-3 text-xs text-muted-foreground">
+      <p className={cn(HELP_BOX, "text-muted-foreground")}>
         Click a kind to add it after the row your caret is in, or to the last group. Hover over one to see its props.
       </p>
     )
@@ -585,7 +590,7 @@ function KindCard({ entry }: { entry: Doc | null }) {
   const example =
     entry.example ?? ("make" in entry ? pretty((entry as KindEntry).make(1).field) : null)
   return (
-    <div className="max-h-[50%] overflow-auto border-t border-border p-3 text-xs">
+    <div className={HELP_BOX}>
       <p className="font-mono font-medium">{entry.kind}</p>
       <p className="mt-1 text-muted-foreground">{entry.blurb}</p>
       {entry.props.length > 0 && (
