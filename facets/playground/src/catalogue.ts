@@ -86,7 +86,8 @@ export const CATALOGUE: KindEntry[] = [
   },
   {
     kind: "color",
-    blurb: "A colour as a hex string, with a swatch.",
+    blurb:
+      "A colour as a hex string. Built in as a swatch and a hex box; this playground overrides the renderer with a picker, as a host app would.",
     props: [["presets", "hex strings (declared, not yet drawn)"]],
     make: (n) => ({
       field: { kind: "color", id: id("colour", n), path: id("colour", n), label: "Colour" },

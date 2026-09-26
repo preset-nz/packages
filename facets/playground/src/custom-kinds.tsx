@@ -4,6 +4,8 @@ import {
   type FieldRenderer,
 } from "../../src"
 import type React from "react"
+import { ColorPicker } from "@/components/ui/color-picker"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
@@ -88,7 +90,41 @@ const Rating: FieldRenderer<CustomFieldDef> = ({ field, value, disabled, onChang
   )
 }
 
+/**
+ * Overrides the built-in `color` kind, which is a swatch and a hex box. The
+ * package stays picker-agnostic; a host that wants a picker registers its own
+ * renderer after `registerBuiltinRenderers()`, and the last registration wins.
+ */
+const PickerColor: FieldRenderer<CustomFieldDef> = ({ field, value, disabled, onChange }) => {
+  const hex = typeof value === "string" && value.length > 0 ? value : null
+  const label = field.label ?? field.id
+  return (
+    <FieldLabel label={label}>
+      <div className="flex items-center gap-2">
+        {onChange ? (
+          <>
+            <ColorPicker color={hex ?? "#000000"} onChange={onChange} disabled={disabled} />
+            <Input
+              aria-label={label}
+              value={hex ?? ""}
+              disabled={disabled}
+              onChange={(e) => onChange(e.target.value)}
+              className="font-mono"
+            />
+          </>
+        ) : (
+          <div className="flex min-h-8 items-center gap-2 py-1 text-xs">
+            {hex && <span className="size-4 border border-border" style={{ backgroundColor: hex }} />}
+            <span className="font-mono">{hex ?? "—"}</span>
+          </div>
+        )}
+      </div>
+    </FieldLabel>
+  )
+}
+
 export function registerCustomKinds(): void {
+  registerFieldRenderer("color", PickerColor as FieldRenderer)
   registerFieldRenderer("swatches", Swatches as FieldRenderer)
   registerFieldRenderer("rating", Rating as FieldRenderer)
 }
