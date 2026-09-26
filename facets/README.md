@@ -14,6 +14,10 @@ switch statement over your types.
 Built for image and map editors, where the same panel has to render a layer, a
 filter, a document or a tool depending on what is selected.
 
+The playground at [facets.preset.nz](https://facets.preset.nz) shows the field
+kinds, the schema as JSON, and the panel it draws, side by side. Its source is
+in `playground/`.
+
 ---
 
 ## Installing
