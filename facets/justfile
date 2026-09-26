@@ -17,3 +17,21 @@ install:
 [group('quality')]
 check:
     ./node_modules/.bin/tsc --noEmit
+
+# Playground dev server (facets.preset.nz), importing ../src directly
+[group('dev')]
+playground:
+    pnpm --dir playground dev
+
+[group('quality')]
+playground-check:
+    cd playground && ./node_modules/.bin/tsc --noEmit -p .
+
+[group('build')]
+playground-build:
+    pnpm --dir playground build
+
+# Outward-facing: publishes facets.preset.nz. Ask before running.
+[group('build')]
+playground-deploy: playground-build
+    cd playground && ./node_modules/.bin/wrangler deploy

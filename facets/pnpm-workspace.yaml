@@ -3,3 +3,12 @@
 # @types/react, and a real React in these node_modules is a second copy a
 # consumer could resolve through the file: symlink.
 autoInstallPeers: false
+
+# The playground (facets.preset.nz) is an app beside the package, not part of
+# it. `files: ["src"]` keeps it out of the tarball.
+packages:
+  - playground
+
+allowBuilds:
+  esbuild: true
+  workerd: true
