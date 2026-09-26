@@ -165,7 +165,7 @@ export function App() {
           <a className="hover:text-foreground" href="https://www.npmjs.com/package/@preset.nz/facets">
             npm
           </a>
-          <a className="hover:text-foreground" href="/licenses.txt">
+          <a className="hover:text-foreground" href="/licenses.txt" target="_blank" rel="noreferrer">
             Licences
           </a>
         </nav>
