@@ -1,6 +1,6 @@
 {
   "name": "@preset.nz/facets",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Schema-as-data property/inspector panels for React: FieldDef schemas, a scope registry, an open field-renderer registry, and a generic PropertyPanel.",
   "license": "MIT",
   "homepage": "https://facets.preset.nz",
