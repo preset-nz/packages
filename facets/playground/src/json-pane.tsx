@@ -43,7 +43,7 @@ export function JsonPane({
           onChange={onText}
           extensions={extensions}
           theme={dark ? "dark" : "light"}
-          basicSetup={{ foldGutter: false, autocompletion: false }}
+          basicSetup={{ autocompletion: false }}
           className="h-full [&_.cm-editor]:h-full [&_.cm-editor]:bg-transparent! [&_.cm-gutters]:bg-transparent!"
         />
       </div>

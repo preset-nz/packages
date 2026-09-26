@@ -6,6 +6,7 @@ export interface Saved {
   schemaText: string
   valueText: string
   readOnly: boolean
+  starter: string
 }
 
 export function load(): Partial<Saved> {

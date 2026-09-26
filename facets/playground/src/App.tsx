@@ -8,20 +8,21 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react"
-import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
 import {
   PropertyPanel,
   getFieldRenderer,
   registerScope,
+  type CheckboxFieldDef,
+  type FieldDef,
 } from "../../src"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
-import { CATALOGUE, DISABLED_WHEN_DOC, type Doc, type KindEntry } from "./catalogue"
-import { DEFAULT_SCHEMA, DEFAULT_VALUES, pretty } from "./defaults"
+import { CATALOGUE, DISABLED_WHEN_DOC, GROUP_DOC, type Doc, type KindEntry } from "./catalogue"
+import { DEFAULT_STARTER, STARTERS, pretty, type Starter } from "./defaults"
 import { JsonPane } from "./json-pane"
-import { clear, load, save } from "./storage"
-import { parseSchema, parseValues, schemaFields } from "./parse"
+import { load, save } from "./storage"
+import { fieldKeys, parseSchema, parseValues, schemaFields } from "./parse"
 import { ResizeHandle, useColumnWidths } from "./resize"
 
 // One stable scope key. Its registration is replaced whenever the schema
@@ -37,12 +38,13 @@ interface LogEntry {
 export function App() {
   const initial = useMemo(load, [])
   const [schemaText, setSchemaText] = useState(
-    initial.schemaText ?? pretty(DEFAULT_SCHEMA),
+    initial.schemaText ?? pretty(DEFAULT_STARTER.schema),
   )
   const [valueText, setValueText] = useState(
-    initial.valueText ?? pretty(DEFAULT_VALUES),
+    initial.valueText ?? pretty(DEFAULT_STARTER.values),
   )
   const [readOnly, setReadOnly] = useState(initial.readOnly ?? false)
+  const [starter, setStarter] = useState(initial.starter ?? DEFAULT_STARTER.id)
   const [showLog, setShowLog] = useState(false)
   const [log, setLog] = useState<LogEntry[]>([])
   const [hovered, setHovered] = useState<Doc | null>(null)
@@ -52,8 +54,8 @@ export function App() {
   // While either pane holds invalid JSON, keep showing the last good version.
   const schemaParse = useMemo(() => parseSchema(schemaText), [schemaText])
   const valueParse = useMemo(() => parseValues(valueText), [valueText])
-  const lastSchema = useLastGood(schemaParse, DEFAULT_SCHEMA)
-  const lastValues = useLastGood(valueParse, DEFAULT_VALUES)
+  const lastSchema = useLastGood(schemaParse, DEFAULT_STARTER.schema)
+  const lastValues = useLastGood(valueParse, DEFAULT_STARTER.values)
 
   const valuesRef = useRef(lastValues)
   valuesRef.current = lastValues
@@ -76,8 +78,8 @@ export function App() {
   )
 
   useEffect(() => {
-    save({ schemaText, valueText, readOnly })
-  }, [schemaText, valueText, readOnly])
+    save({ schemaText, valueText, readOnly, starter })
+  }, [schemaText, valueText, readOnly, starter])
 
   const unknownKinds = useMemo(
     () =>
@@ -90,14 +92,23 @@ export function App() {
   const addField = (entry: KindEntry) => {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
-    const taken = new Set(schemaFields(schema).flatMap((f) => [f.id, f.path]))
-    let n = 1
-    let made = entry.make(n)
-    while (taken.has(made.field.id) || taken.has(made.field.path)) made = entry.make(++n)
+    const made = makeUnique(entry, schemaFields(schema))
     if (schema.groups.length === 0) schema.groups.push({ id: "group", title: "Group", rows: [] })
     schema.groups[schema.groups.length - 1].rows.push(made.field)
     setSchemaText(pretty(schema))
-    setValueText(pretty({ ...valuesRef.current, [made.field.path]: made.value }))
+    if ("path" in made.field) {
+      setValueText(pretty({ ...valuesRef.current, [made.field.path]: made.value }))
+    }
+  }
+
+  const addGroup = () => {
+    if (!schemaParse.ok) return
+    const schema = structuredClone(schemaParse.value)
+    const ids = new Set(schema.groups.map((g) => g.id))
+    let n = schema.groups.length + 1
+    while (ids.has(`group${n}`)) n++
+    schema.groups.push({ id: `group${n}`, title: `Group ${n}`, collapsible: true, rows: [] })
+    setSchemaText(pretty(schema))
   }
 
   // Makes the last field depend on the nearest checkbox before it. If there
@@ -109,14 +120,13 @@ export function App() {
     const target = fields.at(-1)
     if (!target) return
     let values = valuesRef.current
-    let driver = fields.slice(0, -1).reverse().find((f) => f.kind === "checkbox")
+    let driver = fields
+      .slice(0, -1)
+      .reverse()
+      .find((f): f is CheckboxFieldDef => f.kind === "checkbox")
     if (!driver) {
-      const entry = CATALOGUE.find((e) => e.kind === "checkbox")!
-      const taken = new Set(fields.flatMap((f) => [f.id, f.path]))
-      let n = 1
-      let made = entry.make(n)
-      while (taken.has(made.field.id) || taken.has(made.field.path)) made = entry.make(++n)
-      driver = made.field
+      const made = makeUnique(CATALOGUE.find((e) => e.kind === "checkbox")!, fields)
+      driver = made.field as CheckboxFieldDef
       for (const group of schema.groups) {
         const at = group.rows.findIndex((row) => (Array.isArray(row) ? row.includes(target) : row === target))
         if (at >= 0) {
@@ -131,11 +141,10 @@ export function App() {
     setValueText(pretty(values))
   }
 
-  const reset = () => {
-    clear()
-    setSchemaText(pretty(DEFAULT_SCHEMA))
-    setValueText(pretty(DEFAULT_VALUES))
-    setReadOnly(false)
+  const loadStarter = (next: Starter) => {
+    setStarter(next.id)
+    setSchemaText(pretty(next.schema))
+    setValueText(pretty(next.values))
     setLog([])
   }
 
@@ -145,6 +154,9 @@ export function App() {
         <h1 className="font-mono text-sm font-medium">@preset.nz/facets</h1>
         <span className="text-xs text-muted-foreground">playground</span>
         <nav className="ml-auto flex gap-4 text-xs text-muted-foreground">
+          <a className="hover:text-foreground" href="https://preset.nz">
+            preset.nz
+          </a>
           <a className="hover:text-foreground" href="https://github.com/preset-nz/facets">
             GitHub
           </a>
@@ -166,9 +178,10 @@ export function App() {
             onWidth={(px) => cols.set("palette", px)}
             onReset={() => cols.reset("palette")}
           />
-          <PaneTitle>Field kinds</PaneTitle>
-          <ul className="min-h-0 flex-1 overflow-auto py-1">
-            {CATALOGUE.map((entry) => (
+          <div className="min-h-0 flex-1 overflow-auto">
+          <PaneTitle>Fields</PaneTitle>
+          <ul className="py-1">
+            {CATALOGUE.filter((e) => !e.layout).map((entry) => (
               <li key={entry.kind}>
                 <button
                   type="button"
@@ -186,6 +199,27 @@ export function App() {
               </li>
             ))}
           </ul>
+          <PaneTitle>Layout</PaneTitle>
+          <ul className="py-1">
+            <li>
+              <PaletteButton
+                label="group"
+                disabled={!schemaParse.ok}
+                onClick={addGroup}
+                onHover={() => setHovered(GROUP_DOC)}
+              />
+            </li>
+            {CATALOGUE.filter((e) => e.layout).map((entry) => (
+              <li key={entry.kind}>
+                <PaletteButton
+                  label={entry.kind}
+                  disabled={!schemaParse.ok}
+                  onClick={() => addField(entry)}
+                  onHover={() => setHovered(entry)}
+                />
+              </li>
+            ))}
+          </ul>
           <PaneTitle>Conditions</PaneTitle>
           <button
             type="button"
@@ -197,6 +231,7 @@ export function App() {
           >
             disabledWhen
           </button>
+          </div>
           <KindCard entry={hovered} />
         </aside>
 
@@ -234,14 +269,23 @@ export function App() {
               <Checkbox checked={showLog} onCheckedChange={(c) => setShowLog(Boolean(c))} />
               Write log
             </Label>
-            <button
-              type="button"
-              onClick={reset}
-              title="Restore the starting schema and values"
-              className="ml-auto flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <ArrowCounterClockwiseIcon className="size-3.5" /> Reset
-            </button>
+            <div className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Start from</span>
+              {STARTERS.map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => loadStarter(st)}
+                  title={`Replace the schema and values with "${st.name}"`}
+                  className={cn(
+                    "px-1.5 py-0.5 hover:text-foreground",
+                    st.id === starter && "bg-accent text-foreground",
+                  )}
+                >
+                  {st.name}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-6">
             {unknownKinds.length > 0 && (
@@ -267,6 +311,40 @@ export function App() {
 
       </main>
     </div>
+  )
+}
+
+/** The entry's field, numbered so its id and path don't clash with any in `fields`. */
+function makeUnique(entry: KindEntry, fields: FieldDef[]) {
+  const taken = new Set(fields.flatMap(fieldKeys))
+  let n = 1
+  let made = entry.make(n)
+  while (fieldKeys(made.field).some((k) => taken.has(k))) made = entry.make(++n)
+  return made
+}
+
+function PaletteButton({
+  label,
+  disabled,
+  onClick,
+  onHover,
+}: {
+  label: string
+  disabled: boolean
+  onClick: () => void
+  onHover: () => void
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      onMouseEnter={onHover}
+      onFocus={onHover}
+      className="flex w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
+    >
+      {label}
+    </button>
   )
 }
 

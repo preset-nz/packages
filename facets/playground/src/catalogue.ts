@@ -9,6 +9,8 @@ export interface KindEntry {
   blurb: string
   props: Array<[name: string, doc: string]>
   custom?: boolean
+  /** Display-only kinds sit under Layout in the palette. */
+  layout?: boolean
   make: (n: number) => { field: FieldDef; value: unknown }
 }
 
@@ -162,6 +164,27 @@ export const CATALOGUE: KindEntry[] = [
   },
 ]
 
+CATALOGUE.push(
+  {
+    kind: "separator",
+    layout: true,
+    blurb: "A horizontal rule between rows. It has no path and holds no value.",
+    props: [],
+    make: (n) => ({ field: { kind: "separator", id: id("sep", n) }, value: undefined }),
+  },
+  {
+    kind: "label",
+    layout: true,
+    blurb:
+      "Static text: a hint, a note, a sub-heading. It has no path. Give it a disabledWhen to grey it out along with the field it describes.",
+    props: [["label", "the text"]],
+    make: (n) => ({
+      field: { kind: "label", id: id("note", n), label: "A note about the fields below." },
+      value: undefined,
+    }),
+  },
+)
+
 export const KNOWN_KINDS = new Set(CATALOGUE.map((e) => e.kind))
 
 export interface Doc {
@@ -185,5 +208,23 @@ export const DISABLED_WHEN_DOC: Doc = {
   example: `"disabledWhen": {
   "path": "blend",
   "in": ["multiply", "screen"]
+}`,
+}
+
+export const GROUP_DOC: Doc = {
+  kind: "group",
+  blurb: "Starts a new group at the end. Fields you add after that go into it.",
+  props: [
+    ["title", "the heading; omit for none"],
+    ["description", "a line under the title"],
+    ["collapsible", "fold under the title"],
+    ["defaultCollapsed", "start folded"],
+    ["rows", "fields, or [field, field] for a row of two"],
+  ],
+  example: `{
+  "id": "group2",
+  "title": "Group 2",
+  "collapsible": true,
+  "rows": []
 }`,
 }

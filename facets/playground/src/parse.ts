@@ -1,5 +1,7 @@
 import type { FieldDef, PropertySchema } from "../../src"
 
+const DISPLAY_KINDS = new Set(["separator", "label"])
+
 type Parsed<T> = { ok: true; value: T } | { ok: false; error: string }
 
 // Structural checks only, enough that the panel won't throw on its way in.
@@ -24,8 +26,11 @@ export function parseSchema(text: string): Parsed<PropertySchema> {
       for (const [f, field] of fields.entries()) {
         const where = Array.isArray(row) ? `${at}.rows[${r}][${f}]` : `${at}.rows[${r}]`
         if (!isObject(field)) return fail(`${where} must be a field object`)
-        for (const key of ["kind", "id", "path"])
+        for (const key of ["kind", "id"])
           if (typeof field[key] !== "string") return fail(`${where}.${key} must be a string`)
+        // Display-only kinds hold no value, so they have no path.
+        if (!DISPLAY_KINDS.has(field.kind as string) && typeof field.path !== "string")
+          return fail(`${where}.path must be a string`)
       }
     }
   }
@@ -53,4 +58,9 @@ function isObject(v: unknown): v is Record<string, unknown> {
 
 function fail(error: string): { ok: false; error: string } {
   return { ok: false, error }
+}
+
+/** A field's id and, if it holds a value, its path: what a new field must not reuse. */
+export function fieldKeys(field: FieldDef): string[] {
+  return "path" in field && typeof field.path === "string" ? [field.id, field.path] : [field.id]
 }
