@@ -13,6 +13,7 @@ export function JsonPane({
   dark,
   onCursor,
   editorRef,
+  status,
 }: {
   title: string
   text: string
@@ -22,6 +23,8 @@ export function JsonPane({
   /** Called with the caret's offset whenever it moves. */
   onCursor?: (offset: number) => void
   editorRef?: Ref<ReactCodeMirrorRef>
+  /** A quiet line under the editor, e.g. where the next insert lands. */
+  status?: string | null
 }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
@@ -56,6 +59,11 @@ export function JsonPane({
           className="h-full [&_.cm-editor]:h-full [&_.cm-editor]:bg-transparent! [&_.cm-gutters]:bg-transparent!"
         />
       </div>
+      {status && !error && (
+        <p className="shrink-0 border-t border-border px-3 py-1 text-[11px] text-muted-foreground">
+          {status}
+        </p>
+      )}
       {error && (
         <p className="shrink-0 border-t border-destructive/30 bg-destructive/10 px-3 py-1.5 font-mono text-[11px] text-destructive">
           {error}

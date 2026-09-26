@@ -16,7 +16,7 @@ import {
   type PropertySchema,
 } from "../../src"
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror"
-import { cursorTarget, idOffset } from "./cursor"
+import { cursorTarget, describeTarget, idOffset } from "./cursor"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -61,7 +61,7 @@ export function App() {
   const lastSchema = useLastGood(schemaParse, DEFAULT_STARTER.schema)
   const lastValues = useLastGood(valueParse, DEFAULT_STARTER.values)
 
-  const caret = useRef(-1)
+  const [caret, setCaret] = useState(-1)
   const schemaEditor = useRef<ReactCodeMirrorRef>(null)
   const pendingFocus = useRef<string | null>(null)
   useEffect(() => {
@@ -110,7 +110,7 @@ export function App() {
   // Palette clicks insert at the schema caret (see cursor.ts), then move the
   // caret onto what was inserted, so the next step is editing it.
   const target = () =>
-    schemaParse.ok ? cursorTarget(schemaParse.value, schemaText, caret.current) : null
+    schemaParse.ok ? cursorTarget(schemaParse.value, schemaText, caret) : null
 
   const applySchema = (schema: PropertySchema, focusId: string) => {
     setSchemaText(pretty(schema))
@@ -124,7 +124,7 @@ export function App() {
     const made = makeUnique(entry, schema)
     if (schema.groups.length === 0) schema.groups.push({ id: "group", title: "Group", rows: [] })
     const group = schema.groups[at?.group ?? schema.groups.length - 1]
-    group.rows.splice(at?.row != null ? at.row + 1 : group.rows.length, 0, made.field)
+    group.rows.splice(at?.group != null && at.insertAt != null ? at.insertAt : group.rows.length, 0, made.field)
     applySchema(schema, made.field.id)
     if ("path" in made.field) {
       setValueText(pretty({ ...valuesRef.current, [made.field.path]: made.value }))
@@ -284,7 +284,8 @@ export function App() {
             title="schema.json"
             text={schemaText}
             onText={setSchemaText}
-            onCursor={(offset) => (caret.current = offset)}
+            onCursor={setCaret}
+            status={schemaParse.ok ? describeTarget(schemaParse.value, cursorTarget(schemaParse.value, schemaText, caret)) : null}
             editorRef={schemaEditor}
             error={schemaParse.ok ? null : schemaParse.error}
             dark={dark}
