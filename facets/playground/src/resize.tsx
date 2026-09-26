@@ -75,3 +75,72 @@ export function ResizeHandle({
     />
   )
 }
+
+// The palette's help pane, as a share of the palette's height.
+const SPLIT_KEY = "facets-playground:help-split"
+const SPLIT_DEFAULT = 1 / 3
+const SPLIT_LIMITS: [number, number] = [0.15, 0.7]
+
+export function useHelpSplit() {
+  const [share, setShare] = useState<number>(() => {
+    try {
+      const n = Number(localStorage.getItem(SPLIT_KEY))
+      return n > 0 ? n : SPLIT_DEFAULT
+    } catch {
+      return SPLIT_DEFAULT
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(SPLIT_KEY, String(share))
+    } catch {
+      // As above.
+    }
+  }, [share])
+  const set = (n: number) => setShare(Math.min(SPLIT_LIMITS[1], Math.max(SPLIT_LIMITS[0], n)))
+  return { share, set, reset: () => setShare(SPLIT_DEFAULT) }
+}
+
+/**
+ * A drag handle on a pane's top edge that sizes it as a share of `container`,
+ * measured from the bottom. The parent must be `relative`. Double-click to
+ * restore the default.
+ */
+export function SplitHandle({
+  container,
+  onShare,
+  onReset,
+  label,
+}: {
+  container: () => HTMLElement | null
+  onShare: (share: number) => void
+  onReset: () => void
+  label: string
+}) {
+  return (
+    <div
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={label}
+      title="Drag to resize, double-click to reset"
+      onDoubleClick={onReset}
+      onPointerDown={(e) => {
+        const box = container()?.getBoundingClientRect()
+        if (!box) return
+        e.preventDefault()
+        const el = e.currentTarget
+        el.setPointerCapture(e.pointerId)
+        const move = (ev: PointerEvent) => onShare((box.bottom - ev.clientY) / box.height)
+        const up = () => {
+          el.removeEventListener("pointermove", move)
+          el.removeEventListener("pointerup", up)
+          document.body.style.cursor = ""
+        }
+        el.addEventListener("pointermove", move)
+        el.addEventListener("pointerup", up)
+        document.body.style.cursor = "row-resize"
+      }}
+      className="absolute inset-x-0 -top-1 z-10 hidden h-2 cursor-row-resize hover:bg-ring/30 active:bg-ring/50 md:block"
+    />
+  )
+}

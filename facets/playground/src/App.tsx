@@ -30,7 +30,7 @@ import { JsonPane } from "./json-pane"
 import { load, save } from "./storage"
 import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
 import { fieldKeys, parseSchema, parseValues, schemaFields } from "./parse"
-import { ResizeHandle, useColumnWidths } from "./resize"
+import { ResizeHandle, SplitHandle, useColumnWidths, useHelpSplit } from "./resize"
 import { schemaWarnings } from "./validate"
 import { FACETS } from "./facets-version"
 
@@ -63,6 +63,8 @@ export function App() {
   const [hovered, setHovered] = useState<Doc | null>(null)
   const dark = usePrefersDark()
   const cols = useColumnWidths()
+  const help = useHelpSplit()
+  const palette = useRef<HTMLElement>(null)
 
   // While either pane holds invalid JSON, keep showing the last good version.
   const schemaParse = useMemo(() => parseSchema(schemaText), [schemaText])
@@ -238,7 +240,7 @@ export function App() {
         style={{ "--cols": `${cols.widths.palette}px ${cols.widths.json}px minmax(0,1fr)` } as CSSProperties}
       >
         {/* Palette */}
-        <aside className="relative flex min-h-0 flex-col border-b border-border bg-card md:border-r md:border-b-0">
+        <aside ref={palette} className="relative flex min-h-0 flex-col border-b border-border bg-card md:border-r md:border-b-0">
           <ResizeHandle
             label="Resize field kinds"
             width={cols.widths.palette}
@@ -312,7 +314,18 @@ export function App() {
             ))}
           </ul>
           </div>
-          <KindCard entry={hovered} />
+          <div
+            className="relative h-64 shrink-0 border-t border-border md:h-(--help)"
+            style={{ "--help": `${help.share * 100}%` } as CSSProperties}
+          >
+            <SplitHandle
+              label="Resize help"
+              container={() => palette.current}
+              onShare={help.set}
+              onReset={help.reset}
+            />
+            <KindCard entry={hovered} />
+          </div>
         </aside>
 
         {/* JSON */}
@@ -573,10 +586,11 @@ function PaneTitle({ children }: { children: ReactNode }) {
   )
 }
 
-// A fixed height, so the palette above never moves as the help changes.
+// Its pane has a set height (a third of the palette, draggable), so the
+// palette above never moves as the help changes.
 // Hover is read from pointer movement, not mouseenter: scrolling the list
 // under a still pointer then leaves the help alone.
-const HELP_BOX = "h-64 shrink-0 overflow-auto border-t border-border p-3 text-xs"
+const HELP_BOX = "h-full overflow-auto p-3 text-xs"
 
 function KindCard({ entry }: { entry: Doc | null }) {
   if (!entry) {
