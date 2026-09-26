@@ -3,6 +3,7 @@
 {
   "name": "facets-playground",
   "compatibility_date": "2026-09-26",
+  "routes": [{ "pattern": "facets.preset.nz", "custom_domain": true }],
   "assets": {
     "directory": "./dist",
     "not_found_handling": "single-page-application"
