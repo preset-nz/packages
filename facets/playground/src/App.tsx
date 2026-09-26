@@ -15,7 +15,7 @@ import {
   registerScope,
   type CheckboxFieldDef,
   type PanelView,
-  type PromoteLevel,
+  type PromoteView,
   type PropertySchema,
 } from "../../src"
 import type { ReactCodeMirrorRef } from "@uiw/react-codemirror"
@@ -52,6 +52,7 @@ export function App() {
     initial.valueText ?? pretty(DEFAULT_STARTER.values),
   )
   const [readOnly, setReadOnly] = useState(initial.readOnly ?? false)
+  const [view, setView] = useState<PanelView>(initial.view ?? "inspector")
   const [starter, setStarter] = useState(initial.starter ?? DEFAULT_STARTER.id)
   const [showLog, setShowLog] = useState(false)
   const [log, setLog] = useState<LogEntry[]>([])
@@ -107,8 +108,8 @@ export function App() {
   )
 
   useEffect(() => {
-    save({ schemaText, valueText, readOnly, starter })
-  }, [schemaText, valueText, readOnly, starter])
+    save({ schemaText, valueText, readOnly, starter, view })
+  }, [schemaText, valueText, readOnly, starter, view])
 
   const unknownKinds = useMemo(
     () =>
@@ -186,17 +187,19 @@ export function App() {
     setValueText(pretty(values))
   }
 
-  // Promotes the field at the caret (or the last field). The same level
-  // again takes the promotion off.
-  const togglePromote = (level: PromoteLevel) => {
+  // Adds the view to the promote list of the field at the caret (or the
+  // last field), or takes it off if it's there.
+  const togglePromote = (target_: PromoteView) => {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
     const fields = schemaFields(schema)
     const at = target()
     const field = (at?.field && fields.find((f) => f.id === at.field!.id)) || fields.at(-1)
     if (!field) return
-    if (field.promote === level) delete field.promote
-    else field.promote = level
+    const rest = (field.promote ?? []).filter((v) => v !== target_)
+    const next = rest.length < (field.promote ?? []).length ? rest : [...rest, target_]
+    if (next.length) field.promote = VIEWS.filter((v): v is PromoteView => next.includes(v as PromoteView))
+    else delete field.promote
     applySchema(schema, field.id)
   }
 
@@ -292,12 +295,12 @@ export function App() {
           </button>
           <PaneTitle>Views</PaneTitle>
           <ul className="py-1">
-            {(["collapsed", "card"] as const).map((level) => (
-              <li key={level}>
+            {(["card", "collapsed"] as const).map((v) => (
+              <li key={v}>
                 <PaletteButton
-                  label={`promote: ${level}`}
+                  label={`promote: ${v}`}
                   disabled={!schemaParse.ok}
-                  onClick={() => togglePromote(level)}
+                  onClick={() => togglePromote(v)}
                   onHover={() => setHovered(PROMOTE_DOC)}
                 />
               </li>
@@ -337,6 +340,7 @@ export function App() {
         {/* Preview */}
         <section className="flex min-h-0 flex-col">
           <div className="flex h-8 shrink-0 items-center gap-4 border-b border-border px-3">
+            <ViewToggle view={view} onView={setView} />
             <Label className="text-xs text-muted-foreground">
               <Checkbox checked={readOnly} onCheckedChange={(c) => setReadOnly(Boolean(c))} />
               Read-only
@@ -384,37 +388,13 @@ export function App() {
                 those fields.
               </p>
             )}
-            <div className="flex flex-wrap items-start gap-6">
-              <div className="flex w-64 flex-col gap-6">
-                <ViewPreview
-                  view="card"
-                  schema={lastSchema}
-                  schemaText={schemaText}
-                  values={lastValues}
-                  readOnly={readOnly}
-                />
-                <ViewPreview
-                  view="collapsed"
-                  schema={lastSchema}
-                  schemaText={schemaText}
-                  values={lastValues}
-                  readOnly={readOnly}
-                />
-              </div>
-              <figure className="flex flex-col gap-1.5">
-                <ViewCaption>Inspector</ViewCaption>
-                <div className="w-80 border border-border bg-background shadow-sm">
-                  <PanelBoundary resetKey={schemaText}>
-                    <PropertyPanel
-                      scopeKey={SCOPE}
-                      selection={lastValues}
-                      ctx={null}
-                      readOnly={readOnly}
-                    />
-                  </PanelBoundary>
-                </div>
-              </figure>
-            </div>
+            <ViewPreview
+              view={view}
+              schema={lastSchema}
+              schemaText={schemaText}
+              values={lastValues}
+              readOnly={readOnly}
+            />
           </div>
           {showLog && <WriteLog log={log} onClear={() => setLog([])} />}
         </section>
@@ -424,12 +404,40 @@ export function App() {
   )
 }
 
-const VIEW_HINT: Record<Exclude<PanelView, "inspector">, string> = {
-  card: 'Nothing promoted. Add "promote": "card" or "collapsed" to a field.',
-  collapsed: 'Nothing promoted to "collapsed".',
+// Inspector first, then folding down: the order the toggle steps through.
+const VIEWS: PanelView[] = ["inspector", "card", "collapsed"]
+const VIEW_NAME: Record<PanelView, string> = {
+  inspector: "Inspector",
+  card: "Card",
+  collapsed: "Collapsed",
 }
 
-/** The same scope drawn as a card, or folded shut to one line. */
+function ViewToggle({ view, onView }: { view: PanelView; onView: (v: PanelView) => void }) {
+  return (
+    <div role="radiogroup" aria-label="View" className="flex border border-border text-xs">
+      {VIEWS.map((v) => (
+        <button
+          key={v}
+          type="button"
+          role="radio"
+          aria-checked={view === v}
+          onClick={() => onView(v)}
+          className={cn(
+            "px-2 py-0.5 text-muted-foreground hover:text-foreground",
+            view === v && "bg-accent text-foreground",
+          )}
+        >
+          {VIEW_NAME[v]}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * The scope in one view. The box stays the same width in every view, so
+ * stepping through them shows what folds away.
+ */
 function ViewPreview({
   view,
   schema,
@@ -437,42 +445,33 @@ function ViewPreview({
   values,
   readOnly,
 }: {
-  view: Exclude<PanelView, "inspector">
+  view: PanelView
   schema: PropertySchema
   schemaText: string
   values: Record<string, unknown>
   readOnly: boolean
 }) {
-  const empty = promotedFields(schema, view).length === 0
+  const empty = view !== "inspector" && promotedFields(schema, view).length === 0
   return (
-    <figure className="flex flex-col gap-1.5">
-      <ViewCaption>{view === "card" ? "Card" : "Collapsed"}</ViewCaption>
-      <div className="border border-border bg-background shadow-sm">
-        {view === "collapsed" && (
-          <div className="flex h-7 items-center gap-1 border-b border-border px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-            <svg aria-hidden viewBox="0 0 16 16" className="size-3 -rotate-90">
-              <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            </svg>
-            Folded scope
-          </div>
-        )}
-        {empty ? (
-          <p className="p-3 text-xs text-muted-foreground">{VIEW_HINT[view]}</p>
-        ) : (
-          <PanelBoundary resetKey={schemaText}>
-            <PropertyPanel scopeKey={SCOPE} selection={values} ctx={null} readOnly={readOnly} view={view} />
-          </PanelBoundary>
-        )}
-      </div>
-    </figure>
-  )
-}
-
-function ViewCaption({ children }: { children: ReactNode }) {
-  return (
-    <figcaption className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-      {children}
-    </figcaption>
+    <div className="w-80 border border-border bg-background shadow-sm">
+      {view === "collapsed" && (
+        <div className="flex h-7 items-center gap-1 border-b border-border px-3 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+          <svg aria-hidden viewBox="0 0 16 16" className="size-3 -rotate-90">
+            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          Folded scope
+        </div>
+      )}
+      {empty ? (
+        <p className="p-3 text-xs text-muted-foreground">
+          Nothing promoted to {view}. Add <span className="font-mono">"promote": ["{view}"]</span> to a field.
+        </p>
+      ) : (
+        <PanelBoundary resetKey={schemaText}>
+          <PropertyPanel scopeKey={SCOPE} selection={values} ctx={null} readOnly={readOnly} view={view} />
+        </PanelBoundary>
+      )}
+    </div>
   )
 }
 

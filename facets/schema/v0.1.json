@@ -103,11 +103,15 @@
       }
     },
     "promote": {
-      "enum": [
-        "collapsed",
-        "card"
-      ],
-      "description": "Where the field shows besides the inspector, like a parm promoted to a Houdini asset's interface. \"collapsed\": in a closed group's header, in a folded scope and on the card. \"card\": on the card only. Omit for inspector-only."
+      "type": "array",
+      "description": "The views the field shows in besides the inspector, like a parm promoted to a Houdini asset's interface. \"card\": on the card. \"collapsed\": in a closed group's header and in a folded scope. Omit for inspector-only.",
+      "items": {
+        "enum": [
+          "card",
+          "collapsed"
+        ]
+      },
+      "uniqueItems": true
     },
     "selectOption": {
       "type": "object",

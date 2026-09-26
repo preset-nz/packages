@@ -214,12 +214,12 @@ export const DISABLED_WHEN_DOC: Doc = {
 export const PROMOTE_DOC: Doc = {
   kind: "promote",
   blurb:
-    "Shows a field outside the inspector, like a parm promoted to a Houdini asset's interface. A click promotes the field at the caret (or the last field); clicking the same level again removes it.",
+    "Shows a field outside the inspector, like a parm promoted to a Houdini asset's interface. A click adds the view to the field at the caret (or the last field); clicking again takes it off.",
   props: [
-    ["collapsed", "in a closed group's header, a folded scope and the card"],
-    ["card", "on the card only"],
+    ["card", "on the card"],
+    ["collapsed", "in a closed group's header and a folded scope"],
   ],
-  example: `"promote": "collapsed"`,
+  example: `"promote": ["card", "collapsed"]`,
 }
 
 export const GROUP_DOC: Doc = {

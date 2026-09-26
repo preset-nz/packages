@@ -43,10 +43,10 @@ const simple: Starter = {
             max: 1,
             step: 0.01,
             disabledWhen: { path: "visible", equals: false },
-            promote: "collapsed",
+            promote: ["card", "collapsed"],
           },
           [
-            { kind: "color", id: "fill", path: "fill", label: "Fill", promote: "card" },
+            { kind: "color", id: "fill", path: "fill", label: "Fill", promote: ["card"] },
             { kind: "select", id: "blend", path: "blend", label: "Blend", options: blendOptions },
           ],
         ],
@@ -142,7 +142,7 @@ const everything: Starter = {
         collapsible: true,
         defaultCollapsed: true,
         rows: [
-          { kind: "textarea", id: "notes", path: "notes", label: "Notes", rows: 3, promote: "collapsed" },
+          { kind: "textarea", id: "notes", path: "notes", label: "Notes", rows: 3, promote: ["collapsed"] },
           { kind: "file", id: "source", path: "source", label: "Source" },
           { kind: "label", id: "custom", label: "Custom kinds, registered by this playground:" },
           [
@@ -177,8 +177,9 @@ const everything: Starter = {
 }
 
 // A synth operator, to show promotion: the same scope drawn as an
-// inspector, a card and a collapsed line. Output starts closed, so its
-// header shows its "collapsed" field.
+// inspector, a card and a collapsed line. Type is promoted to collapsed
+// only, so a closed Filter says what it is without crowding the card.
+// Output starts closed, so its header shows Master.
 const filterTypes = [
   { value: "lowpass", label: "Low-pass" },
   { value: "highpass", label: "High-pass" },
@@ -195,8 +196,8 @@ const operator: Starter = {
         title: "Filter",
         collapsible: true,
         rows: [
-          { kind: "select", id: "type", path: "type", label: "Type", options: filterTypes, promote: "card" },
-          { kind: "slider", id: "cutoff", path: "cutoff", label: "Cutoff", min: 20, max: 20000, step: 1, promote: "collapsed" },
+          { kind: "select", id: "type", path: "type", label: "Type", options: filterTypes, promote: ["collapsed"] },
+          { kind: "slider", id: "cutoff", path: "cutoff", label: "Cutoff", min: 20, max: 20000, step: 1, promote: ["card", "collapsed"] },
           { kind: "slider", id: "resonance", path: "resonance", label: "Resonance", min: 0, max: 1, step: 0.01 },
         ],
       },
@@ -206,8 +207,8 @@ const operator: Starter = {
         collapsible: true,
         defaultCollapsed: true,
         rows: [
-          { kind: "slider", id: "master", path: "master", label: "Master", min: 0, max: 1, step: 0.01, promote: "collapsed" },
-          { kind: "slider", id: "pan", path: "pan", label: "Pan", min: -1, max: 1, step: 0.01, promote: "card" },
+          { kind: "slider", id: "master", path: "master", label: "Master", min: 0, max: 1, step: 0.01, promote: ["card", "collapsed"] },
+          { kind: "slider", id: "pan", path: "pan", label: "Pan", min: -1, max: 1, step: 0.01, promote: ["card"] },
           { kind: "slider", id: "width", path: "width", label: "Width", min: 0, max: 1, step: 0.01 },
         ],
       },

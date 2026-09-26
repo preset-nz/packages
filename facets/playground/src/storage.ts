@@ -1,3 +1,5 @@
+import type { PanelView } from "../../src"
+
 // Last session, restored on load. Everything is wrapped: storage can be
 // blocked, full, or hold something an older playground wrote.
 const KEY = "facets-playground:v1"
@@ -7,6 +9,7 @@ export interface Saved {
   valueText: string
   readOnly: boolean
   starter: string
+  view: PanelView
 }
 
 export function load(): Partial<Saved> {

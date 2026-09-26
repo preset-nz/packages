@@ -19,21 +19,22 @@ export interface BaseField {
   label?: string
   path: string
   disabledWhen?: DisabledWhen
-  promote?: PromoteLevel
+  promote?: PromoteView[]
 }
 
 /**
- * Where a field shows besides the inspector, like a parm promoted to a
- * Houdini asset's interface. The levels nest: `"collapsed"` fields show in a
- * closed group's header, in a folded scope and on the card; `"card"` fields
- * show on the card only. Leave it out and the field is inspector-only.
+ * A view a field can be promoted to, like a parm promoted to a Houdini
+ * asset's interface. `promote` lists them, each chosen on its own:
+ * `"card"` shows the field on the card; `"collapsed"` in a closed group's
+ * header and in a folded scope. Leave `promote` out and the field is
+ * inspector-only.
  */
-export type PromoteLevel = "collapsed" | "card"
+export type PromoteView = "card" | "collapsed"
 
 /**
  * How `PropertyPanel` draws a scope. `"inspector"` is every field in its
- * groups; `"card"` the promoted fields, flat; `"collapsed"` the fields
- * promoted to `"collapsed"`, on one line.
+ * groups; `"card"` the fields promoted to it, flat; `"collapsed"` the
+ * fields promoted to it, on one line.
  */
 export type PanelView = "inspector" | "card" | "collapsed"
 
@@ -140,7 +141,7 @@ export interface SeparatorFieldDef {
   id: string
   label?: string
   disabledWhen?: DisabledWhen
-  promote?: PromoteLevel
+  promote?: PromoteView[]
 }
 
 /** Static text: a hint, a note, a sub-heading. The text is `label`. */
@@ -149,7 +150,7 @@ export interface LabelFieldDef {
   id: string
   label: string
   disabledWhen?: DisabledWhen
-  promote?: PromoteLevel
+  promote?: PromoteView[]
 }
 
 export type BuiltinFieldDef =

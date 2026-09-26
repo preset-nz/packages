@@ -21,11 +21,9 @@ interface PropertyPanelProps {
 
 type Row = Array<FieldDef | FieldDef[]>[number]
 
-/** Whether a field shows in a view. The levels nest: collapsed ⊂ card ⊂ inspector. */
+/** Whether a field shows in a view: every field in the inspector, else only those promoted to it. */
 export function showsIn(field: FieldDef, view: PanelView): boolean {
-  if (view === "inspector") return true
-  if (view === "card") return field.promote === "card" || field.promote === "collapsed"
-  return field.promote === "collapsed"
+  return view === "inspector" || (field.promote?.includes(view) ?? false)
 }
 
 /** The fields a view draws, in schema order, with paired rows flattened. */
@@ -69,8 +67,8 @@ export function PropertyPanel({
     ? undefined
     : (path: string, val: unknown) => scope.write!(path, val, selection, ctx)
 
-  // Card: the promoted fields, flat, no group chrome (a card has its own
-  // header). Collapsed: the "collapsed" ones on one line. Either draws
+  // Card: the fields promoted to it, flat, no group chrome (a card has its
+  // own header). Collapsed: the fields promoted to it, on one line. Either draws
   // nothing when nothing is promoted.
   if (view !== "inspector") {
     const rows = scope.schema.groups.flatMap((g) => rowsIn(g.rows, view))
