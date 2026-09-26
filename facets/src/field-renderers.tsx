@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Separator } from "@/components/ui/separator"
 import { registerFieldRenderer } from "./registry"
 import type {
   CheckboxFieldDef,
@@ -26,6 +27,8 @@ import type {
   TextFieldDef,
   TextareaFieldDef,
   FileFieldDef,
+  LabelFieldDef,
+  SeparatorFieldDef,
   VectorFieldDef,
 } from "./types"
 
@@ -425,7 +428,31 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   )
 }
 
+const SeparatorRenderer: FieldRenderer<SeparatorFieldDef> = () => (
+  <Separator className="my-1" />
+)
+
+// The same in every mode: there is nothing to edit. Greys out under
+// disabledWhen so a hint can follow the field it describes.
+const LabelRenderer: FieldRenderer<LabelFieldDef> = ({ field, disabled }) => (
+  <p
+    className={
+      "text-xs text-muted-foreground" + (disabled ? " opacity-50" : "")
+    }
+  >
+    {field.label}
+  </p>
+)
+
 export function registerBuiltinRenderers(): void {
+  registerFieldRenderer(
+    "separator",
+    SeparatorRenderer as FieldRenderer<import("./types").FieldDef>,
+  )
+  registerFieldRenderer(
+    "label",
+    LabelRenderer as FieldRenderer<import("./types").FieldDef>,
+  )
   registerFieldRenderer(
     "text",
     TextRenderer as FieldRenderer<import("./types").FieldDef>,

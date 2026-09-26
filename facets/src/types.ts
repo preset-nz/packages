@@ -9,6 +9,9 @@ export type BuiltinFieldKind =
   | "color"
   | "checkbox"
   | "file"
+  | "vector"
+  | "separator"
+  | "label"
 
 export interface BaseField {
   kind: string
@@ -109,6 +112,24 @@ export interface FileFieldDef extends BaseField {
   helperText?: string
 }
 
+// Display-only rows: they show something but hold no value, so they have no
+// `path`. Houdini's Separator and Label parameter types.
+
+/** A horizontal rule between rows. */
+export interface SeparatorFieldDef {
+  kind: "separator"
+  id: string
+  disabledWhen?: DisabledWhen
+}
+
+/** Static text: a hint, a note, a sub-heading. The text is `label`. */
+export interface LabelFieldDef {
+  kind: "label"
+  id: string
+  label: string
+  disabledWhen?: DisabledWhen
+}
+
 export type BuiltinFieldDef =
   | SelectFieldDef
   | ColorFieldDef
@@ -119,6 +140,8 @@ export type BuiltinFieldDef =
   | CheckboxFieldDef
   | FileFieldDef
   | VectorFieldDef
+  | SeparatorFieldDef
+  | LabelFieldDef
 
 export type FieldDef = BuiltinFieldDef | CustomFieldDef
 

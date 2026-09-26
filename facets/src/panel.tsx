@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useId, useMemo, useState } from "react"
 import { Separator } from "@/components/ui/separator"
 import { getFieldRenderer, getScope } from "./registry"
 import type {
@@ -69,23 +69,54 @@ function PropertyGroup({
   onChange?: (path: string, val: unknown) => void
   isLast: boolean
 }) {
+  // Collapsing needs a title to click. Open or closed is the group's own
+  // state; a host that wants it remembered across selections keys the panel.
+  const collapsible = Boolean(group.collapsible && group.title)
+  const [collapsed, setCollapsed] = useState(
+    collapsible && Boolean(group.defaultCollapsed),
+  )
+  const bodyId = useId()
+  const titleClass =
+    "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground"
+
   return (
     <section className="flex flex-col gap-3 px-3 py-3">
       {(group.title || group.description) && (
         <header>
-          {group.title && (
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {group.title}
-            </h3>
-          )}
-          {group.description && (
+          {group.title &&
+            (collapsible ? (
+              <h3 className={titleClass}>
+                <button
+                  type="button"
+                  aria-expanded={!collapsed}
+                  aria-controls={bodyId}
+                  onClick={() => setCollapsed((c) => !c)}
+                  className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-1 px-1 text-left uppercase hover:text-foreground"
+                >
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 16 16"
+                    className={
+                      "size-3 shrink-0 transition-transform " +
+                      (collapsed ? "-rotate-90" : "")
+                    }
+                  >
+                    <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                  </svg>
+                  {group.title}
+                </button>
+              </h3>
+            ) : (
+              <h3 className={titleClass}>{group.title}</h3>
+            ))}
+          {group.description && !collapsed && (
             <p className="mt-1 text-xs text-muted-foreground">
               {group.description}
             </p>
           )}
         </header>
       )}
-      <div className="flex flex-col gap-3">
+      <div id={bodyId} hidden={collapsed} className="flex flex-col gap-3">
         {group.rows.map((row, idx) => {
           const fields = Array.isArray(row) ? row : [row]
           return (
@@ -142,11 +173,14 @@ function FieldSlot({
     return false
   })()
 
+  // Display-only kinds (separator, label) have no path: no value, no writes.
+  const path = "path" in field ? field.path : undefined
   return renderer({
     field,
-    value: values[field.path],
+    value: path === undefined ? undefined : values[path],
     disabled,
-    onChange: onChange ? (val) => onChange(field.path, val) : undefined,
+    onChange:
+      onChange && path !== undefined ? (val) => onChange(path, val) : undefined,
     ctx,
   })
 }
