@@ -61,6 +61,18 @@ package in your CSS. From `src/index.css`:
 Nothing fails when this line is missing. The build succeeds and the panel
 renders unstyled.
 
+Tell Vite to resolve one copy of React and of this package, so the package and
+your app share one registry. In `vite.config.ts`:
+
+```ts
+resolve: {
+  dedupe: ["react", "react-dom", "@preset.nz/facets"],
+},
+```
+
+Without it, a linked or nested install can register renderers in one copy and
+look them up in another.
+
 The upside is that `facets` inherits whatever primitive library you already
 chose — Base UI, Radix, or your own — instead of dragging in a second one and
 making your panels look foreign inside your own app.
@@ -206,6 +218,17 @@ code, so it has no JSON form.
 
 One file covers every 0.1.x release. Patches may add kinds and props to it,
 never remove or tighten them.
+
+### For agents
+
+`https://facets.preset.nz/llms.txt` is the contract in brief. A Claude Code
+plugin with a skill for writing schemas, scopes and custom renderers lives in
+this repo:
+
+```sh
+claude plugin marketplace add preset-nz/facets
+claude plugin install facets@preset-nz-facets
+```
 
 ---
 

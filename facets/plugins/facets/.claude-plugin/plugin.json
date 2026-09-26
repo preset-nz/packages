@@ -1,0 +1,8 @@
+{
+  "name": "facets",
+  "description": "Write and wire inspector panels with @preset.nz/facets: schemas, scopes, custom field renderers, host setup.",
+  "author": { "name": "preset.nz" },
+  "homepage": "https://facets.preset.nz",
+  "repository": "https://github.com/preset-nz/facets",
+  "license": "MIT"
+}

@@ -1,0 +1,32 @@
+# @preset.nz/facets
+
+> React inspector panels defined as data. A PropertySchema (groups of rows of fields) plus a Scope (read, optional write) renders through one generic <PropertyPanel>. Fields pick a renderer by `kind`; hosts register their own kinds. MIT. npm: @preset.nz/facets. React 19 peer. Ships unbuilt TypeScript.
+
+## Contract
+
+- JSON Schema for a PropertySchema: https://facets.preset.nz/schema/v0.1.json (also `@preset.nz/facets/schema/v0.1.json`). Validate against it. It covers every 0.1.x; patches only add to it.
+- Built-in kinds: text, textarea, number, slider, select, color, checkbox, file, vector, separator, label. They are strict: an unknown prop, a missing `path`, or a `path` on separator/label is invalid.
+- Any other `kind` is a custom kind the host registers with `registerFieldRenderer(kind, Component)`. Extra props are allowed. A misspelt built-in kind validates as custom and renders nothing (console warning), so check kinds against the list.
+- `path` is a flat key into the record `read()` returns: "a.b" is one key, not a nested lookup.
+- A row is a field (full width) or an array of fields (one grid row, usually two).
+- Groups: { id, title?, description?, collapsible?, defaultCollapsed?, rows }.
+- disabledWhen: { path, equals | notEquals | in | notIn }, reading one other field's value.
+- Read-only (no `write`, or `readOnly` on the panel): renderers get no onChange and draw values as text.
+- select `options: [{ value, label }]` in JSON; `optionsProvider(ctx)` is code only.
+
+## Host setup (all four; the first three fail silently)
+
+1. shadcn-style primitives at `@/components/ui/{input,label,checkbox,separator,select}`, with `@` aliased to `src/`. Base UI or Radix.
+2. Tailwind 4, in the CSS entry: `@source "../node_modules/@preset.nz/facets/src";` Without it the panel renders unstyled.
+3. Vite: `resolve.dedupe: ["react", "react-dom", "@preset.nz/facets"]`, for one React and one registry.
+4. Call `registerBuiltinRenderers()` once at startup, before registering custom renderers. Nothing registers on import (`sideEffects: false`).
+
+## Guides
+
+- [Claude skill, full guide](https://raw.githubusercontent.com/preset-nz/facets/main/plugins/facets/skills/facets-schema/SKILL.md): schemas, scopes, custom kinds and overrides, host setup, checks. Install it in Claude Code: `claude plugin marketplace add preset-nz/facets`, then `claude plugin install facets@preset-nz-facets`.
+- [README](https://raw.githubusercontent.com/preset-nz/facets/main/README.md): install, worked example, read-only, custom kinds.
+- [Types](https://raw.githubusercontent.com/preset-nz/facets/main/src/types.ts): FieldDef, PropertySchema, Scope, FieldRendererProps.
+
+## Try it
+
+- [Playground](https://facets.preset.nz): field palette, schema JSON, live panel, schema warnings.

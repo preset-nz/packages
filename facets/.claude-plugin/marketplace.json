@@ -1,0 +1,12 @@
+{
+  "name": "preset-nz-facets",
+  "description": "The facets plugin for @preset.nz/facets.",
+  "owner": { "name": "preset.nz" },
+  "plugins": [
+    {
+      "name": "facets",
+      "source": "./plugins/facets",
+      "description": "Write and wire inspector panels with @preset.nz/facets: schemas, scopes, custom field renderers, host setup."
+    }
+  ]
+}
