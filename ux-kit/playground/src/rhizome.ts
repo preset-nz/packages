@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
 
@@ -31,6 +31,14 @@ export type History = {
   history_len: number
   undo_labels: string[] // oldest first
   redo_labels: string[] // next first
+}
+
+/** The gesture verbs, bound to the one open tree. One gesture at a time. */
+export type Gesture = {
+  begin: (path: string, key: string) => void
+  apply: (path: string, key: string, value: unknown) => void
+  end: () => void
+  cancel: () => void
 }
 
 export const DOC_PREFIX = "/documents/"
@@ -93,5 +101,19 @@ export function useRhizome() {
     [call],
   )
 
-  return { rows, history, schema, error, call, set }
+  /**
+   * A drag as a rhizome gesture (`Tree::begin` / `apply` / `end` / `cancel`): `apply` shows at
+   * once, and the whole drag is one undo step at `end`. rhizome keeps the gesture id.
+   */
+  const gesture = useMemo<Gesture>(
+    () => ({
+      begin: (path, key) => void call("rhizome_gesture_begin", { path, key }),
+      apply: (path, key, value) => void call("rhizome_gesture_apply", { path, key, value }),
+      end: () => void call("rhizome_gesture_end"),
+      cancel: () => void call("rhizome_gesture_cancel"),
+    }),
+    [call],
+  )
+
+  return { rows, history, schema, error, call, set, gesture }
 }

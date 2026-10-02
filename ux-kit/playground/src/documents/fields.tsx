@@ -1,6 +1,8 @@
 import { useId } from "react"
-import { Checkbox, Input, Label, Slider, Textarea } from "@preset.nz/ux-kit"
+import { Checkbox, Input, Label, Textarea, VectorField, type VectorFieldProps } from "@preset.nz/ux-kit"
 
+import type { Gesture } from "../rhizome"
+import type { SetValue } from "./index"
 import { useDraft } from "./useDraft"
 
 /** A checkbox with its label. One click is one edit. */
@@ -56,67 +58,40 @@ export function TextField({
   )
 }
 
-/** One number: the typed text is kept until blur or Enter, then it is one edit. */
-export function NumberField({ label, value, onCommit }: { label: string; value: number; onCommit: (v: number) => void }) {
-  const id = useId()
-  const [text, setText] = useDraft(String(value))
-  const commit = () => {
-    const n = Number(text)
-    if (text.trim() === "" || !Number.isFinite(n)) setText(String(value))
-    else if (n !== value) onCommit(n)
-  }
-  return (
-    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <Input
-        id={id}
-        inputMode="decimal"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur()
-          if (e.key === "Escape") setText(String(value))
-        }}
-        className="tabular-nums"
-      />
-    </div>
-  )
-}
-
-/** One slider: dragging shows the value, letting go (or a key press) is the edit. */
-export function SliderField({
-  label,
-  value,
-  max,
-  onCommit,
+/**
+ * A rhizome list value (vec2, vec3, floats) as a row of drag-to-adjust fields. A drag is one
+ * gesture: live edits, one undo step, Escape puts it back. A typed number, or an arrow key, is
+ * a plain labelled edit (arrow-key runs share one step).
+ */
+export function NumbersField({
+  path,
+  valueKey,
+  values,
+  set,
+  gesture,
+  orientation,
+  ...props
 }: {
-  label: string
-  value: number
-  max: number
-  onCommit: (v: number) => void
-}) {
-  const id = useId()
-  const [local, setLocal] = useDraft(value)
+  path: string
+  valueKey: string
+  values: number[]
+  set: SetValue
+  gesture: Gesture
+} & Omit<VectorFieldProps, "value" | "onValueChange" | "onScrubStart" | "onScrubEnd" | "onScrubCancel">) {
   return (
-    <div className="grid grid-cols-[4rem_1fr_3rem] items-center gap-3">
-      <Label htmlFor={id}>{label}</Label>
-      <Slider
-        id={id}
-        min={0}
-        max={max}
-        step={max / 100}
-        value={local}
-        onValueChange={(v) => setLocal(v as number)}
-        onValueCommitted={(v) => onCommit(v as number)}
-      />
-      <span className="text-right font-mono text-xs tabular-nums text-muted-foreground">
-        {local.toFixed(2)}
-      </span>
-    </div>
+    <VectorField
+      {...props}
+      orientation={orientation}
+      value={values}
+      onValueChange={(next, { reason }) =>
+        reason === "scrub" ? gesture.apply(path, valueKey, next) : set(path, valueKey, next, reason === "step")
+      }
+      onScrubStart={() => gesture.begin(path, valueKey)}
+      onScrubEnd={gesture.end}
+      onScrubCancel={gesture.cancel}
+    />
   )
 }
-
 
 /** A list of `n` numbers from a rhizome value; zeros when it isn't one. */
 export const nums = (v: unknown, n: number): number[] =>

@@ -1,8 +1,8 @@
 import { Separator } from "@preset.nz/ux-kit"
 
-import type { Row } from "../rhizome"
+import type { Gesture, Row } from "../rhizome"
 import { selectValue, useSelection } from "../selection"
-import { BoolField, NumberField, nums, SliderField, TextField, withAt } from "./fields"
+import { BoolField, NumbersField, nums, TextField } from "./fields"
 import { DOC_PAGE, DocHeader } from "./Header"
 import type { SetValue } from "./index"
 import { Selectable } from "./Selectable"
@@ -17,11 +17,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /**
- * A `primitives` node: a boolean, text, a vec3 (one Input per component), a vec2 and a
- * four-float list (one Slider per component). Each control commits one labelled rhizome edit.
+ * A `primitives` node: a boolean, text, a vec3, a vec2 and a four-float list (one drag-to-adjust
+ * field per component). Each control commits one labelled rhizome edit; a drag is one gesture.
  * Each value is one selectable row; the inspector follows it.
  */
-export function PrimitivesDoc({ row, set }: { row: Row; set: SetValue }) {
+export function PrimitivesDoc({ row, set, gesture }: { row: Row; set: SetValue; gesture: Gesture }) {
   const selection = useSelection()
   const v = row.values ?? {}
   const put = (key: string, value: unknown) => set(row.path, key, value)
@@ -68,16 +68,7 @@ export function PrimitivesDoc({ row, set }: { row: Row; set: SetValue }) {
       <Section title="Vector (3 floats)">
         {item(
           "position",
-          <div className="flex gap-3">
-            {(["X", "Y", "Z"] as const).map((axis, i) => (
-              <NumberField
-                key={axis}
-                label={axis}
-                value={position[i]}
-                onCommit={(n) => put("position", withAt(position, i, n))}
-              />
-            ))}
-          </div>,
+          <NumbersField path={row.path} valueKey="position" values={position} set={set} gesture={gesture} step={0.1} />,
         )}
       </Section>
 
@@ -86,17 +77,17 @@ export function PrimitivesDoc({ row, set }: { row: Row; set: SetValue }) {
       <Section title="Vector (2 floats)">
         {item(
           "size",
-          <div className="flex flex-col gap-3">
-            {(["Width", "Height"] as const).map((name, i) => (
-              <SliderField
-                key={name}
-                label={name}
-                value={size[i]}
-                max={100}
-                onCommit={(n) => put("size", withAt(size, i, n))}
-              />
-            ))}
-          </div>,
+          <NumbersField
+            path={row.path}
+            valueKey="size"
+            values={size}
+            set={set}
+            gesture={gesture}
+            labels={["W", "H"]}
+            min={0}
+            max={100}
+            step={0.5}
+          />,
         )}
       </Section>
 
@@ -105,17 +96,17 @@ export function PrimitivesDoc({ row, set }: { row: Row; set: SetValue }) {
       <Section title="Number list (4 floats)">
         {item(
           "weights",
-          <div className="flex flex-col gap-3">
-            {weights.map((w, i) => (
-              <SliderField
-                key={i}
-                label={`Weight ${i + 1}`}
-                value={w}
-                max={1}
-                onCommit={(n) => put("weights", withAt(weights, i, n))}
-              />
-            ))}
-          </div>,
+          <NumbersField
+            path={row.path}
+            valueKey="weights"
+            values={weights}
+            set={set}
+            gesture={gesture}
+            labels={["1", "2", "3", "4"]}
+            min={0}
+            max={1}
+            step={0.01}
+          />,
         )}
       </Section>
       </div>

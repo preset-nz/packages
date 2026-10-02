@@ -3,10 +3,10 @@ import { Button, ColorSwatch, Input, Label, SidePanelContent, SidePanelHeader } 
 
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
-import { BoolField, NumberField, nums, TextField, withAt } from "../documents/fields"
+import { BoolField, NumbersField, nums, TextField } from "../documents/fields"
 import { ROLES, SIZES, WEIGHTS } from "../documents/fonts"
 import { TOKENS } from "../documents/tokens"
-import type { History, Row, Schema, ValueSchema } from "../rhizome"
+import type { Gesture, History, Row, Schema, ValueSchema } from "../rhizome"
 import { selectLayer, setFontSample, useFontSamples, type Selection } from "../selection"
 
 const show = (v: unknown) => (typeof v === "string" ? v || "—" : JSON.stringify(v))
@@ -175,7 +175,7 @@ function FontInspector({ role }: { role: string }) {
 }
 
 /** The editor for one value, by its kind. Same rhizome edit as the row in the centre. */
-function ValueEditor({ doc, spec, set }: { doc: Row; spec: ValueSchema; set: SetValue }) {
+function ValueEditor({ doc, spec, set, gesture }: { doc: Row; spec: ValueSchema; set: SetValue; gesture: Gesture }) {
   const current = doc.values?.[spec.key]
   const put = (value: unknown) => set(doc.path, spec.key, value)
   switch (spec.kind) {
@@ -192,16 +192,16 @@ function ValueEditor({ doc, spec, set }: { doc: Row; spec: ValueSchema; set: Set
       const n = Array.isArray(spec.default) ? spec.default.length : 0
       const list = nums(current, n)
       return (
-        <div className="flex flex-col gap-3">
-          {list.map((x, i) => (
-            <NumberField
-              key={i}
-              label={labels?.[i] ?? `Item ${i + 1}`}
-              value={x}
-              onCommit={(v) => put(withAt(list, i, v))}
-            />
-          ))}
-        </div>
+        <NumbersField
+          path={doc.path}
+          valueKey={spec.key}
+          values={list}
+          set={set}
+          gesture={gesture}
+          labels={labels ?? list.map((_, i) => String(i + 1))}
+          orientation="column"
+          step={spec.key === "weights" ? 0.01 : 0.1}
+        />
       )
     }
     default:
@@ -215,12 +215,14 @@ function ValueInspector({
   valueKey,
   schema,
   set,
+  gesture,
   reset,
 }: {
   doc: Row
   valueKey: string
   schema: Schema | null
   set: SetValue
+  gesture: Gesture
   reset: (path: string, keys: string[]) => void
 }) {
   const spec = schema?.types.find((t) => t.name === doc.type)?.values?.find((v) => v.key === valueKey)
@@ -238,7 +240,7 @@ function ValueInspector({
         </Props>
       </Section>
       <Section title="Edit">
-        <ValueEditor doc={doc} spec={spec} set={set} />
+        <ValueEditor doc={doc} spec={spec} set={set} gesture={gesture} />
         <Button
           variant="outline"
           size="sm"
@@ -265,6 +267,7 @@ export function Inspector({
   schema,
   history,
   set,
+  gesture,
   reset,
 }: {
   doc: Row | null
@@ -273,6 +276,7 @@ export function Inspector({
   schema: Schema | null
   history: History | null
   set: SetValue
+  gesture: Gesture
   reset: (path: string, keys: string[]) => void
 }) {
   const layer = selection.kind === "layer" ? layers.find((l) => l.id === selection.id) : undefined
@@ -285,7 +289,7 @@ export function Inspector({
         ) : selection.kind === "font" ? (
           <FontInspector role={selection.role} />
         ) : selection.kind === "value" && doc ? (
-          <ValueInspector doc={doc} valueKey={selection.key} schema={schema} set={set} reset={reset} />
+          <ValueInspector doc={doc} valueKey={selection.key} schema={schema} set={set} gesture={gesture} reset={reset} />
         ) : layer ? (
           <Section title={String(layer.values?.name ?? layer.name)}>
             {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}

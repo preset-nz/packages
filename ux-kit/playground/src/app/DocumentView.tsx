@@ -5,17 +5,17 @@ import { FontsDoc } from "../documents/FontsDoc"
 import { PrimitivesDoc } from "../documents/PrimitivesDoc"
 import { TokensDoc } from "../documents/TokensDoc"
 import type { SetValue } from "../documents"
-import type { Row } from "../rhizome"
+import type { Gesture, Row } from "../rhizome"
 
 /** The centre: the open document, drawn by what kind of node it is. */
-export function DocumentView({ doc, layers, set }: { doc: Row | null; layers: Row[]; set: SetValue }) {
+export function DocumentView({ doc, layers, set, gesture }: { doc: Row | null; layers: Row[]; set: SetValue; gesture: Gesture }) {
   switch (doc?.type) {
     case "tokens":
       return <TokensDoc />
     case "fonts":
       return <FontsDoc />
     case "primitives":
-      return <PrimitivesDoc row={doc} set={set} />
+      return <PrimitivesDoc row={doc} set={set} gesture={gesture} />
     case "card":
       return <CardDoc layers={layers} set={set} />
     default:

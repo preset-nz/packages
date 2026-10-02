@@ -6,22 +6,25 @@
 //! made up for the playground, not an app's object model. `tokens` and `fonts` hold no
 //! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
 //! of every kind the documents edit. Edits are labelled; undo and redo are
-//! `Tree::undo` / `Tree::redo`. Every change emits `rhizome://commit` (the `Commit`) and
+//! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
+//! live edits, one undo step. Every change emits `rhizome://commit` (the `Commit`) and
 //! refreshes the Edit menu.
 //! TODO: move to rhizome-pom / rhizome-pom-tauri (open document, commit events,
 //! undo wired to the Edit menu) once that exists; this is the hand-rolled version.
 
 use std::sync::Mutex;
 
-use rhizome_core::{Commit, NodeType, Op, Origin, Registry, Row, Tree};
+use rhizome_core::{Commit, Error, GestureId, NodeType, Op, Origin, Registry, Row, Tree};
 use serde::Serialize;
 use serde_json::Value as Json;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::menu;
 
-/// `Tree` is `Send` but not `Sync`, so the one open tree sits behind a mutex.
-pub struct Doc(pub(crate) Mutex<Tree>);
+/// `Tree` is `Send` but not `Sync`, so the one open tree sits behind a mutex. The second field is
+/// the open gesture's id: `GestureId` doesn't cross IPC, so the webview just says begin / apply /
+/// end / cancel and the id stays here. Lock the tree first, then the slot.
+pub struct Doc(pub(crate) Mutex<Tree>, Mutex<Option<GestureId>>);
 
 impl Doc {
     pub fn sample() -> Doc {
@@ -88,7 +91,7 @@ impl Doc {
         // Load the seed back so history starts empty: undo must not remove the documents.
         let (tree, _report) = Tree::load(&seed.serialise(), registry).expect("seed loads");
 
-        Doc(Mutex::new(tree))
+        Doc(Mutex::new(tree), Mutex::new(None))
     }
 }
 
@@ -179,6 +182,87 @@ pub fn rhizome_set(
             t.edit(&label, |tx| tx.apply(&op).map(|_| ()))
         }
     })
+}
+
+/// Opens a gesture for a drag on one value: edits applied through `rhizome_gesture_apply` show at
+/// once and become one undo step at `rhizome_gesture_end`. Labelled like a single set.
+#[tauri::command]
+pub fn rhizome_gesture_begin(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    path: String,
+    key: String,
+) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        gesture_begin(t, &mut doc.1.lock().expect("gesture lock"), &path, &key)
+    })
+}
+
+/// Sets the value inside the open gesture. One commit per call, no undo step of its own.
+#[tauri::command]
+pub fn rhizome_gesture_apply(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    path: String,
+    key: String,
+    value: Json,
+) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        gesture_apply(t, &doc.1.lock().expect("gesture lock"), path, key, value)
+    })
+}
+
+/// Closes the gesture: its edits are one undo step (none if nothing changed).
+#[tauri::command]
+pub fn rhizome_gesture_end(app: AppHandle, doc: State<'_, Doc>) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        gesture_end(t, &mut doc.1.lock().expect("gesture lock"))
+    })
+}
+
+/// Closes the gesture and puts everything back as it was at `begin`.
+#[tauri::command]
+pub fn rhizome_gesture_cancel(app: AppHandle, doc: State<'_, Doc>) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        gesture_cancel(t, &mut doc.1.lock().expect("gesture lock"))
+    })
+}
+
+type Done = rhizome_core::Result<((), Option<Commit>)>;
+
+fn gesture_begin(t: &mut Tree, slot: &mut Option<GestureId>, path: &str, key: &str) -> Done {
+    *slot = Some(t.begin(&format!("Set {key} of {}", leaf(path)))?);
+    Ok(((), None))
+}
+
+fn gesture_apply(
+    t: &mut Tree,
+    slot: &Option<GestureId>,
+    path: String,
+    key: String,
+    value: Json,
+) -> Done {
+    let g = slot.ok_or(Error::NoGesture)?;
+    let commit = t.apply(
+        g,
+        &[Op::Set {
+            at: path,
+            key,
+            value,
+        }],
+    )?;
+    Ok(((), commit))
+}
+
+fn gesture_end(t: &mut Tree, slot: &mut Option<GestureId>) -> Done {
+    let g = slot.take().ok_or(Error::NoGesture)?;
+    t.end(g)?;
+    Ok(((), None))
+}
+
+fn gesture_cancel(t: &mut Tree, slot: &mut Option<GestureId>) -> Done {
+    let g = slot.take().ok_or(Error::NoGesture)?;
+    Ok(((), t.cancel(g)?))
 }
 
 /// Resets values of a node to their defaults, as one edit: the `keys` given, or every value
@@ -305,5 +389,58 @@ mod tests {
         assert!(tree
             .edit_ops("Bad", &[set("weights", json!([1, 2]))])
             .is_err());
+    }
+
+    fn set_at(key: &str, value: Json) -> (String, String, Json) {
+        ("/documents/primitives".into(), key.into(), value)
+    }
+
+    #[test]
+    fn a_drag_is_live_but_one_undo_step_and_cancel_leaves_none() {
+        let doc = Doc::sample();
+        let mut tree = doc.0.lock().unwrap();
+        let mut slot = None;
+        let path = "/documents/primitives";
+
+        gesture_begin(&mut tree, &mut slot, path, "position").unwrap();
+        for x in [1.0, 2.0, 3.0] {
+            let (p, k, v) = set_at("position", json!([x, 0.0, 0.0]));
+            let (_, commit) = gesture_apply(&mut tree, &slot, p, k, v).unwrap();
+            assert!(commit.is_some(), "each apply commits, so the panel follows");
+        }
+        assert_eq!(tree.history_len(), 0, "no undo step until end");
+        gesture_end(&mut tree, &mut slot).unwrap();
+        assert_eq!(tree.history_len(), 1);
+        assert_eq!(tree.undo_label(), Some("Set position of primitives"));
+
+        tree.undo().unwrap();
+        let value = |t: &Tree| {
+            t.rows()
+                .into_iter()
+                .find(|r| r.path.as_str() == path)
+                .unwrap()
+                .values["position"]
+                .clone()
+        };
+        assert_eq!(
+            value(&tree),
+            json!([0.0, 0.0, 0.0]),
+            "one undo reverts the whole drag"
+        );
+
+        gesture_begin(&mut tree, &mut slot, path, "position").unwrap();
+        let (p, k, v) = set_at("position", json!([9.0, 9.0, 9.0]));
+        gesture_apply(&mut tree, &slot, p, k, v).unwrap();
+        gesture_cancel(&mut tree, &mut slot).unwrap();
+        assert_eq!(value(&tree), json!([0.0, 0.0, 0.0]));
+        assert_eq!(
+            tree.history_len(),
+            0,
+            "the redo of the first drag is all that is left"
+        );
+        assert!(
+            gesture_end(&mut tree, &mut slot).is_err(),
+            "no gesture is open"
+        );
     }
 }

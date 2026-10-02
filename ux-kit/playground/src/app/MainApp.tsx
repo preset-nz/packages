@@ -32,7 +32,7 @@ import { blurField, useTextUndo } from "../textUndo"
 
 /** The main window: toolbar, outline of documents, the selected document, inspector, status bar. */
 export function MainApp() {
-  const { rows, history, schema, error, call, set } = useRhizome()
+  const { rows, history, schema, error, call, set, gesture } = useRhizome()
   const { dark, toggle: toggleTheme } = useTheme()
   const [leftOpen, setLeftOpen] = useStored("left.open", true)
   const [rightOpen, setRightOpen] = useStored("right.open", true)
@@ -128,7 +128,7 @@ export function MainApp() {
               if (e.currentTarget.contains(el) && !el.closest("[data-selectable]")) clearSelection()
             }}
           >
-            <DocumentView doc={selected} layers={layers} set={set} />
+            <DocumentView doc={selected} layers={layers} set={set} gesture={gesture} />
           </main>
           <SidePanel
             side="right"
@@ -147,6 +147,7 @@ export function MainApp() {
               schema={schema}
               history={history}
               set={set}
+              gesture={gesture}
               reset={resetKeys}
             />
           </SidePanel>
