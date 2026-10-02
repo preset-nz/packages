@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Button, ColorSwatch, Input, Label, SidePanelContent, SidePanelHeader } from "@preset.nz/ux-kit"
+import { Button, ColorSwatch, Input, Label, SidePanelContent } from "@preset.nz/ux-kit"
 
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
@@ -273,7 +273,6 @@ export function Inspector({
   const layer = selection.kind === "layer" ? layers.find((l) => l.id === selection.id) : undefined
   return (
     <>
-      <SidePanelHeader>Inspector</SidePanelHeader>
       <SidePanelContent className="flex flex-col gap-6 p-3">
         {selection.kind === "token" ? (
           <TokenInspector name={selection.name} />

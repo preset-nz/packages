@@ -1,4 +1,4 @@
-import { cn, EmptyState, SidePanelContent, SidePanelHeader } from "@preset.nz/ux-kit"
+import { cn, EmptyState, SidePanelContent } from "@preset.nz/ux-kit"
 
 import { docInfo } from "../documents"
 import type { Row } from "../rhizome"
@@ -26,7 +26,6 @@ export function Outline({
 }) {
   return (
     <>
-      <SidePanelHeader>Outline</SidePanelHeader>
       <SidePanelContent className="p-1">
         {docs.length === 0 ? (
           <EmptyState title="No documents" description="The tree has none." className="p-4" />
