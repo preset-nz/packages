@@ -13,11 +13,6 @@ install:
 dev:
     pnpm --dir playground tauri dev
 
-# Playground frontend only, in a browser tab: no Rust rebuild, no rhizome data.
-[group('dev')]
-dev-web:
-    pnpm --dir playground dev
-
 # Typecheck and lint the kit.
 [group('quality')]
 check-kit:
