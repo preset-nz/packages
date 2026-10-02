@@ -3,7 +3,7 @@ import { Separator } from "@preset.nz/ux-kit"
 import type { Row } from "../rhizome"
 import { selectValue, useSelection } from "../selection"
 import { BoolField, NumberField, nums, SliderField, TextField, withAt } from "./fields"
-import { DocHeader } from "./Header"
+import { DOC_PAGE, DocHeader } from "./Header"
 import type { SetValue } from "./index"
 import { Selectable } from "./Selectable"
 
@@ -41,11 +41,12 @@ export function PrimitivesDoc({ row, set }: { row: Row; set: SetValue }) {
   )
 
   return (
-    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 p-6">
+    <div className={DOC_PAGE}>
       <DocHeader title="Primitives">
         One node with a value of each kind. Every change is a labelled edit: undo, redo and History
         follow. Select a row to inspect that value.
       </DocHeader>
+      <div className="flex max-w-xl flex-col gap-6">
 
       <Section title="Text">
         {item("title", <TextField label="Title" value={String(v.title ?? "")} onCommit={(t) => put("title", t)} />)}
@@ -117,6 +118,7 @@ export function PrimitivesDoc({ row, set }: { row: Row; set: SetValue }) {
           </div>,
         )}
       </Section>
+      </div>
     </div>
   )
 }

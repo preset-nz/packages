@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 
 import { selectToken, useSelection } from "../selection"
-import { DocHeader } from "./Header"
+import { DOC_PAGE, DocHeader } from "./Header"
 import { Selectable } from "./Selectable"
 import { TOKENS } from "./tokens"
 
@@ -15,7 +15,7 @@ export function TokensDoc() {
   }, [])
 
   return (
-    <div className="mx-auto w-full max-w-4xl p-6">
+    <div className={DOC_PAGE}>
       <DocHeader title="Tokens">
         The kit&apos;s colour variables, read from <span className="font-mono">index.css</span>. Each
         card shows the light value on the left and the dark value on the right. Select a card to

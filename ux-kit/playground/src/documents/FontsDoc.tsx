@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react"
 
 import { selectFont, useFontSamples, useSelection } from "../selection"
 import { ROLES, SIZES, WEIGHTS, type FontRole } from "./fonts"
-import { DocHeader } from "./Header"
+import { DOC_PAGE, DocHeader } from "./Header"
 import { Selectable } from "./Selectable"
 
 function Specimen({ role, token, cls, sample: defaultSample }: FontRole) {
@@ -67,7 +67,7 @@ function Specimen({ role, token, cls, sample: defaultSample }: FontRole) {
 /** One specimen per font role: the family stack, weights and the type scale. Select a role. */
 export function FontsDoc() {
   return (
-    <div className="mx-auto w-full max-w-4xl p-6">
+    <div className={DOC_PAGE}>
       <DocHeader title="Fonts">
         Three roles: headings, body text and code. Sizes are the type scale; weights are the ones the
         kit loads. Select a role to type your own sample.

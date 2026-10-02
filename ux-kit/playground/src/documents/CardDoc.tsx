@@ -3,7 +3,7 @@ import { Card } from "@preset.nz/ux-kit"
 import type { Row } from "../rhizome"
 import { selectLayer, useSelection } from "../selection"
 import { CardPanel } from "./CardPanel"
-import { DocHeader } from "./Header"
+import { DOC_PAGE, DocHeader } from "./Header"
 import type { SetValue } from "./index"
 import { Selectable } from "./Selectable"
 
@@ -14,7 +14,7 @@ import { Selectable } from "./Selectable"
 export function CardDoc({ layers, set }: { layers: Row[]; set: SetValue }) {
   const selection = useSelection()
   return (
-    <div className="mx-auto w-full max-w-5xl p-6">
+    <div className={DOC_PAGE}>
       <DocHeader title="Card">
         Layers drawn by facets from one schema, each bound to its own rhizome node. Select a card and
         the inspector shows its full panel; edit in either place.
