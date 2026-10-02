@@ -1,7 +1,7 @@
 import { useId } from "react"
 import { Checkbox, Input, Label, Textarea, VectorField, type VectorFieldProps } from "@preset.nz/ux-kit"
 
-import type { Gesture } from "../rhizome"
+import type { Gesture, Row, ValueSchema } from "../rhizome"
 import type { SetValue } from "./index"
 import { useDraft } from "./useDraft"
 
@@ -98,3 +98,66 @@ export const nums = (v: unknown, n: number): number[] =>
   Array.isArray(v) && v.length === n && v.every((x) => typeof x === "number") ? v : Array(n).fill(0)
 
 export const withAt = (list: number[], i: number, n: number) => list.map((x, j) => (j === i ? n : x))
+
+/** How a value key is presented, wherever it is edited: the label, its component names, step and range. */
+const VIEW: Record<string, { label: string; labels?: string[]; step?: number; min?: number; max?: number; multiline?: boolean }> = {
+  title: { label: "Title" },
+  notes: { label: "Notes", multiline: true },
+  visible: { label: "Visible" },
+  locked: { label: "Locked" },
+  position: { label: "Position", labels: ["X", "Y", "Z"], step: 0.1 },
+  size: { label: "Size", labels: ["W", "H"], step: 0.5, min: 0, max: 100 },
+  weights: { label: "Weights", labels: ["1", "2", "3", "4"], step: 0.01, min: 0, max: 1 },
+}
+
+/**
+ * The editor for one rhizome value, chosen by its kind. The document and the inspector both
+ * render this, so a value is edited by the same component, with the same gesture and undo wiring,
+ * wherever it appears. `orientation` is the only thing a caller decides: the layout.
+ */
+export function ValueField({
+  doc,
+  valueKey,
+  kind,
+  set,
+  gesture,
+  orientation,
+}: {
+  doc: Row
+  valueKey: string
+  kind: ValueSchema["kind"]
+  set: SetValue
+  gesture: Gesture
+  orientation?: "row" | "column"
+}) {
+  const current = doc.values?.[valueKey]
+  const view = VIEW[valueKey] ?? { label: valueKey }
+  const put = (value: unknown) => set(doc.path, valueKey, value)
+  switch (kind) {
+    case "bool":
+      return <BoolField label={view.label} value={current === true} onCommit={put} />
+    case "text":
+      return <TextField label={view.label} value={String(current ?? "")} multiline={view.multiline} onCommit={put} />
+    case "vec2":
+    case "vec3":
+    case "floats": {
+      const n = kind === "vec2" ? 2 : kind === "vec3" ? 3 : (view.labels?.length ?? 4)
+      return (
+        <NumbersField
+          path={doc.path}
+          valueKey={valueKey}
+          values={nums(current, n)}
+          set={set}
+          gesture={gesture}
+          labels={view.labels ?? Array.from({ length: n }, (_, i) => String(i + 1))}
+          orientation={orientation}
+          step={view.step}
+          min={view.min}
+          max={view.max}
+        />
+      )
+    }
+    default:
+      return <p className="text-xs text-muted-foreground">No editor for {kind} values.</p>
+  }
+}

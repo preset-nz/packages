@@ -3,13 +3,13 @@ import { Button, ColorSwatch, Input, Label, SidePanelContent, SidePanelHeader } 
 
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
-import { BoolField, NumbersField, nums, TextField } from "../documents/fields"
+import { ValueField } from "../documents/fields"
 import { system } from "../documents/messages"
 import { ROLES, SIZES, WEIGHTS } from "../documents/fonts"
 import { TOKENS } from "../documents/tokens"
 import type { HistoryState } from "@preset.nz/app-kit"
 
-import type { Gesture, Row, Schema, ValueSchema } from "../rhizome"
+import type { Gesture, Row, Schema } from "../rhizome"
 import { selectLayer, setFontSample, useFontSamples, type Selection } from "../selection"
 
 const show = (v: unknown) => (typeof v === "string" ? v || "—" : JSON.stringify(v))
@@ -200,41 +200,6 @@ function SystemInspector({ id }: { id: string }) {
   )
 }
 
-/** The editor for one value, by its kind. Same rhizome edit as the row in the centre. */
-function ValueEditor({ doc, spec, set, gesture }: { doc: Row; spec: ValueSchema; set: SetValue; gesture: Gesture }) {
-  const current = doc.values?.[spec.key]
-  const put = (value: unknown) => set(doc.path, spec.key, value)
-  switch (spec.kind) {
-    case "bool":
-      return <BoolField label={spec.key} value={current === true} onCommit={put} />
-    case "text":
-      return (
-        <TextField label={spec.key} value={String(current ?? "")} multiline={spec.key === "notes"} onCommit={put} />
-      )
-    case "vec2":
-    case "vec3":
-    case "floats": {
-      const labels = spec.kind === "vec2" ? ["X", "Y"] : spec.kind === "vec3" ? ["X", "Y", "Z"] : null
-      const n = Array.isArray(spec.default) ? spec.default.length : 0
-      const list = nums(current, n)
-      return (
-        <NumbersField
-          path={doc.path}
-          valueKey={spec.key}
-          values={list}
-          set={set}
-          gesture={gesture}
-          labels={labels ?? list.map((_, i) => String(i + 1))}
-          orientation="column"
-          step={spec.key === "weights" ? 0.01 : 0.1}
-        />
-      )
-    }
-    default:
-      return <p className="text-xs text-muted-foreground">No editor for {spec.kind} values.</p>
-  }
-}
-
 /** One value of the Primitives node: key, kind, default, current, an editor, and reset. */
 function ValueInspector({
   doc,
@@ -266,7 +231,7 @@ function ValueInspector({
         </Props>
       </Section>
       <Section title="Edit">
-        <ValueEditor doc={doc} spec={spec} set={set} gesture={gesture} />
+        <ValueField doc={doc} valueKey={spec.key} kind={spec.kind} set={set} gesture={gesture} orientation="column" />
         <Button
           variant="outline"
           size="sm"
