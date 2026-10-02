@@ -1,38 +1,16 @@
 import { useMemo } from "react"
-// The kit's own stylesheet as text: the document is read from the same variables the app uses.
-import css from "@preset.nz/ux-kit/index.css?raw"
 
+import { selectToken, useSelection } from "../selection"
 import { DocHeader } from "./Header"
+import { Selectable } from "./Selectable"
+import { TOKENS } from "./tokens"
 
-type Vars = Map<string, string>
-
-/** The `--name: value` declarations of the first rule whose selector matches `selector`. */
-function declarations(selector: RegExp): Vars {
-  const body = selector.exec(css)?.[1] ?? ""
-  const vars: Vars = new Map()
-  for (const m of body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) vars.set(m[1], m[2].trim())
-  return vars
-}
-
-const isColour = (v: string) => /^(oklch|oklab|hsl|rgb|#)/.test(v)
-
-function group(name: string) {
-  if (name.startsWith("sidebar")) return "Sidebar"
-  if (name.startsWith("chart")) return "Chart"
-  return "Surface and text"
-}
-
-/** Every colour token in index.css, as a card: swatches in light and dark, name, values. */
+/** Every colour token in index.css, as a card: swatches in light and dark, name, values. Select one. */
 export function TokensDoc() {
+  const selection = useSelection()
   const groups = useMemo(() => {
-    const light = declarations(/^:root\s*\{([^}]*)\}/m)
-    const dark = declarations(/^\.dark\s*\{([^}]*)\}/m)
-    const out = new Map<string, { name: string; light: string; dark: string }[]>()
-    for (const [key, value] of light) {
-      if (!isColour(value)) continue
-      const g = group(key.slice(2))
-      out.set(g, [...(out.get(g) ?? []), { name: key, light: value, dark: dark.get(key) ?? value }])
-    }
+    const out = new Map<string, typeof TOKENS>()
+    for (const t of TOKENS) out.set(t.group, [...(out.get(t.group) ?? []), t])
     return [...out]
   }, [])
 
@@ -40,16 +18,23 @@ export function TokensDoc() {
     <div className="mx-auto w-full max-w-4xl p-6">
       <DocHeader title="Tokens">
         The kit&apos;s colour variables, read from <span className="font-mono">index.css</span>. Each
-        card shows the light value on the left and the dark value on the right.
+        card shows the light value on the left and the dark value on the right. Select a card to
+        inspect it.
       </DocHeader>
       {groups.map(([title, tokens]) => (
         <section key={title} className="mb-8">
           <h2 className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {title}
           </h2>
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-3 p-1">
             {tokens.map((t) => (
-              <article key={t.name} className="overflow-hidden rounded-md border border-border bg-card">
+              <Selectable
+                key={t.name}
+                as="article"
+                selected={selection.kind === "token" && selection.name === t.name}
+                onSelect={() => selectToken(t.name)}
+                className="overflow-hidden border border-border bg-card"
+              >
                 <div className="flex h-16" aria-hidden>
                   <div className="flex-1" style={{ background: t.light }} />
                   <div className="flex-1" style={{ background: t.dark }} />
@@ -63,7 +48,7 @@ export function TokensDoc() {
                     <dd className="truncate font-mono text-foreground" title={t.dark}>{t.dark}</dd>
                   </dl>
                 </div>
-              </article>
+              </Selectable>
             ))}
           </div>
         </section>

@@ -2,16 +2,27 @@ import { cn, EmptyState, SidePanelContent, SidePanelHeader } from "@preset.nz/ux
 
 import { docInfo } from "../documents"
 import type { Row } from "../rhizome"
+import type { Selection } from "../selection"
 
-/** The rhizome tree as an outline: one row per document. Selection is by node id. */
+/**
+ * The rhizome tree as an outline: one row per document, and under Card its layers. A click on a
+ * document opens it; a click on a layer opens Card and selects the layer. The document row is
+ * selected-styled while open; a layer row while it is the selected item.
+ */
 export function Outline({
   docs,
-  selectedId,
-  onSelect,
+  layers,
+  openId,
+  selection,
+  onOpen,
+  onSelectLayer,
 }: {
   docs: Row[]
-  selectedId: string | null
-  onSelect: (id: string) => void
+  layers: Row[]
+  openId: string | null
+  selection: Selection
+  onOpen: (id: string) => void
+  onSelectLayer: (docId: string, layerId: string) => void
 }) {
   return (
     <>
@@ -23,22 +34,49 @@ export function Outline({
           <ul role="listbox" aria-label="Documents" className="flex flex-col gap-0.5">
             {docs.map((d) => {
               const info = docInfo(d.type)
-              const selected = d.id === selectedId
+              const open = d.id === openId
+              // The document row is the strong one only while no item inside it is selected.
+              const strong = open && selection.kind === "none"
               return (
-                <li key={d.id} role="option" aria-selected={selected}>
+                <li key={d.id} role="option" aria-selected={open}>
                   <button
                     type="button"
-                    onClick={() => onSelect(d.id)}
+                    onClick={() => onOpen(d.id)}
                     className={cn(
                       "flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm",
-                      selected
+                      strong
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "hover:bg-sidebar-accent/50",
+                        : open
+                          ? "bg-sidebar-accent/50"
+                          : "hover:bg-sidebar-accent/50",
                     )}
                   >
-                    {info && <info.Icon weight={selected ? "fill" : "regular"} className="size-4 shrink-0" />}
+                    {info && <info.Icon weight={open ? "fill" : "regular"} className="size-4 shrink-0" />}
                     <span className="truncate">{info?.label ?? d.name}</span>
                   </button>
+                  {d.type === "card" && layers.length > 0 && (
+                    <ul role="group" className="mt-0.5 flex flex-col gap-0.5 pl-6">
+                      {layers.map((l) => {
+                        const selected = selection.kind === "layer" && selection.id === l.id && open
+                        return (
+                          <li key={l.id} role="option" aria-selected={selected}>
+                            <button
+                              type="button"
+                              onClick={() => onSelectLayer(d.id, l.id)}
+                              className={cn(
+                                "flex w-full items-center rounded-sm px-2 py-0.5 text-left text-xs",
+                                selected
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                                  : "text-muted-foreground hover:bg-sidebar-accent/50",
+                              )}
+                            >
+                              <span className="truncate">{String(l.values?.name ?? l.name)}</span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
                 </li>
               )
             })}

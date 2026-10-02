@@ -12,7 +12,18 @@ export type Row = {
   role: "root" | "category" | "group" | "node" | "opaque"
   /** Every value in the schema, resolved, as the file format writes it (colour is [r, g, b, a]). */
   values?: Record<string, unknown>
+  /** The value keys actually stored; the rest read as their defaults. */
+  set?: string[]
 }
+/** One value in a node type's schema (rhizome-core's `ValueSchema`), as `rhizome_schema` returns it. */
+export type ValueSchema = {
+  key: string
+  kind: "bool" | "int" | "float" | "text" | "choice" | "vec2" | "vec3" | "colour" | "floats" | "shaped"
+  default: unknown
+  range?: [number, number]
+  choices?: string[]
+}
+export type Schema = { types: { name: string; values?: ValueSchema[] }[] }
 export type Commit = { seq: number; label: string }
 export type History = {
   undo_label: string | null
@@ -24,11 +35,14 @@ export type History = {
 
 export const DOC_PREFIX = "/documents/"
 
+export const LAYER_PREFIX = "/layers/"
+
 export const fetchRows = () => invoke<Row[]>("rhizome_rows")
 
 export function useRhizome() {
   const [rows, setRows] = useState<Row[]>([])
   const [history, setHistory] = useState<History | null>(null)
+  const [schema, setSchema] = useState<Schema | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
@@ -38,6 +52,11 @@ export function useRhizome() {
         setHistory(h)
       })
       .catch((e) => setError(String(e)))
+  }, [])
+
+  useEffect(() => {
+    // The registry doesn't change while the app runs: once.
+    invoke<Schema>("rhizome_schema").then(setSchema, (e) => setError(String(e)))
   }, [])
 
   useEffect(() => {
@@ -74,5 +93,5 @@ export function useRhizome() {
     [call],
   )
 
-  return { rows, history, error, call, set }
+  return { rows, history, schema, error, call, set }
 }

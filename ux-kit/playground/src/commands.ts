@@ -21,8 +21,10 @@ export interface Command {
 }
 
 export interface CommandContext {
-  /** The selected document has values to reset. */
+  /** The selection (or the open document, with none) has values to reset. */
   canReset: boolean
+  /** Why not, when it doesn't. */
+  resetReason: string
   undoLabel: string | null
   redoLabel: string | null
   leftOpen: boolean
@@ -61,11 +63,11 @@ export function buildCommands(c: CommandContext): Command[] {
     },
     {
       id: "doc.reset",
-      label: "Reset values",
+      label: "Reset",
       icon: icon("EraserIcon"),
       shortcut: "⌥⌘R",
       enabled: c.canReset,
-      disabledReason: "This document has no values to reset",
+      disabledReason: c.resetReason,
       run: c.reset,
     },
     {

@@ -7,8 +7,8 @@ import { TokensDoc } from "../documents/TokensDoc"
 import type { SetValue } from "../documents"
 import type { Row } from "../rhizome"
 
-/** The centre: the selected document, drawn by what kind of node it is. */
-export function DocumentView({ doc, set }: { doc: Row | null; set: SetValue }) {
+/** The centre: the open document, drawn by what kind of node it is. */
+export function DocumentView({ doc, layers, set }: { doc: Row | null; layers: Row[]; set: SetValue }) {
   switch (doc?.type) {
     case "tokens":
       return <TokensDoc />
@@ -17,7 +17,7 @@ export function DocumentView({ doc, set }: { doc: Row | null; set: SetValue }) {
     case "primitives":
       return <PrimitivesDoc row={doc} set={set} />
     case "card":
-      return <CardDoc row={doc} set={set} />
+      return <CardDoc layers={layers} set={set} />
     default:
       return (
         <EmptyState

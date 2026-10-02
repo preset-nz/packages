@@ -137,7 +137,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let settings = plain("app.settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
     let undo = plain("edit.undo", "Undo", false, Some("CmdOrCtrl+Z"))?;
     let redo = plain("edit.redo", "Redo", false, Some("CmdOrCtrl+Shift+Z"))?;
-    let reset = plain("doc.reset", "Reset Values", false, Some("CmdOrCtrl+Alt+R"))?;
+    let reset = plain("doc.reset", "Reset", false, Some("CmdOrCtrl+Alt+R"))?;
     let theme = plain(
         "view.theme",
         "Toggle Dark Mode",
