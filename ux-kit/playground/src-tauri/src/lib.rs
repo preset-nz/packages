@@ -23,6 +23,7 @@ pub fn run() {
             preset_app_kit::app_kit_history,
             preset_app_kit::app_kit_undo,
             preset_app_kit::app_kit_redo,
+            preset_app_kit::app_kit_text_menu,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the ux-kit playground");
