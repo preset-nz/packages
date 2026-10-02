@@ -48,12 +48,18 @@ export function useRhizome() {
     }
   }, [refresh])
 
-  /** Runs a rhizome command; the commit event brings the new state back. */
+  /** Runs a rhizome command and returns its result; the commit event brings the new state back. */
   const call = useCallback(
-    (cmd: string, args?: Record<string, unknown>) =>
-      invoke(cmd, args).then(
-        () => setError(null),
-        (e) => setError(String(e)),
+    <T = unknown>(cmd: string, args?: Record<string, unknown>) =>
+      invoke<T>(cmd, args).then(
+        (v) => {
+          setError(null)
+          return v
+        },
+        (e) => {
+          setError(String(e))
+          return undefined
+        },
       ),
     [],
   )

@@ -10,7 +10,7 @@ import {
 } from "@preset.nz/ux-kit"
 
 import { buildCommands, toItems, TOOLBAR } from "../commands"
-import { fetchRows, NOTE_PREFIX, useRhizome } from "../rhizome"
+import { NOTE_PREFIX, useRhizome } from "../rhizome"
 import { useStored } from "../stored"
 import { useTheme } from "../theme"
 import { Inspector } from "./Inspector"
@@ -33,11 +33,9 @@ export function MainApp() {
   const selected = notes.find((n) => n.id === selectedId) ?? null
 
   const addNote = useCallback(async () => {
-    const before = new Set(notes.map((n) => n.id))
-    await call("rhizome_add_note")
-    const added = (await fetchRows()).find((r) => r.path.startsWith(NOTE_PREFIX) && !before.has(r.id))
-    if (added) setSelectedId(added.id)
-  }, [call, notes])
+    const id = await call<string>("rhizome_add_note")
+    if (id) setSelectedId(id)
+  }, [call])
 
   const commands = useMemo(
     () =>

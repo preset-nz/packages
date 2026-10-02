@@ -9,7 +9,7 @@
 
 use std::sync::Mutex;
 
-use rhizome_core::{Commit, NodeType, Origin, Registry, Row, Tree, Value};
+use rhizome_core::{Commit, NodeId, NodeType, Origin, Registry, Row, Tree, Value};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -101,10 +101,8 @@ pub fn rhizome_history(doc: State<'_, Doc>) -> HistoryState {
 }
 
 #[tauri::command]
-pub fn rhizome_add_note(app: AppHandle, doc: State<'_, Doc>) -> Result<(), String> {
-    run(&app, &doc, |t| {
-        t.edit("Add Note", |tx| tx.add_unique("/notes", "note", "note").map(|_| ()))
-    })
+pub fn rhizome_add_note(app: AppHandle, doc: State<'_, Doc>) -> Result<NodeId, String> {
+    run(&app, &doc, |t| t.edit("Add Note", |tx| tx.add_unique("/notes", "note", "note")))
 }
 
 #[tauri::command]
