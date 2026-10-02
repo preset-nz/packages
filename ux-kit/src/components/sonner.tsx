@@ -21,6 +21,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
         error: <XCircleIcon className="size-4" />,
         loading: <SpinnerIcon className="size-4 animate-spin" />,
       }}
+      // Sonner paints its toasts from `--normal-*` at a specificity a plain class can't beat, so the
+      // warning kind (the kit's `--warning`) needs `!`. Success and error stay sonner's default look.
+      toastOptions={{
+        classNames: { warning: "!border-warning !bg-warning !text-warning-foreground" },
+      }}
       style={
         {
           "--normal-bg": "var(--popover)",
