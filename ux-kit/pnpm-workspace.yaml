@@ -1,0 +1,7 @@
+# The playground is an app beside the kit, not part of it. `files: ["src"]`
+# keeps it out of the tarball. The kit itself is the workspace root.
+packages:
+  - playground
+
+allowBuilds:
+  esbuild: true
