@@ -1,18 +1,26 @@
 //! The native menu bar. Rule 1 of `guidance/design/native-apps.md`: every command lives
-//! here with its accelerator, and each item is forwarded to the webview as one event that
-//! maps to one handler (see playground/src/menu.ts).
+//! here with its accelerator.
+//!
+//! Menu item ids are the command ids of `playground/src/commands.ts`, the same ids the
+//! toolbar uses. Undo, redo and opening windows are handled here; every other command is
+//! forwarded to the main window as a `command` event whose payload is the id. The webview
+//! pushes enabled and checked state back through `menu_state`.
+//! Accelerators are written here (the menu is built before the webview exists) and as
+//! display strings in commands.ts; keep the two in step.
 
-use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use std::collections::HashMap;
+use std::sync::Mutex;
+
+use serde::Deserialize;
+use tauri::menu::{
+    AboutMetadata, CheckMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, Submenu,
+};
+use tauri::{AppHandle, Emitter, Manager, Runtime, State, WebviewUrl, WebviewWindowBuilder};
 
 use crate::doc::{self, Doc, HistoryState};
 
-/// The Edit > Undo / Redo items, kept so their titles and enabled state can follow the
-/// tree's history.
-pub struct HistoryItems<R: Runtime> {
-    undo: MenuItem<R>,
-    redo: MenuItem<R>,
-}
+/// Every command item by id, so `menu_state` can reach it.
+pub struct Items<R: Runtime>(Mutex<HashMap<String, MenuItemKind<R>>>);
 
 fn title(verb: &str, label: &Option<String>) -> String {
     match label {
@@ -24,23 +32,64 @@ fn title(verb: &str, label: &Option<String>) -> String {
 /// Re-read the history from the tree and update Edit > Undo / Redo.
 pub fn sync_history(app: &AppHandle) {
     let state = HistoryState::of(&app.state::<Doc>().0.lock().expect("tree lock"));
-    if let Some(items) = app.try_state::<HistoryItems<tauri::Wry>>() {
-        let _ = items.undo.set_text(title("Undo", &state.undo_label));
-        let _ = items.undo.set_enabled(state.undo_label.is_some());
-        let _ = items.redo.set_text(title("Redo", &state.redo_label));
-        let _ = items.redo.set_enabled(state.redo_label.is_some());
+    if let Some(items) = app.try_state::<Items<tauri::Wry>>() {
+        let items = items.0.lock().expect("menu items lock");
+        if let Some(undo) = items.get("edit.undo").and_then(|i| i.as_menuitem()) {
+            let _ = undo.set_text(title("Undo", &state.undo_label));
+            let _ = undo.set_enabled(state.undo_label.is_some());
+        }
+        if let Some(redo) = items.get("edit.redo").and_then(|i| i.as_menuitem()) {
+            let _ = redo.set_text(title("Redo", &state.redo_label));
+            let _ = redo.set_enabled(state.redo_label.is_some());
+        }
     }
 }
 
-/// Menu item id to the event the webview listens for.
-const EVENTS: &[(&str, &str)] = &[
-    ("app-settings", "menu://app/settings"),
-    ("view-toggle-theme", "menu://view/toggle-theme"),
-    ("view-tokens", "menu://view/section/tokens"),
-    ("view-primitives", "menu://view/section/primitives"),
-    ("view-composites", "menu://view/section/composites"),
-    ("view-native", "menu://view/section/native"),
-];
+#[derive(Deserialize)]
+pub struct CommandState {
+    id: String,
+    enabled: Option<bool>,
+    checked: Option<bool>,
+}
+
+/// The webview's command table, as it stands: enabled and checked state per command id.
+/// Undo and redo are not sent; they follow the tree's history (`sync_history`).
+#[tauri::command]
+pub fn menu_state(items: State<'_, Items<tauri::Wry>>, states: Vec<CommandState>) {
+    let items = items.0.lock().expect("menu items lock");
+    for s in states {
+        match items.get(&s.id) {
+            Some(MenuItemKind::MenuItem(i)) => {
+                if let Some(e) = s.enabled {
+                    let _ = i.set_enabled(e);
+                }
+            }
+            Some(MenuItemKind::Check(i)) => {
+                if let Some(e) = s.enabled {
+                    let _ = i.set_enabled(e);
+                }
+                if let Some(c) = s.checked {
+                    let _ = i.set_checked(c);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Show a secondary window, creating it the first time. Same frontend, told apart by `?window=`.
+fn open_window(app: &AppHandle, label: &str, title: &str, size: (f64, f64)) {
+    if let Some(w) = app.get_webview_window(label) {
+        let _ = w.show();
+        let _ = w.set_focus();
+        return;
+    }
+    let url = WebviewUrl::App(format!("index.html?window={label}").into());
+    let _ = WebviewWindowBuilder::new(app, label, url)
+        .title(title)
+        .inner_size(size.0, size.1)
+        .build();
+}
 
 pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let name = "ux-kit playground";
@@ -49,8 +98,30 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         version: Some(app.package_info().version.to_string()),
         ..Default::default()
     };
+    let mut items: HashMap<String, MenuItemKind<tauri::Wry>> = HashMap::new();
 
-    let settings = MenuItem::with_id(app, "app-settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
+    let mut plain = |id: &str, text: &str, enabled: bool, accel: Option<&str>| -> tauri::Result<MenuItem<tauri::Wry>> {
+        let item = MenuItem::with_id(app, id, text, enabled, accel)?;
+        items.insert(id.to_string(), MenuItemKind::MenuItem(item.clone()));
+        Ok(item)
+    };
+    let settings = plain("app.settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
+    let undo = plain("edit.undo", "Undo", false, Some("CmdOrCtrl+Z"))?;
+    let redo = plain("edit.redo", "Redo", false, Some("CmdOrCtrl+Shift+Z"))?;
+    let add = plain("note.add", "Add Note", true, Some("CmdOrCtrl+N"))?;
+    let remove = plain("note.remove", "Remove Note", false, Some("CmdOrCtrl+Backspace"))?;
+    let theme = plain("view.theme", "Toggle Dark Mode", true, Some("CmdOrCtrl+Shift+L"))?;
+    let gallery = plain("window.gallery", "Gallery", true, Some("CmdOrCtrl+Shift+G"))?;
+
+    let check = |id: &str, text: &str, accel: &str| -> tauri::Result<CheckMenuItem<tauri::Wry>> {
+        CheckMenuItem::with_id(app, id, text, true, true, Some(accel))
+    };
+    let left = check("panel.left", "Show Outline", "CmdOrCtrl+Alt+S")?;
+    let right = check("panel.right", "Show Inspector", "CmdOrCtrl+Alt+I")?;
+    items.insert("panel.left".into(), MenuItemKind::Check(left.clone()));
+    items.insert("panel.right".into(), MenuItemKind::Check(right.clone()));
+    app.manage(Items(Mutex::new(items)));
+
     let app_menu = Submenu::with_items(
         app,
         name,
@@ -69,9 +140,12 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         ],
     )?;
 
-    let undo = MenuItem::with_id(app, "edit-undo", "Undo", false, Some("CmdOrCtrl+Z"))?;
-    let redo = MenuItem::with_id(app, "edit-redo", "Redo", false, Some("CmdOrCtrl+Shift+Z"))?;
-    app.manage(HistoryItems { undo: undo.clone(), redo: redo.clone() });
+    let file_menu = Submenu::with_items(
+        app,
+        "File",
+        true,
+        &[&add, &remove, &PredefinedMenuItem::separator(app)?, &PredefinedMenuItem::close_window(app, None)?],
+    )?;
 
     let edit_menu = Submenu::with_items(
         app,
@@ -88,22 +162,15 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         ],
     )?;
 
-    let toggle = MenuItem::with_id(app, "view-toggle-theme", "Toggle Dark Mode", true, Some("CmdOrCtrl+Shift+L"))?;
-    let tokens = MenuItem::with_id(app, "view-tokens", "Tokens", true, Some("CmdOrCtrl+1"))?;
-    let primitives = MenuItem::with_id(app, "view-primitives", "Primitives", true, Some("CmdOrCtrl+2"))?;
-    let composites = MenuItem::with_id(app, "view-composites", "Composites", true, Some("CmdOrCtrl+3"))?;
-    let native = MenuItem::with_id(app, "view-native", "Native", true, Some("CmdOrCtrl+4"))?;
     let view_menu = Submenu::with_items(
         app,
         "View",
         true,
         &[
-            &tokens,
-            &primitives,
-            &composites,
-            &native,
+            &left,
+            &right,
             &PredefinedMenuItem::separator(app)?,
-            &toggle,
+            &theme,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::fullscreen(app, None)?,
         ],
@@ -117,27 +184,26 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
             &PredefinedMenuItem::minimize(app, None)?,
             &PredefinedMenuItem::maximize(app, None)?,
             &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::close_window(app, None)?,
+            &gallery,
         ],
     )?;
 
-    let menu = Menu::with_items(app, &[&app_menu, &edit_menu, &view_menu, &window_menu])?;
+    let menu = Menu::with_items(app, &[&app_menu, &file_menu, &edit_menu, &view_menu, &window_menu])?;
     app.set_menu(menu)?;
 
     sync_history(app);
 
-    app.on_menu_event(|handle, event| {
-        match event.id().0.as_str() {
-            "edit-undo" => {
-                let _ = doc::undo(handle);
-            }
-            "edit-redo" => {
-                let _ = doc::redo(handle);
-            }
-            _ => {}
+    app.on_menu_event(|handle, event| match event.id().0.as_str() {
+        "edit.undo" => {
+            let _ = doc::undo(handle);
         }
-        if let Some((_, evt)) = EVENTS.iter().find(|(id, _)| *id == event.id().0.as_str()) {
-            let _ = handle.emit(evt, ());
+        "edit.redo" => {
+            let _ = doc::redo(handle);
+        }
+        "window.gallery" => open_window(handle, "gallery", "Gallery", (1000.0, 700.0)),
+        "app.settings" => open_window(handle, "settings", "Settings", (480.0, 360.0)),
+        id => {
+            let _ = handle.emit_to("main", "command", id);
         }
     });
     Ok(())

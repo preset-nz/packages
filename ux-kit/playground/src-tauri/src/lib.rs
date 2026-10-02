@@ -14,10 +14,12 @@ pub fn run() {
             doc::rhizome_history,
             doc::rhizome_add_note,
             doc::rhizome_set_body,
+            doc::rhizome_set_colour,
             doc::rhizome_rename,
             doc::rhizome_remove,
             doc::rhizome_undo,
             doc::rhizome_redo,
+            menu::menu_state,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the ux-kit playground");

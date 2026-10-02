@@ -25,7 +25,8 @@ impl Doc {
             .node(
                 NodeType::new("note")
                     .in_categories(&["notes"])
-                    .text("body", ""),
+                    .text("body", "")
+                    .colour("colour", [0.97, 0.96, 0.91, 1.0]),
             )
             .build()
             .expect("sample registry");
@@ -116,6 +117,19 @@ pub fn rhizome_set_body(
     run(&app, &doc, |t| {
         let label = format!("Edit {}", leaf(&path));
         t.edit(&label, |tx| tx.set_value(path.as_str(), "body", Value::Text(body)))
+    })
+}
+
+#[tauri::command]
+pub fn rhizome_set_colour(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    path: String,
+    colour: [f64; 4],
+) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        let label = format!("Colour {}", leaf(&path));
+        t.edit(&label, |tx| tx.set_value(path.as_str(), "colour", Value::Colour(colour)))
     })
 }
 
