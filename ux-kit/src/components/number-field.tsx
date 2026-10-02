@@ -45,6 +45,15 @@ interface NumberFieldProps
   format?: Intl.NumberFormatOptions
   /** The scrub handle and the input's accessible name. */
   label: string
+  /**
+   * Where the label sits. `inside` (default): the handle at the left of the box. `column`: the handle
+   * is a grid item in the caller's label column (the field spans two columns of a grid, as a
+   * subgrid) and the box is the second, so labels and boxes line up across rows. `above`: the handle
+   * stacks over a full-width box.
+   */
+  labelPlacement?: "inside" | "column" | "above"
+  /** A muted unit after the number, inside the box (`px`, `°`). */
+  suffix?: React.ReactNode
   disabled?: boolean
   readOnly?: boolean
   /** The pointer went down on the label and started to move: open the app's undo transaction. */
@@ -76,6 +85,8 @@ function NumberField({
   precision,
   format,
   label,
+  labelPlacement = "inside",
+  suffix,
   disabled,
   readOnly,
   onScrubStart,
@@ -179,6 +190,37 @@ function NumberField({
     }
   }
 
+  const outside = labelPlacement !== "inside"
+  const input = (
+    <NumberFieldPrimitive.Input
+      ref={inputRef}
+      data-slot="number-field-input"
+      aria-label={label}
+      className="h-full w-full min-w-0 bg-transparent px-2 text-right tabular-nums outline-none selection:bg-selection/40 disabled:cursor-not-allowed"
+      onFocus={(e) => {
+        skipCommit.current = false
+        e.currentTarget.select()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault()
+          e.currentTarget.blur()
+        } else if (e.key === "Escape") {
+          skipCommit.current = true
+          setLocal(valueRef.current)
+          e.currentTarget.blur()
+        }
+      }}
+    />
+  )
+  const unit = suffix != null && (
+    <span data-slot="number-field-suffix" className="flex shrink-0 items-center pr-2 text-muted-foreground select-none">
+      {suffix}
+    </span>
+  )
+  const boxClass =
+    "flex h-8 min-w-0 flex-1 items-stretch rounded-none border border-input bg-transparent text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50 data-disabled:opacity-50 dark:bg-input/30"
+
   return (
     <NumberFieldPrimitive.Root
       data-slot="number-field"
@@ -195,19 +237,28 @@ function NumberField({
       readOnly={readOnly}
       locale="en-NZ"
       className={cn(
-        "group/number-field relative flex h-8 min-w-0 flex-1 items-stretch rounded-none border border-input bg-transparent text-xs transition-colors focus-within:border-ring focus-within:ring-1 focus-within:ring-ring/50 data-disabled:opacity-50 dark:bg-input/30",
+        "min-w-0",
+        !outside && `group/number-field relative ${boxClass}`,
+        labelPlacement === "column" && "col-span-2 grid grid-cols-subgrid items-center data-disabled:opacity-50",
+        labelPlacement === "above" && "flex flex-col gap-1 data-disabled:opacity-50",
         className
       )}
       {...props}
     >
       <NumberFieldPrimitive.ScrubArea
         data-slot="number-field-label"
+        title={outside ? label : undefined}
         pixelSensitivity={1}
         className={cn(
-          "flex shrink-0 items-center border-r border-input px-2 text-muted-foreground select-none",
+          outside
+            ? "block min-w-0 truncate text-[11px] font-medium tracking-wide text-muted-foreground select-none"
+            : "flex shrink-0 items-center border-r border-input px-2 text-muted-foreground select-none",
           disabled || readOnly
             ? "cursor-default"
-            : "cursor-ew-resize hover:bg-muted hover:text-foreground data-scrubbing:bg-selection/20 data-scrubbing:text-foreground"
+            : cn(
+                "cursor-ew-resize hover:text-foreground data-scrubbing:text-foreground",
+                !outside && "hover:bg-muted data-scrubbing:bg-selection/20"
+              )
         )}
       >
         {label}
@@ -215,26 +266,17 @@ function NumberField({
           <ArrowsHorizontalIcon className="size-4 text-foreground" weight="bold" />
         </NumberFieldPrimitive.ScrubAreaCursor>
       </NumberFieldPrimitive.ScrubArea>
-      <NumberFieldPrimitive.Input
-        ref={inputRef}
-        data-slot="number-field-input"
-        aria-label={label}
-        className="h-full w-full min-w-0 bg-transparent px-2 text-right tabular-nums outline-none selection:bg-selection/40 disabled:cursor-not-allowed"
-        onFocus={(e) => {
-          skipCommit.current = false
-          e.currentTarget.select()
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault()
-            e.currentTarget.blur()
-          } else if (e.key === "Escape") {
-            skipCommit.current = true
-            setLocal(valueRef.current)
-            e.currentTarget.blur()
-          }
-        }}
-      />
+      {outside ? (
+        <div className={boxClass}>
+          {input}
+          {unit}
+        </div>
+      ) : (
+        <>
+          {input}
+          {unit}
+        </>
+      )}
     </NumberFieldPrimitive.Root>
   )
 }
