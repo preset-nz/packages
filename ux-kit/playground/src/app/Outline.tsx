@@ -1,28 +1,33 @@
 import { cn, EmptyState, SidePanelContent } from "@preset.nz/ux-kit"
 
 import { docInfo } from "../documents"
+import { opKind } from "../documents/ops"
 import type { Row } from "../rhizome"
 import type { Selection } from "../selection"
 
 /**
- * The rhizome tree as an outline: one row per document, and under Card its layers. A click on a
+ * The rhizome tree as an outline: one row per document, under Card its layers, under Ops its stack. A click on a
  * document opens it; a click on a layer opens Card and selects the layer. The document row is
  * selected-styled while no item inside it is selected; a layer row while it is the selected item.
  */
 export function Outline({
   docs,
   layers,
+  ops,
   openId,
   selection,
   onOpen,
   onSelectLayer,
+  onSelectOp,
 }: {
   docs: Row[]
   layers: Row[]
+  ops: Row[]
   openId: string | null
   selection: Selection
   onOpen: (id: string) => void
   onSelectLayer: (docId: string, layerId: string) => void
+  onSelectOp: (docId: string, opId: string) => void
 }) {
   return (
     <>
@@ -50,6 +55,28 @@ export function Outline({
                     {info && <info.Icon weight={open ? "fill" : "regular"} className="size-4 shrink-0" />}
                     <span className="truncate">{info?.label ?? d.name}</span>
                   </button>
+                  {d.type === "ops" && ops.length > 0 && (
+                    <ul role="group" className="mt-0.5 flex flex-col gap-0.5 pl-6">
+                      {ops.map((o) => {
+                        const selected = selection.kind === "op" && selection.id === o.id && open
+                        return (
+                          <li key={o.id} role="option" aria-selected={selected}>
+                            <button
+                              type="button"
+                              onClick={() => onSelectOp(d.id, o.id)}
+                              className={cn(
+                                "selectable flex w-full items-center rounded-sm px-2 py-0.5 text-left text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                !selected && "text-muted-foreground hover:bg-sidebar-accent/50",
+                              )}
+                              data-selected={selected || undefined}
+                            >
+                              <span className="truncate">{opKind(o.type)?.label ?? o.name}</span>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  )}
                   {d.type === "card" && layers.length > 0 && (
                     <ul role="group" className="mt-0.5 flex flex-col gap-0.5 pl-6">
                       {layers.map((l) => {

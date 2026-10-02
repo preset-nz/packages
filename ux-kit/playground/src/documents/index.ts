@@ -8,6 +8,7 @@ export const DOCS = [
   { type: "fonts", label: "Fonts", Icon: Icons.TextAaIcon },
   { type: "primitives", label: "Primitives", Icon: Icons.SlidersHorizontalIcon },
   { type: "card", label: "Card", Icon: Icons.IdentificationCardIcon },
+  { type: "ops", label: "Ops", Icon: Icons.FadersHorizontalIcon },
   { type: "messages", label: "Messages", Icon: Icons.ChatTextIcon },
 ] as const
 

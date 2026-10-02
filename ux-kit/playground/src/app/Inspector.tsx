@@ -3,6 +3,8 @@ import { Button, ColorSwatch, Input, Label, SidePanelContent } from "@preset.nz/
 
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
+import { OpPanel } from "../documents/OpPanel"
+import { opKind } from "../documents/ops"
 import { ValueField } from "../documents/fields"
 import { system } from "../documents/messages"
 import { ROLES, SIZES, WEIGHTS } from "../documents/fonts"
@@ -10,7 +12,7 @@ import { TOKENS } from "../documents/tokens"
 import type { HistoryState } from "@preset.nz/app-kit"
 
 import type { Gesture, Row, Schema } from "../rhizome"
-import { selectLayer, setFontSample, useFontSamples, type Selection } from "../selection"
+import { selectLayer, selectOp, setFontSample, useFontSamples, type Selection } from "../selection"
 
 const show = (v: unknown) => (typeof v === "string" ? v || "—" : JSON.stringify(v))
 
@@ -39,7 +41,7 @@ const Props = ({ children }: { children: React.ReactNode }) => (
 )
 
 /** The open document with nothing selected inside it: what it is, and what it holds. */
-function DocSummary({ doc, layers }: { doc: Row | null; layers: Row[] }) {
+function DocSummary({ doc, layers, ops }: { doc: Row | null; layers: Row[]; ops: Row[] }) {
   if (!doc) return <p className="text-xs text-muted-foreground">No document open.</p>
   const values = Object.entries(doc.values ?? {})
   return (
@@ -74,6 +76,19 @@ function DocSummary({ doc, layers }: { doc: Row | null; layers: Row[] }) {
               </li>
             ))}
           </ul>
+        </Section>
+      )}
+      {doc.type === "ops" && (
+        <Section title="Stack">
+          <ol className="flex list-decimal flex-col gap-0.5 pl-4 text-xs">
+            {ops.map((o) => (
+              <li key={o.id}>
+                <button type="button" className="hover:underline" onClick={() => selectOp(o.id)}>
+                  {opKind(o.type)?.label ?? o.name}
+                </button>
+              </li>
+            ))}
+          </ol>
         </Section>
       )}
       <p className="text-xs text-muted-foreground">Select an item in the document to inspect it. Esc clears.</p>
@@ -254,6 +269,7 @@ function ValueInspector({
 export function Inspector({
   doc,
   layers,
+  ops,
   selection,
   schema,
   history,
@@ -263,6 +279,7 @@ export function Inspector({
 }: {
   doc: Row | null
   layers: Row[]
+  ops: Row[]
   selection: Selection
   schema: Schema | null
   history: HistoryState | null
@@ -271,6 +288,7 @@ export function Inspector({
   reset: (path: string, keys: string[]) => void
 }) {
   const layer = selection.kind === "layer" ? layers.find((l) => l.id === selection.id) : undefined
+  const op = selection.kind === "op" ? ops.find((o) => o.id === selection.id) : undefined
   return (
     <>
       <SidePanelContent className="flex flex-col gap-6 p-3">
@@ -289,8 +307,15 @@ export function Inspector({
               <CardPanel key={layer.id} row={layer} set={set} gesture={gesture} view="inspector" />
             </div>
           </Section>
+        ) : op ? (
+          <Section title={opKind(op.type)?.label ?? op.name}>
+            {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
+            <div className="-mx-3">
+              <OpPanel key={op.id} row={op} set={set} gesture={gesture} view="inspector" />
+            </div>
+          </Section>
         ) : (
-          <DocSummary doc={doc} layers={layers} />
+          <DocSummary doc={doc} layers={layers} ops={ops} />
         )}
 
         <Section title="History">

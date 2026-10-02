@@ -15,13 +15,14 @@ import { CommandToolbar, useCommands, undo } from "@preset.nz/app-kit"
 
 import { buildBindings, TOOLBAR } from "../commands"
 import { docInfo, sortDocs } from "../documents"
-import { DOC_PREFIX, LAYER_PREFIX, useRhizome } from "../rhizome"
+import { DOC_PREFIX, LAYER_PREFIX, STACK_PREFIX, useRhizome } from "../rhizome"
 import {
   clearSelection,
   openDocument,
   resolveSelection,
   selectionPath,
   selectLayer,
+  selectOp,
   useOpenDocumentId,
   useSelection,
 } from "../selection"
@@ -45,10 +46,11 @@ export function MainApp() {
 
   const docs = useMemo(() => sortDocs(rows.filter((r) => r.path.startsWith(DOC_PREFIX))), [rows])
   const layers = useMemo(() => rows.filter((r) => r.path.startsWith(LAYER_PREFIX)), [rows])
+  const ops = useMemo(() => rows.filter((r) => r.path.startsWith(STACK_PREFIX)), [rows])
   // The open document is by node id; with none (or one that is gone) the first shows.
   const selected = docs.find((d) => d.id === openId) ?? docs[0] ?? null
-  const selection = resolveSelection(itemSelection, selected, layers)
-  const reset = resetTarget(selected, selection, layers)
+  const selection = resolveSelection(itemSelection, selected, layers, ops)
+  const reset = resetTarget(selected, selection, layers, ops)
   const canReset = reset.target !== null
 
   // Escape clears the item, except in a field, where it puts the typed text back.
@@ -113,10 +115,12 @@ export function MainApp() {
               <Outline
                 docs={docs}
                 layers={layers}
+                ops={ops}
                 openId={selected?.id ?? null}
                 selection={selection}
                 onOpen={openDocument}
                 onSelectLayer={(docId, layerId) => (openDocument(docId), selectLayer(layerId))}
+                onSelectOp={(docId, opId) => (openDocument(docId), selectOp(opId))}
               />
             </SidePanel>
             <main className="min-w-0 flex-1 overflow-auto" onClick={(e) => {
@@ -125,7 +129,7 @@ export function MainApp() {
                 if (e.currentTarget.contains(el) && !el.closest("[data-selectable]")) clearSelection()
               }}
             >
-              <DocumentView doc={selected} layers={layers} set={set} gesture={gesture} />
+              <DocumentView doc={selected} layers={layers} ops={ops} set={set} gesture={gesture} />
             </main>
             <SidePanel
               side="right"
@@ -140,6 +144,7 @@ export function MainApp() {
               <Inspector
                 doc={selected}
                 layers={layers}
+                ops={ops}
                 selection={selection}
                 schema={schema}
                 history={history}
@@ -154,7 +159,7 @@ export function MainApp() {
             <StatusItem label="History">
               {done} of {total}
             </StatusItem>
-            <StatusItem label="Selection">{selectionPath(selection, selected, layers)}</StatusItem>
+            <StatusItem label="Selection">{selectionPath(selection, selected, layers, ops)}</StatusItem>
             <StatusSpacer />
             {error && <span className="truncate text-destructive">{error}</span>}
           </StatusBar>

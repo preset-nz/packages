@@ -1,9 +1,10 @@
-//! An in-memory rhizome tree of five documents (and the layers the Card document holds), and
-//! the commands that read and edit it.
+//! An in-memory rhizome tree of six documents (and the layers the Card document holds, and the
+//! op stack the Ops document holds), and the commands that read and edit it.
 //!
 //! Uses rhizome-core as it is: `Registry`, `Tree`, `Tree::rows`, `Op::Set` / `Op::Reset`
 //! through `Tree::edit_ops` and `Tree::edit_coalesced`. The category and node types below are
-//! made up for the playground, not an app's object model. `tokens`, `fonts` and `messages` hold no
+//! made up for the playground, not an app's object model, except the three op types: their keys,
+//! ranges, defaults and choices are Oblique's (`sidecar/ops/{cmyk_halftone,film_stock,levels}.py`). `tokens`, `fonts` and `messages` hold no
 //! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
 //! of every kind the documents edit. Edits are labelled; undo and redo are
 //! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
@@ -31,10 +32,12 @@ impl Doc {
         let registry = Registry::builder()
             .category("documents", Origin::Loaded)
             .category("layers", Origin::Loaded)
+            .category("stack", Origin::Loaded)
             .node(NodeType::new("tokens").in_categories(docs))
             .node(NodeType::new("fonts").in_categories(docs))
             .node(NodeType::new("card").in_categories(docs))
             .node(NodeType::new("messages").in_categories(docs))
+            .node(NodeType::new("ops").in_categories(docs))
             .node(
                 NodeType::new("primitives")
                     .in_categories(docs)
@@ -62,6 +65,47 @@ impl Doc {
                     .float("rotation", -180.0..=180.0, 0.0)
                     .text("notes", ""),
             )
+            // Oblique's op params, one value per param, same keys, ranges and defaults. A colour
+            // is the hex default as [r, g, b, 1]; an enum is a choice; `scale: spatial` and units
+            // are in Oblique's descriptions, not its spec, so they live in the webview's schema.
+            .node(
+                NodeType::new("cmyk_halftone")
+                    .in_categories(&["stack"])
+                    .float("dot_size", 1.0..=200.0, 6.0)
+                    .float("angle_c", 0.0..=90.0, 15.0)
+                    .float("angle_m", 0.0..=90.0, 75.0)
+                    .float("angle_y", 0.0..=90.0, 0.0)
+                    .float("angle_k", 0.0..=90.0, 45.0)
+                    .colour("ink_c", [0.0, 1.0, 1.0, 1.0])
+                    .colour("ink_m", [1.0, 0.0, 1.0, 1.0])
+                    .colour("ink_y", [1.0, 1.0, 0.0, 1.0])
+                    .colour("ink_k", [0.0, 0.0, 0.0, 1.0])
+                    .float("misregistration", 0.0..=8.0, 0.0)
+                    .int("seed", 0..=i64::from(i32::MAX), 0)
+                    .choice("mode", &["paper", "over"], "paper")
+                    .bool("white_is_alpha", false)
+                    .bool("spill", false),
+            )
+            .node(
+                NodeType::new("film_stock")
+                    .in_categories(&["stack"])
+                    .choice(
+                        "stock",
+                        &["polaroid_600", "sx70", "cross_process", "bleach_bypass", "expired"],
+                        "polaroid_600",
+                    )
+                    .float("amount", 0.0..=1.0, 1.0)
+                    .float("grain", 0.0..=1.0, 0.5)
+                    .float("vignette", 0.0..=1.0, 0.5)
+                    .int("seed", 0..=i64::from(i32::MAX), 0),
+            )
+            .node(
+                NodeType::new("levels")
+                    .in_categories(&["stack"])
+                    .float("black", 0.0..=255.0, 0.0)
+                    .float("white", 0.0..=255.0, 255.0)
+                    .float("gamma", 0.1..=5.0, 1.0),
+            )
             .build()
             .expect("sample registry");
 
@@ -72,6 +116,11 @@ impl Doc {
             tx.add("/documents", "primitives", "primitives")?;
             tx.add("/documents", "card", "card")?;
             tx.add("/documents", "messages", "messages")?;
+            tx.add("/documents", "ops", "ops")?;
+            // Path order is stack order (rows come back sorted by path), so these read top to bottom.
+            tx.add("/stack", "cmyk_halftone", "cmyk_halftone")?;
+            tx.add("/stack", "film_stock", "film_stock")?;
+            tx.add("/stack", "levels", "levels")?;
             tx.add("/layers", "layer", "background")?;
             tx.add("/layers", "layer", "figure")?;
             tx.add("/layers", "layer", "shadow")?;
@@ -328,7 +377,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn sample_has_five_documents_three_layers_and_no_history() {
+    fn sample_has_six_documents_three_layers_three_ops_and_no_history() {
         let doc = Doc::sample();
         let tree = doc.0.lock().unwrap();
         let types: Vec<String> = tree
@@ -337,14 +386,37 @@ mod tests {
             .filter(|r| r.path.as_str().starts_with("/documents/"))
             .map(|r| r.type_name)
             .collect();
-        assert_eq!(types.len(), 5);
+        assert_eq!(types.len(), 6);
         let layers = tree
             .rows()
             .into_iter()
             .filter(|r| r.type_name == "layer")
             .count();
         assert_eq!(layers, 3);
+        let ops: Vec<String> = tree
+            .rows()
+            .into_iter()
+            .filter(|r| r.path.as_str().starts_with("/stack/"))
+            .map(|r| r.type_name)
+            .collect();
+        assert_eq!(ops, ["cmyk_halftone", "film_stock", "levels"], "stack order is path order");
         assert_eq!(tree.history_len(), 0);
+    }
+
+    #[test]
+    fn op_values_keep_oblique_ranges_and_an_int_refuses_a_fraction() {
+        let doc = Doc::sample();
+        let mut tree = doc.0.lock().unwrap();
+        let set = |at: &str, key: &str, value: Json| Op::Set {
+            at: at.into(),
+            key: key.into(),
+            value,
+        };
+        tree.edit_ops("ok", &[set("/stack/cmyk_halftone", "angle_k", json!(90.0))]).unwrap();
+        assert!(tree.edit_ops("high", &[set("/stack/cmyk_halftone", "angle_k", json!(91.0))]).is_err());
+        assert!(tree.edit_ops("low", &[set("/stack/levels", "gamma", json!(0.05))]).is_err());
+        assert!(tree.edit_ops("frac", &[set("/stack/film_stock", "seed", json!(1.5))]).is_err());
+        tree.edit_ops("seed", &[set("/stack/film_stock", "seed", json!(7))]).unwrap();
     }
 
     #[test]

@@ -37,6 +37,9 @@ export const DOC_PREFIX = "/documents/"
 
 export const LAYER_PREFIX = "/layers/"
 
+/** Where the Ops document's op nodes live; path order is stack order. */
+export const STACK_PREFIX = "/stack/"
+
 export const fetchRows = () => invoke<Row[]>("rhizome_rows")
 
 export function useRhizome() {
