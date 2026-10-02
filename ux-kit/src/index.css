@@ -184,3 +184,16 @@
     user-drag: none;
   }
 }
+
+/* Selection is a faint tint with a 1px edge; focus is the ring. Never two rings (ux-patterns.md,
+   Georg 2026-10-03). Put `selectable` on a row, card or item and set `data-selected` (or
+   aria-selected="true") on the selected one. The edge is a background gradient, not a border or a
+   shadow, so it never shifts the layout and never competes with a focus ring's box-shadow. */
+@utility selectable {
+  &:is([data-selected], [aria-selected="true"]) {
+    background-color: color-mix(in oklab, var(--selection) 12%, transparent);
+    background-image: linear-gradient(var(--selection), var(--selection));
+    background-size: 1px 100%;
+    background-repeat: no-repeat;
+  }
+}

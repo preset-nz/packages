@@ -4,7 +4,7 @@ import { cn } from "@preset.nz/ux-kit"
 /**
  * One selectable item in a document's centre view. A click or focus inside selects it;
  * clicks that land outside every `[data-selectable]` are the canvas's, which clears. The
- * selected look is the same everywhere.
+ * selected look is the kit's `selectable` tint; the focus ring is separate and never stacks with it.
  */
 export function Selectable({
   selected,
@@ -29,8 +29,8 @@ export function Selectable({
       // Focus inside a child control selects too; an item that already holds the selection is left be.
       onFocus={() => !selected && onSelect()}
       className={cn(
-        "rounded-md outline-none transition-shadow",
-        "data-selected:ring-2 data-selected:ring-selection data-selected:ring-offset-2 data-selected:ring-offset-background",
+        "selectable rounded-md outline-none",
+        "focus-visible:ring-2 focus-visible:ring-ring",
         className,
       )}
     >

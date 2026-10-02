@@ -7,7 +7,7 @@ import type { Selection } from "../selection"
 /**
  * The rhizome tree as an outline: one row per document, and under Card its layers. A click on a
  * document opens it; a click on a layer opens Card and selects the layer. The document row is
- * selected-styled while open; a layer row while it is the selected item.
+ * selected-styled while no item inside it is selected; a layer row while it is the selected item.
  */
 export function Outline({
   docs,
@@ -43,13 +43,10 @@ export function Outline({
                     type="button"
                     onClick={() => onOpen(d.id)}
                     className={cn(
-                      "flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm",
-                      strong
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : open
-                          ? "bg-sidebar-accent/50"
-                          : "hover:bg-sidebar-accent/50",
+                      "selectable flex w-full items-center gap-2 rounded-sm px-2 py-1 text-left text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                      !strong && (open ? "bg-sidebar-accent/50" : "hover:bg-sidebar-accent/50"),
                     )}
+                    data-selected={strong || undefined}
                   >
                     {info && <info.Icon weight={open ? "fill" : "regular"} className="size-4 shrink-0" />}
                     <span className="truncate">{info?.label ?? d.name}</span>
@@ -64,11 +61,10 @@ export function Outline({
                               type="button"
                               onClick={() => onSelectLayer(d.id, l.id)}
                               className={cn(
-                                "flex w-full items-center rounded-sm px-2 py-0.5 text-left text-xs",
-                                selected
-                                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                                  : "text-muted-foreground hover:bg-sidebar-accent/50",
+                                "selectable flex w-full items-center rounded-sm px-2 py-0.5 text-left text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                !selected && "text-muted-foreground hover:bg-sidebar-accent/50",
                               )}
+                              data-selected={selected || undefined}
                             >
                               <span className="truncate">{String(l.values?.name ?? l.name)}</span>
                             </button>
