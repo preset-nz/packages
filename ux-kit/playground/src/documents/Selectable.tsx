@@ -30,7 +30,7 @@ export function Selectable({
       onFocus={() => !selected && onSelect()}
       className={cn(
         "rounded-md outline-none transition-shadow",
-        "data-selected:ring-2 data-selected:ring-primary data-selected:ring-offset-2 data-selected:ring-offset-background",
+        "data-selected:ring-2 data-selected:ring-selection data-selected:ring-offset-2 data-selected:ring-offset-background",
         className,
       )}
     >

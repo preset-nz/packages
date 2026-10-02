@@ -40,6 +40,7 @@
     --color-destructive: var(--destructive);
     --color-destructive-foreground: var(--destructive-foreground);
     --color-warning: var(--warning);
+    --color-selection: var(--selection);
     --color-warning-foreground: var(--warning-foreground);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
@@ -86,6 +87,7 @@
     --warning-foreground: oklch(0.25 0.04 70);
     --border: oklch(0.87 0.008 215);
     --input: oklch(0.87 0.008 215);
+    --selection: oklch(0.66 0.04 210); /* quieter than primary: selected things, not actions */
     --ring: oklch(0.5 0.085 210);
     --chart-1: oklch(0.5 0.085 210);
     --chart-2: oklch(0.7 0.12 70);
@@ -125,6 +127,7 @@
     --warning-foreground: oklch(0.22 0.04 70);
     --border: oklch(0.32 0.012 215);
     --input: oklch(0.35 0.012 215);
+    --selection: oklch(0.56 0.045 205);
     --ring: oklch(0.68 0.09 205);
     --chart-1: oklch(0.68 0.09 205);
     --chart-2: oklch(0.76 0.11 70);
