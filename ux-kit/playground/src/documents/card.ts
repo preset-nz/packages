@@ -5,8 +5,7 @@ import {
   type Scope,
 } from "@preset.nz/facets"
 
-import { colourToHex, hexToColour } from "../colour"
-import type { Gesture, Row } from "../rhizome"
+import { nodeScope, type NodeAdapter } from "./bound"
 
 /**
  * The property card for a `card` node, written as facets data. Each `path` is a rhizome
@@ -63,68 +62,10 @@ export const CARD_SCHEMA: PropertySchema = {
   ],
 }
 
-/** What facets holds as the selection: the node, plus values typed but not yet accepted. */
-export interface CardSelection {
-  row: Row
-  /** In the panel's terms (colour as hex), keyed by path. */
-  draft: Record<string, unknown>
-}
-
-/** What the scope's `write` reaches. `ctx` is the host's: here, one rhizome set and the draft. */
-export interface CardContext {
-  set: (path: string, key: string, value: unknown, coalesce: boolean) => void
-  setDraft: (key: string, value: unknown) => void
-  /** rhizome's gesture verbs, and whether a drag is open (writes then `apply` instead of `set`). */
-  gesture?: Gesture
-  gesturing?: { current: boolean }
-}
-
-/** The node's values in the panel's terms: rhizome's, with the colour as hex. */
-export function cardValues(row: Row): Record<string, unknown> {
-  const v = row.values ?? {}
-  return { ...v, tint: colourToHex(v.tint) }
-}
-
-// Streamed input (typing, dragging) shares one undo step per key; a toggle or a pick is its own.
-const STREAMED = new Set(["name", "notes", "opacity", "offset", "rotation", "tint"])
-
-const card: Scope<CardSelection, Record<string, unknown>> = {
-  schema: CARD_SCHEMA,
-  read: (sel) => ({ ...cardValues(sel.row), ...sel.draft }),
-  write: (path, value, sel, ctx: CardContext) => {
-    // Show what was typed at once; the draft drops away when rhizome's value moves.
-    ctx.setDraft(path, value)
-    // Half-typed input is not a value yet: keep it in the draft, edit nothing.
-    let out = value
-    if (path === "tint") {
-      out = typeof value === "string" ? hexToColour(value) : null
-    } else if (Array.isArray(value)) {
-      if (!value.every((n) => typeof n === "number" && Number.isFinite(n))) return
-    } else if (typeof value === "number" && !Number.isFinite(value)) {
-      return
-    }
-    if (out === null || out === undefined) return
-    if (ctx.gesture && ctx.gesturing?.current) ctx.gesture.apply(sel.row.path, path, out)
-    else ctx.set(sel.row.path, path, out, STREAMED.has(path))
-  },
-  // A scrub, slider drag or colour pick: live applies, one undo step.
-  gesture: {
-    begin: (path, sel, ctx: CardContext) => {
-      if (!ctx.gesture) return
-      ctx.gesturing!.current = true
-      ctx.gesture.begin(sel.row.path, path)
-    },
-    end: (_path, _sel, ctx: CardContext) => {
-      if (!ctx.gesture) return
-      ctx.gesturing!.current = false
-      ctx.gesture.end()
-    },
-    cancel: (_path, _sel, ctx: CardContext) => {
-      if (!ctx.gesture) return
-      ctx.gesturing!.current = false
-      ctx.gesture.cancel()
-    },
-  },
+/** How a layer's values cross to the panel: the tint as hex. Streamed input shares one undo step per key. */
+export const CARD_ADAPTER: NodeAdapter = {
+  colours: ["tint"],
+  streamed: new Set(["name", "notes", "opacity", "offset", "rotation", "tint"]),
 }
 
 let registered = false
@@ -133,5 +74,5 @@ export function registerCardScope() {
   if (registered) return
   registered = true
   registerBuiltinRenderers()
-  registerScope("card", card as unknown as Scope)
+  registerScope("card", nodeScope(CARD_SCHEMA, CARD_ADAPTER) as unknown as Scope)
 }
