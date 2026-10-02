@@ -48,6 +48,9 @@ Union of the `src/components/ui` folders in Strata, Oblique, Shard and Map & Ter
 | toolbar | yes | Oblique, M&T | Base UI Toolbar (roving focus). `ToolbarItems` takes `groups` of `ToolbarItemSpec` (id, label, icon, shortcut, enabled, disabledReason, pressed, menu) and `onCommand(id)`; Oblique's `ToolButtonSpec` table with M&T's disabled reason. Disabled items stay focusable so the tooltip can say why. `ToolbarButton`, `ToolbarGroup`, `ToolbarSeparator`, `ToolbarSpacer` compose by hand. Shard's header buttons are inline JSX and Fault's are not a toolbar, so neither contributed |
 | color-field | yes | M&T, Oblique, Strata | Swatch, hex text (commits on blur or Enter, bad input reverts), optional alpha (`#rrggbbaa`), preset grid in a Popover, native picker with `onPickStart`/`onPickEnd` for undo transactions (Oblique), `clearable` and null value (Strata, Oblique's optional colour), read-only, `trailing` slot for an eyedropper |
 | color-swatch | yes | Strata, M&T, Oblique | Chip over a checkerboard; `null` is the dashed empty chip |
+| side-panel | yes | Strata, M&T | Docked panel, props only (`open`, `width` owned by the app). Collapsed it leaves an icon rail that reopens it; the inner edge resizes by pointer drag (pointer capture) or arrow keys, clamped by `clampWidth`. `SidePanelHeader`, `SidePanelContent`. Strata's `SidePanel` ideas; persistence stays app-side |
+| status-bar | yes | Oblique, Strata, M&T | `StatusBar`, `StatusItem` (optional label), `StatusSpacer`. Contents stay app-side |
+| empty-state | yes | new | Icon, title, description, action slot |
 
 M&T's `src/palettes/` (presets and derivation) was considered for the colour field and left out: it is map domain data and stays in the app, which passes its colours in through `presets`.
 
