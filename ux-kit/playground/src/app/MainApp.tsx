@@ -17,6 +17,7 @@ import { Inspector } from "./Inspector"
 import { NoteEditor } from "./NoteEditor"
 import { Outline } from "./Outline"
 import { useMenuSync } from "./useMenuSync"
+import { blurField, useTextUndo } from "../textUndo"
 
 /** The main window: toolbar, outline, note, inspector, status bar. */
 export function MainApp() {
@@ -48,15 +49,16 @@ export function MainApp() {
         dark,
         addNote,
         removeNote: () => selected && call("rhizome_remove", { path: selected.path }),
-        undo: () => call("rhizome_undo"),
-        redo: () => call("rhizome_redo"),
+        // Blur first: a focused field commits its text as one edit, then the undo takes that edit.
+        undo: () => (blurField(), call("rhizome_undo")),
+        redo: () => (blurField(), call("rhizome_redo")),
         toggleLeft: () => setLeftOpen((v) => !v),
         toggleRight: () => setRightOpen((v) => !v),
         toggleTheme,
       }),
     [selected, history, leftOpen, rightOpen, dark, addNote, call, setLeftOpen, setRightOpen, toggleTheme],
   )
-  useMenuSync(commands)
+  useMenuSync(commands, useTextUndo())
 
   const run = (id: string) => {
     const c = commands.find((x) => x.id === id)

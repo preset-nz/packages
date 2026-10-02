@@ -9,6 +9,7 @@
 //! display strings in commands.ts; keep the two in step.
 
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
 
 use serde::Deserialize;
@@ -18,6 +19,11 @@ use tauri::menu::{
 use tauri::{AppHandle, Emitter, Manager, Runtime, State, WebviewUrl, WebviewWindowBuilder};
 
 use crate::doc::{self, Doc, HistoryState};
+
+/// Whether a text field has focus in the webview (reported through `menu_state`). While it
+/// does, Edit > Undo/Redo belong to the field's typing, not the document. See textUndo.ts.
+#[derive(Default)]
+pub struct TextFocus(AtomicBool);
 
 /// Every command item by id, so `menu_state` can reach it.
 pub struct Items<R: Runtime>(Mutex<HashMap<String, MenuItemKind<R>>>);
@@ -32,15 +38,16 @@ fn title(verb: &str, label: &Option<String>) -> String {
 /// Re-read the history from the tree and update Edit > Undo / Redo.
 pub fn sync_history(app: &AppHandle) {
     let state = HistoryState::of(&app.state::<Doc>().0.lock().expect("tree lock"));
+    let text = app.state::<TextFocus>().0.load(Ordering::Relaxed);
     if let Some(items) = app.try_state::<Items<tauri::Wry>>() {
         let items = items.0.lock().expect("menu items lock");
         if let Some(undo) = items.get("edit.undo").and_then(|i| i.as_menuitem()) {
-            let _ = undo.set_text(title("Undo", &state.undo_label));
-            let _ = undo.set_enabled(state.undo_label.is_some());
+            let _ = undo.set_text(if text { "Undo".into() } else { title("Undo", &state.undo_label) });
+            let _ = undo.set_enabled(text || state.undo_label.is_some());
         }
         if let Some(redo) = items.get("edit.redo").and_then(|i| i.as_menuitem()) {
-            let _ = redo.set_text(title("Redo", &state.redo_label));
-            let _ = redo.set_enabled(state.redo_label.is_some());
+            let _ = redo.set_text(if text { "Redo".into() } else { title("Redo", &state.redo_label) });
+            let _ = redo.set_enabled(text || state.redo_label.is_some());
         }
     }
 }
@@ -55,7 +62,17 @@ pub struct CommandState {
 /// The webview's command table, as it stands: enabled and checked state per command id.
 /// Undo and redo are not sent; they follow the tree's history (`sync_history`).
 #[tauri::command]
-pub fn menu_state(items: State<'_, Items<tauri::Wry>>, states: Vec<CommandState>) {
+pub fn menu_state(
+    app: AppHandle,
+    items: State<'_, Items<tauri::Wry>>,
+    focus_state: State<'_, TextFocus>,
+    states: Vec<CommandState>,
+    text_focus: Option<bool>,
+) {
+    if let Some(t) = text_focus {
+        focus_state.0.store(t, Ordering::Relaxed);
+        sync_history(&app);
+    }
     let items = items.0.lock().expect("menu items lock");
     for s in states {
         match items.get(&s.id) {
@@ -121,6 +138,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
     items.insert("panel.left".into(), MenuItemKind::Check(left.clone()));
     items.insert("panel.right".into(), MenuItemKind::Check(right.clone()));
     app.manage(Items(Mutex::new(items)));
+    app.manage(TextFocus::default());
 
     let app_menu = Submenu::with_items(
         app,
@@ -194,11 +212,21 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
     sync_history(app);
 
     app.on_menu_event(|handle, event| match event.id().0.as_str() {
-        "edit.undo" => {
-            let _ = doc::undo(handle);
-        }
-        "edit.redo" => {
-            let _ = doc::redo(handle);
+        id @ ("edit.undo" | "edit.redo") => {
+            let undo = id == "edit.undo";
+            if handle.state::<TextFocus>().0.load(Ordering::Relaxed) {
+                // A text field has focus: the webview runs execCommand on it.
+                let target = handle
+                    .webview_windows()
+                    .into_iter()
+                    .find(|(_, w)| w.is_focused().unwrap_or(false))
+                    .map_or("main".to_string(), |(label, _)| label);
+                let _ = handle.emit_to(target, "text-undo", if undo { "undo" } else { "redo" });
+            } else if undo {
+                let _ = doc::undo(handle);
+            } else {
+                let _ = doc::redo(handle);
+            }
         }
         "window.gallery" => open_window(handle, "gallery", "Gallery", (1000.0, 700.0)),
         "app.settings" => open_window(handle, "settings", "Settings", (480.0, 360.0)),

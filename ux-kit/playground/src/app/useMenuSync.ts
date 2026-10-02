@@ -7,9 +7,10 @@ import type { Command } from "../commands"
 /**
  * Connects the command table to the native menu: menu items arrive as `command` events
  * carrying the command id, and enabled/checked state goes back with `menu_state`.
- * Undo and redo are left to Rust, which sets their titles from the tree's history.
+ * Undo and redo are left to Rust, which sets their titles from the tree's history, or
+ * from `textFocus` (see textUndo.ts) while a text field has focus.
  */
-export function useMenuSync(commands: Command[]) {
+export function useMenuSync(commands: Command[], textFocus: boolean) {
   const latest = useRef(commands)
   latest.current = commands
 
@@ -23,11 +24,11 @@ export function useMenuSync(commands: Command[]) {
     }
   }, [])
 
-  const key = JSON.stringify(commands.map((c) => [c.id, c.enabled, c.pressed]))
+  const key = JSON.stringify(commands.map((c) => [c.id, c.enabled, c.pressed])) + textFocus
   useEffect(() => {
     const states = latest.current
       .filter((c) => !c.id.startsWith("edit."))
       .map((c) => ({ id: c.id, enabled: c.enabled, checked: c.pressed }))
-    invoke("menu_state", { states }).catch(() => {})
+    invoke("menu_state", { states, textFocus }).catch(() => {})
   }, [key])
 }

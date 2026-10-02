@@ -1,5 +1,6 @@
 export { cn } from "./lib/utils"
 export { useIsMobile } from "./lib/use-mobile"
+export { useTextFocus, isTextField } from "./lib/use-text-focus"
 
 export * from "./components/avatar"
 export * from "./components/badge"
