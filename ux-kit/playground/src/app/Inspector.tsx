@@ -7,7 +7,9 @@ import { BoolField, NumbersField, nums, TextField } from "../documents/fields"
 import { system } from "../documents/messages"
 import { ROLES, SIZES, WEIGHTS } from "../documents/fonts"
 import { TOKENS } from "../documents/tokens"
-import type { Gesture, History, Row, Schema, ValueSchema } from "../rhizome"
+import type { HistoryState } from "@preset.nz/app-kit"
+
+import type { Gesture, Row, Schema, ValueSchema } from "../rhizome"
 import { selectLayer, setFontSample, useFontSamples, type Selection } from "../selection"
 
 const show = (v: unknown) => (typeof v === "string" ? v || "—" : JSON.stringify(v))
@@ -298,7 +300,7 @@ export function Inspector({
   layers: Row[]
   selection: Selection
   schema: Schema | null
-  history: History | null
+  history: HistoryState | null
   set: SetValue
   gesture: Gesture
   reset: (path: string, keys: string[]) => void
@@ -330,15 +332,15 @@ export function Inspector({
         <Section title="History">
           {history && (
             <ol className="flex flex-col gap-0.5 font-mono text-xs">
-              {history.undo_labels.map((label, i) => (
+              {history.undoLabels.map((label, i) => (
                 <li key={`u${i}`}>
                   <span className="text-muted-foreground">{i + 1}</span> {label}
                 </li>
               ))}
               <li className="text-primary">— now —</li>
-              {history.redo_labels.map((label, i) => (
+              {history.redoLabels.map((label, i) => (
                 <li key={`r${i}`} className="text-muted-foreground">
-                  {history.history_len + i + 1} {label}
+                  {history.historyLen + i + 1} {label}
                 </li>
               ))}
             </ol>

@@ -8,18 +8,17 @@
 //! of every kind the documents edit. Edits are labelled; undo and redo are
 //! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
 //! live edits, one undo step. Every change emits `rhizome://commit` (the `Commit`) and
-//! refreshes the Edit menu.
+//! refreshes the Edit menu (app-kit's `refresh_history`). Undo and redo run through app-kit,
+//! which calls the `History` impl below, from the menu or the toolbar.
 //! TODO: move to rhizome-pom / rhizome-pom-tauri (open document, commit events,
 //! undo wired to the Edit menu) once that exists; this is the hand-rolled version.
 
 use std::sync::Mutex;
 
+use preset_app_kit::{refresh_history, History};
 use rhizome_core::{Commit, Error, GestureId, NodeType, Op, Origin, Registry, Row, Tree};
-use serde::Serialize;
 use serde_json::Value as Json;
-use tauri::{AppHandle, Emitter, Manager, State};
-
-use crate::menu;
+use tauri::{AppHandle, Emitter, Runtime, State};
 
 /// `Tree` is `Send` but not `Sync`, so the one open tree sits behind a mutex. The second field is
 /// the open gesture's id: `GestureId` doesn't cross IPC, so the webview just says begin / apply /
@@ -103,41 +102,55 @@ pub fn rhizome_rows(doc: State<'_, Doc>) -> Vec<Row> {
     doc.0.lock().expect("tree lock").rows()
 }
 
-/// The tree's history as it stands: `Tree::undo_label`, `Tree::redo_label`,
-/// `Tree::history_len`, and every step from `Tree::undo_labels` / `Tree::redo_labels`.
-#[derive(Clone, Debug, Default, Serialize)]
-pub struct HistoryState {
-    pub undo_label: Option<String>,
-    pub redo_label: Option<String>,
-    pub history_len: usize,
-    /// Oldest first.
-    pub undo_labels: Vec<String>,
-    /// Next first.
-    pub redo_labels: Vec<String>,
-}
+/// The open tree is the playground's `History`: app-kit reads the labels from it for the Edit
+/// menu and the toolbar, and calls `undo` and `redo` from either. Each read takes the tree lock,
+/// so `refresh_history` must never run while it is held (`run` below drops it first).
+impl History for Doc {
+    fn undo_label(&self) -> Option<String> {
+        self.0
+            .lock()
+            .expect("tree lock")
+            .undo_label()
+            .map(str::to_string)
+    }
 
-impl HistoryState {
-    pub fn of(tree: &Tree) -> HistoryState {
-        HistoryState {
-            undo_label: tree.undo_label().map(str::to_string),
-            redo_label: tree.redo_label().map(str::to_string),
-            history_len: tree.history_len(),
-            undo_labels: tree.undo_labels().map(str::to_string).collect(),
-            redo_labels: tree.redo_labels().map(str::to_string).collect(),
-        }
+    fn redo_label(&self) -> Option<String> {
+        self.0
+            .lock()
+            .expect("tree lock")
+            .redo_label()
+            .map(str::to_string)
+    }
+
+    fn undo_labels(&self) -> Vec<String> {
+        let tree = self.0.lock().expect("tree lock");
+        tree.undo_labels().map(str::to_string).collect()
+    }
+
+    fn redo_labels(&self) -> Vec<String> {
+        let tree = self.0.lock().expect("tree lock");
+        tree.redo_labels().map(str::to_string).collect()
+    }
+
+    fn undo<R: Runtime>(&self, app: &AppHandle<R>) -> Result<(), String> {
+        run(app, self, |t| t.undo().map(|c| ((), c)))
+    }
+
+    fn redo<R: Runtime>(&self, app: &AppHandle<R>) -> Result<(), String> {
+        run(app, self, |t| t.redo().map(|c| ((), c)))
     }
 }
 
 /// After any write: tell the webview, and bring the Edit menu in line with the history.
-fn changed(app: &AppHandle, commit: Option<Commit>) {
+fn changed<R: Runtime>(app: &AppHandle<R>, commit: Option<Commit>) {
     if let Some(commit) = commit {
         let _ = app.emit("rhizome://commit", commit);
     }
-    menu::sync_history(app);
+    refresh_history(app);
 }
 
-fn run<T>(
-    app: &AppHandle,
+fn run<R: Runtime, T>(
+    app: &AppHandle<R>,
     doc: &Doc,
     f: impl FnOnce(&mut Tree) -> rhizome_core::Result<(T, Option<Commit>)>,
 ) -> Result<T, String> {
@@ -151,11 +164,6 @@ fn run<T>(
 #[tauri::command]
 pub fn rhizome_schema(doc: State<'_, Doc>) -> rhizome_core::Schema {
     doc.0.lock().expect("tree lock").registry().schema()
-}
-
-#[tauri::command]
-pub fn rhizome_history(doc: State<'_, Doc>) -> HistoryState {
-    HistoryState::of(&doc.0.lock().expect("tree lock"))
 }
 
 /// Sets one value, as one labelled edit. `coalesce` is for input that arrives as a stream (a
@@ -312,27 +320,6 @@ fn keys_label(ops: &[Op]) -> Option<&str> {
 
 fn leaf(path: &str) -> &str {
     path.rsplit('/').next().unwrap_or(path)
-}
-
-/// Shared by the command and the menu item.
-pub fn undo(app: &AppHandle) -> Result<(), String> {
-    let doc = app.state::<Doc>();
-    run(app, &doc, |t| t.undo().map(|c| ((), c)))
-}
-
-pub fn redo(app: &AppHandle) -> Result<(), String> {
-    let doc = app.state::<Doc>();
-    run(app, &doc, |t| t.redo().map(|c| ((), c)))
-}
-
-#[tauri::command]
-pub fn rhizome_undo(app: AppHandle) -> Result<(), String> {
-    undo(&app)
-}
-
-#[tauri::command]
-pub fn rhizome_redo(app: AppHandle) -> Result<(), String> {
-    redo(&app)
 }
 
 #[cfg(test)]

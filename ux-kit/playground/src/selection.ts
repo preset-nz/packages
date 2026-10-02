@@ -1,29 +1,11 @@
-import { useSyncExternalStore } from "react"
+import { createSelection, createStore, useStore } from "@preset.nz/app-kit"
 
 import type { Row } from "./rhizome"
 
 // Interaction state, kept out of the rhizome document (guidance/design/interaction-state.md):
 // small stores, a discriminated union, narrow setters, no setSelection. Selection is not an
 // undo step; undo and redo leave it alone, and a selection whose target is gone reads as none.
-
-function createStore<T>(initial: T) {
-  let state = initial
-  const listeners = new Set<() => void>()
-  return {
-    get: () => state,
-    set(next: T) {
-      if (Object.is(next, state)) return
-      state = next
-      listeners.forEach((l) => l())
-    },
-    subscribe(l: () => void) {
-      listeners.add(l)
-      return () => void listeners.delete(l)
-    },
-  }
-}
-
-const useStore = <T>(s: ReturnType<typeof createStore<T>>) => useSyncExternalStore(s.subscribe, s.get)
+// The stores come from app-kit; the kinds, the setters and the resolution below are the app's.
 
 /** The item inside the open document that the inspector follows. Which kinds apply depends on the document. */
 export type Selection =
@@ -39,22 +21,22 @@ const NONE: Selection = { kind: "none" }
 // Two scopes, as interaction-state.md asks: which document is open (navigation, driven by the
 // outline) and which item is selected inside it (driven by the centre view). Opening a
 // document clears the item, so the pair can't disagree.
-const openDoc = createStore<string | null>(null)
-const item = createStore<Selection>(NONE)
+const openDoc = createSelection<string | null>(null)
+const item = createSelection<Selection>(NONE)
 
-export const useOpenDocumentId = () => useStore(openDoc)
-export const useSelection = () => useStore(item)
+export const useOpenDocumentId = () => openDoc.use()
+export const useSelection = () => item.use()
 
 export const openDocument = (id: string) => {
-  if (openDoc.get() !== id) item.set(NONE)
-  openDoc.set(id)
+  if (openDoc.get() !== id) item.clear()
+  openDoc.select(id)
 }
-export const clearSelection = () => item.set(NONE)
-export const selectToken = (name: string) => item.set({ kind: "token", name })
-export const selectFont = (role: string) => item.set({ kind: "font", role })
-export const selectValue = (key: string) => item.set({ kind: "value", key })
-export const selectSystem = (id: string) => item.set({ kind: "system", id })
-export const selectLayer = (id: string) => item.set({ kind: "layer", id })
+export const clearSelection = () => item.clear()
+export const selectToken = (name: string) => item.select({ kind: "token", name })
+export const selectFont = (role: string) => item.select({ kind: "font", role })
+export const selectValue = (key: string) => item.select({ kind: "value", key })
+export const selectSystem = (id: string) => item.select({ kind: "system", id })
+export const selectLayer = (id: string) => item.select({ kind: "layer", id })
 
 /** The selection, if it makes sense for the open document and its target exists. */
 export function resolveSelection(sel: Selection, doc: Row | null, layers: Row[]): Selection {

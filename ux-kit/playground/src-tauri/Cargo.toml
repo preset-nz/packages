@@ -20,3 +20,7 @@ serde_json = "1"
 # rhizome is a path dependency while one consumer uses it (see packages/CLAUDE.md).
 # Only the playground depends on it; the kit's TypeScript does not.
 rhizome-core = { path = "../../../rhizome/crates/rhizome-core" }
+# app-kit: the command table, menu, Undo and Redo, text-undo routing. Path dependency while
+# one consumer uses it (see packages/CLAUDE.md). It does not depend on rhizome; doc.rs
+# implements its `History` trait for the open tree.
+preset-app-kit = { path = "../../../app-kit" }

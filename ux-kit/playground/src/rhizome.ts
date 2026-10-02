@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
 
-// The shapes of rhizome-core's `Row`, `Commit` and the playground's HistoryState as they
+// The shapes of rhizome-core's `Row` and `Commit` as they
 // serialise. Only what the app reads. The commands are in src-tauri/src/doc.rs.
 export type Row = {
   id: string
@@ -25,14 +25,6 @@ export type ValueSchema = {
 }
 export type Schema = { types: { name: string; values?: ValueSchema[] }[] }
 export type Commit = { seq: number; label: string }
-export type History = {
-  undo_label: string | null
-  redo_label: string | null
-  history_len: number
-  undo_labels: string[] // oldest first
-  redo_labels: string[] // next first
-}
-
 /** The gesture verbs, bound to the one open tree. One gesture at a time. */
 export type Gesture = {
   begin: (path: string, key: string) => void
@@ -49,17 +41,11 @@ export const fetchRows = () => invoke<Row[]>("rhizome_rows")
 
 export function useRhizome() {
   const [rows, setRows] = useState<Row[]>([])
-  const [history, setHistory] = useState<History | null>(null)
   const [schema, setSchema] = useState<Schema | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
-    Promise.all([fetchRows(), invoke<History>("rhizome_history")])
-      .then(([r, h]) => {
-        setRows(r)
-        setHistory(h)
-      })
-      .catch((e) => setError(String(e)))
+    fetchRows().then(setRows, (e) => setError(String(e)))
   }, [])
 
   useEffect(() => {
@@ -115,5 +101,5 @@ export function useRhizome() {
     [call],
   )
 
-  return { rows, history, schema, error, call, set, gesture }
+  return { rows, schema, error, call, set, gesture }
 }

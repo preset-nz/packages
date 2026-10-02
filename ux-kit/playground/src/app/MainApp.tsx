@@ -8,11 +8,12 @@ import {
   StatusBar,
   StatusItem,
   StatusSpacer,
-  ToolbarItems,
   TooltipProvider,
 } from "@preset.nz/ux-kit"
 
-import { buildCommands, toItems, TOOLBAR } from "../commands"
+import { CommandToolbar, useCommands, undo } from "@preset.nz/app-kit"
+
+import { buildBindings, TOOLBAR } from "../commands"
 import { docInfo, sortDocs } from "../documents"
 import { DOC_PREFIX, LAYER_PREFIX, useRhizome } from "../rhizome"
 import {
@@ -30,12 +31,10 @@ import { Inspector } from "./Inspector"
 import { DocumentView } from "./DocumentView"
 import { Outline } from "./Outline"
 import { resetTarget } from "./reset"
-import { useMenuSync } from "./useMenuSync"
-import { blurField, useTextUndo } from "../textUndo"
 
 /** The main window: toolbar, outline of documents, the selected document, inspector, status bar. */
 export function MainApp() {
-  const { rows, history, schema, error, call, set, gesture } = useRhizome()
+  const { rows, schema, error, call, set, gesture } = useRhizome()
   const { dark, toggle: toggleTheme } = useTheme()
   const [leftOpen, setLeftOpen] = useStored("left.open", true)
   const [rightOpen, setRightOpen] = useStored("right.open", true)
@@ -65,13 +64,11 @@ export function MainApp() {
   }, [])
   const resetKeys = (path: string, keys: string[]) => call("rhizome_reset", { path, keys })
 
-  const commands = useMemo(
+  const bindings = useMemo(
     () =>
-      buildCommands({
+      buildBindings({
         canReset,
         resetReason: reset.reason ?? "",
-        undoLabel: history?.undo_label ?? null,
-        redoLabel: history?.redo_label ?? null,
         leftOpen,
         rightOpen,
         dark,
@@ -82,46 +79,32 @@ export function MainApp() {
             if (r === undefined) return // failed: the status bar shows the error
             notify({
               message: `Reset ${label}`,
-              action: { label: "Undo", onClick: () => (blurField(), void call("rhizome_undo")) },
+              action: { label: "Undo", onClick: () => void undo() },
             })
           })
         },
-        // Blur first: a focused field commits its text as one edit, then the undo takes that edit.
-        undo: () => (blurField(), call("rhizome_undo")),
-        redo: () => (blurField(), call("rhizome_redo")),
         toggleLeft: () => setLeftOpen((v) => !v),
         toggleRight: () => setRightOpen((v) => !v),
         toggleTheme,
       }),
-    [reset.target, reset.reason, selected, canReset, history, leftOpen, rightOpen, dark, call, setLeftOpen, setRightOpen, toggleTheme],
+    [reset.target, reset.reason, selected, canReset, leftOpen, rightOpen, dark, call, setLeftOpen, setRightOpen, toggleTheme],
   )
-  useMenuSync(commands, useTextUndo())
+  const { commands, run, shortcut, history } = useCommands(bindings)
 
-  const run = (id: string) => {
-    const c = commands.find((x) => x.id === id)
-    if (c?.enabled) c.run()
-  }
-
-  const done = history?.history_len ?? 0
-  const total = done + (history?.redo_labels.length ?? 0)
+  const done = history?.historyLen ?? 0
+  const total = done + (history?.redoLabels.length ?? 0)
 
   return (
     <TooltipProvider delay={300}>
       <SnackbarProvider>
         <div className="flex h-screen flex-col">
-          <ToolbarItems
-            aria-label="Toolbar"
-            leading={toItems(commands, TOOLBAR.leading)}
-            groups={TOOLBAR.groups.map((ids) => toItems(commands, ids))}
-            trailing={toItems(commands, TOOLBAR.trailing)}
-            onCommand={run}
-          />
+          <CommandToolbar aria-label="Toolbar" commands={commands} layout={TOOLBAR} run={run} />
           <div className="flex min-h-0 flex-1">
             <SidePanel
               side="left"
               title="Outline"
               icon={<Icons.TreeStructureIcon />}
-              shortcut="⌥⌘S"
+              shortcut={shortcut("panel.left")}
               open={leftOpen}
               onOpenChange={setLeftOpen}
               width={leftWidth}
@@ -148,7 +131,7 @@ export function MainApp() {
               side="right"
               title="Inspector"
               icon={<Icons.SlidersHorizontalIcon />}
-              shortcut="⌥⌘I"
+              shortcut={shortcut("panel.right")}
               open={rightOpen}
               onOpenChange={setRightOpen}
               width={rightWidth}

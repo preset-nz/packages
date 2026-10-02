@@ -18,6 +18,7 @@ export default defineConfig({
       "@tauri-apps/api",
       "@preset.nz/facets",
       "@preset.nz/ux-kit",
+      "@preset.nz/app-kit",
     ],
   },
   clearScreen: false,

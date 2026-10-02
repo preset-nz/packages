@@ -10,6 +10,7 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@preset.nz/app-kit": "link:../../app-kit",
     "@preset.nz/facets": "link:../../facets",
     "@preset.nz/ux-kit": "link:..",
     "@tailwindcss/vite": "^4.3.1",

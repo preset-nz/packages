@@ -11,7 +11,6 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             doc::rhizome_rows,
-            doc::rhizome_history,
             doc::rhizome_schema,
             doc::rhizome_set,
             doc::rhizome_reset,
@@ -19,9 +18,11 @@ pub fn run() {
             doc::rhizome_gesture_apply,
             doc::rhizome_gesture_end,
             doc::rhizome_gesture_cancel,
-            doc::rhizome_undo,
-            doc::rhizome_redo,
-            menu::menu_state,
+            preset_app_kit::app_kit_commands,
+            preset_app_kit::app_kit_menu_state,
+            preset_app_kit::app_kit_history,
+            preset_app_kit::app_kit_undo,
+            preset_app_kit::app_kit_redo,
         ])
         .run(tauri::generate_context!())
         .expect("error while running the ux-kit playground");
