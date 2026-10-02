@@ -18,7 +18,7 @@ export function DocumentView({ doc, layers, set, gesture }: { doc: Row | null; l
     case "primitives":
       return <PrimitivesDoc row={doc} set={set} gesture={gesture} />
     case "card":
-      return <CardDoc layers={layers} set={set} />
+      return <CardDoc layers={layers} set={set} gesture={gesture} />
     case "messages":
       return <MessagesDoc />
     default:

@@ -287,7 +287,7 @@ export function Inspector({
           <Section title={String(layer.values?.name ?? layer.name)}>
             {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
             <div className="-mx-3">
-              <CardPanel key={layer.id} row={layer} set={set} view="inspector" />
+              <CardPanel key={layer.id} row={layer} set={set} gesture={gesture} view="inspector" />
             </div>
           </Section>
         ) : (

@@ -6,7 +6,7 @@ import {
 } from "@preset.nz/facets"
 
 import { colourToHex, hexToColour } from "../colour"
-import type { Row } from "../rhizome"
+import type { Gesture, Row } from "../rhizome"
 
 /**
  * The property card for a `card` node, written as facets data. Each `path` is a rhizome
@@ -74,6 +74,9 @@ export interface CardSelection {
 export interface CardContext {
   set: (path: string, key: string, value: unknown, coalesce: boolean) => void
   setDraft: (key: string, value: unknown) => void
+  /** rhizome's gesture verbs, and whether a drag is open (writes then `apply` instead of `set`). */
+  gesture?: Gesture
+  gesturing?: { current: boolean }
 }
 
 /** The node's values in the panel's terms: rhizome's, with the colour as hex. */
@@ -101,7 +104,26 @@ const card: Scope<CardSelection, Record<string, unknown>> = {
       return
     }
     if (out === null || out === undefined) return
-    ctx.set(sel.row.path, path, out, STREAMED.has(path))
+    if (ctx.gesture && ctx.gesturing?.current) ctx.gesture.apply(sel.row.path, path, out)
+    else ctx.set(sel.row.path, path, out, STREAMED.has(path))
+  },
+  // A scrub, slider drag or colour pick: live applies, one undo step.
+  gesture: {
+    begin: (path, sel, ctx: CardContext) => {
+      if (!ctx.gesture) return
+      ctx.gesturing!.current = true
+      ctx.gesture.begin(sel.row.path, path)
+    },
+    end: (_path, _sel, ctx: CardContext) => {
+      if (!ctx.gesture) return
+      ctx.gesturing!.current = false
+      ctx.gesture.end()
+    },
+    cancel: (_path, _sel, ctx: CardContext) => {
+      if (!ctx.gesture) return
+      ctx.gesturing!.current = false
+      ctx.gesture.cancel()
+    },
   },
 }
 
