@@ -45,6 +45,11 @@ Union of the `src/components/ui` folders in Strata, Oblique, Shard and Map & Ter
 | skeleton | yes | M&T | Plain |
 | textarea | yes | M&T | Plain, restyled to match Input |
 | sidebar | yes | M&T | Plain, 700 lines. `asChild` became `render`. `useIsMobile` moved into the kit. Untested beyond the `collapsible="none"` form in the playground |
+| toolbar | yes | Oblique, M&T | Base UI Toolbar (roving focus). `ToolbarItems` takes `groups` of `ToolbarItemSpec` (id, label, icon, shortcut, enabled, disabledReason, pressed, menu) and `onCommand(id)`; Oblique's `ToolButtonSpec` table with M&T's disabled reason. Disabled items stay focusable so the tooltip can say why. `ToolbarButton`, `ToolbarGroup`, `ToolbarSeparator`, `ToolbarSpacer` compose by hand. Shard's header buttons are inline JSX and Fault's are not a toolbar, so neither contributed |
+| color-field | yes | M&T, Oblique, Strata | Swatch, hex text (commits on blur or Enter, bad input reverts), optional alpha (`#rrggbbaa`), preset grid in a Popover, native picker with `onPickStart`/`onPickEnd` for undo transactions (Oblique), `clearable` and null value (Strata, Oblique's optional colour), read-only, `trailing` slot for an eyedropper |
+| color-swatch | yes | Strata, M&T, Oblique | Chip over a checkerboard; `null` is the dashed empty chip |
+
+M&T's `src/palettes/` (presets and derivation) was considered for the colour field and left out: it is map domain data and stays in the app, which passes its colours in through `presets`.
 
 ## Using it
 
