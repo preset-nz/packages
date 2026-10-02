@@ -3,7 +3,34 @@
 //! maps to one handler (see playground/src/menu.ts).
 
 use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
-use tauri::{AppHandle, Emitter, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
+
+use crate::doc::{self, Doc, HistoryState};
+
+/// The Edit > Undo / Redo items, kept so their titles and enabled state can follow the
+/// tree's history.
+pub struct HistoryItems<R: Runtime> {
+    undo: MenuItem<R>,
+    redo: MenuItem<R>,
+}
+
+fn title(verb: &str, label: &Option<String>) -> String {
+    match label {
+        Some(l) => format!("{verb} {l}"),
+        None => verb.to_string(),
+    }
+}
+
+/// Re-read the history from the tree and update Edit > Undo / Redo.
+pub fn sync_history(app: &AppHandle) {
+    let state = HistoryState::of(&app.state::<Doc>().0.lock().expect("tree lock"));
+    if let Some(items) = app.try_state::<HistoryItems<tauri::Wry>>() {
+        let _ = items.undo.set_text(title("Undo", &state.undo_label));
+        let _ = items.undo.set_enabled(state.undo_label.is_some());
+        let _ = items.redo.set_text(title("Redo", &state.redo_label));
+        let _ = items.redo.set_enabled(state.redo_label.is_some());
+    }
+}
 
 /// Menu item id to the event the webview listens for.
 const EVENTS: &[(&str, &str)] = &[
@@ -15,7 +42,7 @@ const EVENTS: &[(&str, &str)] = &[
     ("view-native", "menu://view/section/native"),
 ];
 
-pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
+pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let name = "ux-kit playground";
     let about = AboutMetadata {
         name: Some(name.to_string()),
@@ -42,13 +69,17 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         ],
     )?;
 
+    let undo = MenuItem::with_id(app, "edit-undo", "Undo", false, Some("CmdOrCtrl+Z"))?;
+    let redo = MenuItem::with_id(app, "edit-redo", "Redo", false, Some("CmdOrCtrl+Shift+Z"))?;
+    app.manage(HistoryItems { undo: undo.clone(), redo: redo.clone() });
+
     let edit_menu = Submenu::with_items(
         app,
         "Edit",
         true,
         &[
-            &PredefinedMenuItem::undo(app, None)?,
-            &PredefinedMenuItem::redo(app, None)?,
+            &undo,
+            &redo,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::cut(app, None)?,
             &PredefinedMenuItem::copy(app, None)?,
@@ -93,7 +124,18 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     let menu = Menu::with_items(app, &[&app_menu, &edit_menu, &view_menu, &window_menu])?;
     app.set_menu(menu)?;
 
+    sync_history(app);
+
     app.on_menu_event(|handle, event| {
+        match event.id().0.as_str() {
+            "edit-undo" => {
+                let _ = doc::undo(handle);
+            }
+            "edit-redo" => {
+                let _ = doc::redo(handle);
+            }
+            _ => {}
+        }
         if let Some((_, evt)) = EVENTS.iter().find(|(id, _)| *id == event.id().0.as_str()) {
             let _ = handle.emit(evt, ());
         }

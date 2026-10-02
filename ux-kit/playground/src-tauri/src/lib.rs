@@ -9,7 +9,16 @@ pub fn run() {
             menu::install(app.handle())?;
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![doc::rhizome_rows])
+        .invoke_handler(tauri::generate_handler![
+            doc::rhizome_rows,
+            doc::rhizome_history,
+            doc::rhizome_add_note,
+            doc::rhizome_set_body,
+            doc::rhizome_rename,
+            doc::rhizome_remove,
+            doc::rhizome_undo,
+            doc::rhizome_redo,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running the ux-kit playground");
 }

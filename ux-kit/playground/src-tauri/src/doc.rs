@@ -2,16 +2,21 @@
 //!
 //! Uses rhizome-core as it is: `Registry`, `Tree`, `Edit::add`, `Tree::rows`. The node
 //! type and category below are made up for the playground, not an app's object model.
+//! Edits are labelled `Tree::edit` calls; undo and redo are `Tree::undo` / `Tree::redo`.
+//! Every change emits `rhizome://commit` (the `Commit`) and refreshes the Edit menu.
 //! TODO: move to rhizome-pom / rhizome-pom-tauri (open document, commit events,
-//! undo wired to the Edit menu) once the playground shows composites that edit.
+//! undo wired to the Edit menu) once that exists; this is the hand-rolled version.
 
 use std::sync::Mutex;
 
-use rhizome_core::{NodeType, Origin, Registry, Row, Tree, Value};
-use tauri::State;
+use rhizome_core::{Commit, NodeType, Origin, Registry, Row, Tree, Value};
+use serde::Serialize;
+use tauri::{AppHandle, Emitter, Manager, State};
+
+use crate::menu;
 
 /// `Tree` is `Send` but not `Sync`, so the one open tree sits behind a mutex.
-pub struct Doc(Mutex<Tree>);
+pub struct Doc(pub(crate) Mutex<Tree>);
 
 impl Doc {
     pub fn sample() -> Doc {
@@ -44,4 +49,112 @@ impl Doc {
 #[tauri::command]
 pub fn rhizome_rows(doc: State<'_, Doc>) -> Vec<Row> {
     doc.0.lock().expect("tree lock").rows()
+}
+
+/// What undo and redo would do now, straight from the tree: `Tree::undo_label`,
+/// `Tree::redo_label`, `Tree::history_len`.
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct HistoryState {
+    pub undo_label: Option<String>,
+    pub redo_label: Option<String>,
+    pub history_len: usize,
+}
+
+impl HistoryState {
+    pub fn of(tree: &Tree) -> HistoryState {
+        HistoryState {
+            undo_label: tree.undo_label().map(str::to_string),
+            redo_label: tree.redo_label().map(str::to_string),
+            history_len: tree.history_len(),
+        }
+    }
+}
+
+/// After any write: tell the webview, and bring the Edit menu in line with the history.
+fn changed(app: &AppHandle, commit: Option<Commit>) {
+    if let Some(commit) = commit {
+        let _ = app.emit("rhizome://commit", commit);
+    }
+    menu::sync_history(app);
+}
+
+fn run<T>(
+    app: &AppHandle,
+    doc: &Doc,
+    f: impl FnOnce(&mut Tree) -> rhizome_core::Result<(T, Option<Commit>)>,
+) -> Result<T, String> {
+    let out = f(&mut doc.0.lock().expect("tree lock")).map_err(|e| e.to_string())?;
+    changed(app, out.1);
+    Ok(out.0)
+}
+
+#[tauri::command]
+pub fn rhizome_history(doc: State<'_, Doc>) -> HistoryState {
+    HistoryState::of(&doc.0.lock().expect("tree lock"))
+}
+
+#[tauri::command]
+pub fn rhizome_add_note(app: AppHandle, doc: State<'_, Doc>) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        t.edit("Add Note", |tx| tx.add_unique("/notes", "note", "note").map(|_| ()))
+    })
+}
+
+#[tauri::command]
+pub fn rhizome_set_body(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    path: String,
+    body: String,
+) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        let label = format!("Edit {}", leaf(&path));
+        t.edit(&label, |tx| tx.set_value(path.as_str(), "body", Value::Text(body)))
+    })
+}
+
+#[tauri::command]
+pub fn rhizome_rename(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    path: String,
+    name: String,
+) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        let label = format!("Rename {}", leaf(&path));
+        t.edit(&label, |tx| tx.rename(path.as_str(), &name))
+    })
+}
+
+#[tauri::command]
+pub fn rhizome_remove(app: AppHandle, doc: State<'_, Doc>, path: String) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        let label = format!("Remove {}", leaf(&path));
+        t.edit(&label, |tx| tx.remove(path.as_str()))
+    })
+}
+
+fn leaf(path: &str) -> &str {
+    path.rsplit('/').next().unwrap_or(path)
+}
+
+/// Shared by the command and the menu item.
+pub fn undo(app: &AppHandle) -> Result<(), String> {
+    let doc = app.state::<Doc>();
+    run(app, &doc, |t| t.undo().map(|c| ((), c)))
+}
+
+pub fn redo(app: &AppHandle) -> Result<(), String> {
+    let doc = app.state::<Doc>();
+    run(app, &doc, |t| t.redo().map(|c| ((), c)))
+}
+
+#[tauri::command]
+pub fn rhizome_undo(app: AppHandle) -> Result<(), String> {
+    undo(&app)
+}
+
+#[tauri::command]
+pub fn rhizome_redo(app: AppHandle) -> Result<(), String> {
+    redo(&app)
 }
