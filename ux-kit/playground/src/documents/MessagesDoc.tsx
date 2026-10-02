@@ -1,12 +1,12 @@
 import { useRef } from "react"
-import { Button, toast, useSnackbar } from "@preset.nz/ux-kit"
+import { Button, dismissNotification, notify, useSnackbar } from "@preset.nz/ux-kit"
 
 import { selectSystem, useSelection } from "../selection"
 import { DOC_PAGE, DocHeader } from "./Header"
 import { Selectable } from "./Selectable"
 import { SYSTEMS, type ToastSystem } from "./messages"
 
-/** What each button does in one system. Same set of buttons, same texts, so the columns compare. */
+/** What each button does. */
 interface Fire {
   plain(): void
   success(): void
@@ -16,6 +16,7 @@ interface Fire {
   burst(): void
   persistent(): void
   dismiss(): void
+  notify(): void
 }
 
 const LONG_ERROR = {
@@ -45,28 +46,10 @@ function useSnackbarFire(): Fire {
       if (persistentId.current) snackbar.dismiss(persistentId.current)
       persistentId.current = null
     },
-  }
-}
-
-function useSonnerFire(): Fire {
-  const persistentId = useRef<string | number | null>(null)
-  return {
-    plain: () => toast("Exported 3 layers"),
-    success: () => toast.success("Exported 3 layers"),
-    warning: () => toast.warning("Layer names are long"),
-    error: () => toast.error(LONG_ERROR.title, { description: LONG_ERROR.detail }),
-    action: () =>
-      toast("Removed Shadow", {
-        action: { label: "Undo", onClick: () => toast("Restored Shadow") },
-      }),
-    burst: () => [1, 2, 3, 4].forEach((n) => setTimeout(() => toast(`Message ${n} of 4`), n * 120)),
-    persistent: () => {
-      if (persistentId.current !== null) toast.dismiss(persistentId.current)
-      persistentId.current = toast("Stays until dismissed", { duration: Infinity })
-    },
-    dismiss: () => {
-      if (persistentId.current !== null) toast.dismiss(persistentId.current)
-      persistentId.current = null
+    // No hook: the same snackbar, raised the way a command handler or a store would.
+    notify: () => {
+      const id = notify({ message: "Raised with notify()", description: "From plain code, outside React.", kind: "success" })
+      setTimeout(() => dismissNotification(id), 3000)
     },
   }
 }
@@ -82,6 +65,7 @@ function Column({ sys, fire }: { sys: ToastSystem; fire: Fire }) {
     ["Burst of four", fire.burst],
     ["Persistent", fire.persistent],
     ["Dismiss persistent", fire.dismiss],
+    ["notify() outside React", fire.notify],
   ]
   return (
     <Selectable
@@ -110,19 +94,17 @@ function Column({ sys, fire }: { sys: ToastSystem; fire: Fire }) {
   )
 }
 
-/** The kit's two toast systems side by side. Both viewports sit bottom-right above the status bar. */
+/** The snackbar showcase. Its viewport sits bottom-right above the status bar. */
 export function MessagesDoc() {
   const snackbar = useSnackbarFire()
-  const sonner = useSonnerFire()
   return (
     <div className={DOC_PAGE}>
       <DocHeader title="Messages">
-        The same eight messages in each toast system. Fire them and watch where they land, how they
-        stack and how they look. Select a column for its facts.
+        The kit's one toast, the snackbar. Fire each kind and watch where it lands, how they stack
+        and how they look. Select the panel for its facts.
       </DocHeader>
-      <div className="grid gap-4 p-1 md:grid-cols-2">
+      <div className="p-1">
         <Column sys={SYSTEMS[0]} fire={snackbar} />
-        <Column sys={SYSTEMS[1]} fire={sonner} />
       </div>
     </div>
   )

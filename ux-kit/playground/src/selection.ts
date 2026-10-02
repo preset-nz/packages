@@ -32,7 +32,7 @@ export type Selection =
   | { kind: "font"; role: string } // Fonts: a role, `Heading`
   | { kind: "value"; key: string } // Primitives: a value key of the document node
   | { kind: "layer"; id: string } // Card: a layer node
-  | { kind: "system"; id: string } // Messages: a toast system, `snackbar` or `sonner`
+  | { kind: "system"; id: string } // Messages: the toast system, `snackbar`
 
 const NONE: Selection = { kind: "none" }
 

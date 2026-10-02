@@ -103,7 +103,6 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-  Toaster,
   Toggle,
   ToggleGroup,
   ToggleGroupItem,
@@ -111,7 +110,6 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-  toast,
   useSnackbar,
 } from "@preset.nz/ux-kit"
 
@@ -411,14 +409,8 @@ function Feedback() {
   return (
     <Group
       title="Feedback"
-      note="Sonner and the Strata snackbar both live in the kit for now; pick one."
+      note="The snackbar is the kit's one toast."
     >
-      <Demo name="Sonner">
-        <Toaster />
-        <Button variant="outline" onClick={() => toast("Event created", { description: "Via sonner" })}>
-          Show toast
-        </Button>
-      </Demo>
       <Demo name="Snackbar (Base UI Toast)">
         <SnackbarProvider>
           <SnackbarButton />
