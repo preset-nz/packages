@@ -2,9 +2,12 @@ import { useEffect, useMemo } from "react"
 import {
   Icons,
   SidePanel,
+  SnackbarProvider,
+  SnackbarViewport,
   StatusBar,
   StatusItem,
   StatusSpacer,
+  Toaster,
   ToolbarItems,
   TooltipProvider,
 } from "@preset.nz/ux-kit"
@@ -94,6 +97,7 @@ export function MainApp() {
 
   return (
     <TooltipProvider delay={300}>
+     <SnackbarProvider>
       <div className="flex h-screen flex-col">
         <ToolbarItems
           aria-label="Toolbar"
@@ -162,6 +166,10 @@ export function MainApp() {
           {error && <span className="truncate text-destructive">{error}</span>}
         </StatusBar>
       </div>
+      {/* Both toast systems at the same spot, bottom-right above the 24px status bar (the Messages document). */}
+      <SnackbarViewport className="fixed right-3 bottom-9 left-auto" />
+      <Toaster position="bottom-right" offset={{ right: 12, bottom: 36 }} theme={dark ? "dark" : "light"} />
+     </SnackbarProvider>
     </TooltipProvider>
   )
 }

@@ -1,9 +1,9 @@
-//! An in-memory rhizome tree of four documents (and the layers the Card document holds), and
+//! An in-memory rhizome tree of five documents (and the layers the Card document holds), and
 //! the commands that read and edit it.
 //!
 //! Uses rhizome-core as it is: `Registry`, `Tree`, `Tree::rows`, `Op::Set` / `Op::Reset`
 //! through `Tree::edit_ops` and `Tree::edit_coalesced`. The category and node types below are
-//! made up for the playground, not an app's object model. `tokens` and `fonts` hold no
+//! made up for the playground, not an app's object model. `tokens`, `fonts` and `messages` hold no
 //! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
 //! of every kind the documents edit. Edits are labelled; undo and redo are
 //! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
@@ -35,6 +35,7 @@ impl Doc {
             .node(NodeType::new("tokens").in_categories(docs))
             .node(NodeType::new("fonts").in_categories(docs))
             .node(NodeType::new("card").in_categories(docs))
+            .node(NodeType::new("messages").in_categories(docs))
             .node(
                 NodeType::new("primitives")
                     .in_categories(docs)
@@ -71,6 +72,7 @@ impl Doc {
             tx.add("/documents", "fonts", "fonts")?;
             tx.add("/documents", "primitives", "primitives")?;
             tx.add("/documents", "card", "card")?;
+            tx.add("/documents", "messages", "messages")?;
             tx.add("/layers", "layer", "background")?;
             tx.add("/layers", "layer", "figure")?;
             tx.add("/layers", "layer", "shadow")?;
@@ -339,7 +341,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn sample_has_four_documents_three_layers_and_no_history() {
+    fn sample_has_five_documents_three_layers_and_no_history() {
         let doc = Doc::sample();
         let tree = doc.0.lock().unwrap();
         let types: Vec<String> = tree
@@ -348,7 +350,7 @@ mod tests {
             .filter(|r| r.path.as_str().starts_with("/documents/"))
             .map(|r| r.type_name)
             .collect();
-        assert_eq!(types.len(), 4);
+        assert_eq!(types.len(), 5);
         let layers = tree
             .rows()
             .into_iter()

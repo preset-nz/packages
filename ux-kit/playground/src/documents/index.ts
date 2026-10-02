@@ -8,6 +8,7 @@ export const DOCS = [
   { type: "fonts", label: "Fonts", Icon: Icons.TextAaIcon },
   { type: "primitives", label: "Primitives", Icon: Icons.SlidersHorizontalIcon },
   { type: "card", label: "Card", Icon: Icons.IdentificationCardIcon },
+  { type: "messages", label: "Messages", Icon: Icons.ChatTextIcon },
 ] as const
 
 export const docInfo = (type: string) => DOCS.find((d) => d.type === type)

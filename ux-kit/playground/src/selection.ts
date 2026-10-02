@@ -32,6 +32,7 @@ export type Selection =
   | { kind: "font"; role: string } // Fonts: a role, `Heading`
   | { kind: "value"; key: string } // Primitives: a value key of the document node
   | { kind: "layer"; id: string } // Card: a layer node
+  | { kind: "system"; id: string } // Messages: a toast system, `snackbar` or `sonner`
 
 const NONE: Selection = { kind: "none" }
 
@@ -52,6 +53,7 @@ export const clearSelection = () => item.set(NONE)
 export const selectToken = (name: string) => item.set({ kind: "token", name })
 export const selectFont = (role: string) => item.set({ kind: "font", role })
 export const selectValue = (key: string) => item.set({ kind: "value", key })
+export const selectSystem = (id: string) => item.set({ kind: "system", id })
 export const selectLayer = (id: string) => item.set({ kind: "layer", id })
 
 /** The selection, if it makes sense for the open document and its target exists. */
@@ -65,6 +67,8 @@ export function resolveSelection(sel: Selection, doc: Row | null, layers: Row[])
       return doc?.type === "primitives" && sel.key in (doc.values ?? {}) ? sel : NONE
     case "layer":
       return doc?.type === "card" && layers.some((l) => l.id === sel.id) ? sel : NONE
+    case "system":
+      return doc?.type === "messages" ? sel : NONE
     default:
       return NONE
   }
@@ -82,6 +86,8 @@ export function selectionPath(sel: Selection, doc: Row | null, layers: Row[]): s
       return `${doc.path}#${sel.key}`
     case "layer":
       return layers.find((l) => l.id === sel.id)?.path ?? doc.path
+    case "system":
+      return `${doc.path}/${sel.id}`
     default:
       return doc.path
   }

@@ -2,6 +2,7 @@ import { EmptyState, Icons } from "@preset.nz/ux-kit"
 
 import { CardDoc } from "../documents/CardDoc"
 import { FontsDoc } from "../documents/FontsDoc"
+import { MessagesDoc } from "../documents/MessagesDoc"
 import { PrimitivesDoc } from "../documents/PrimitivesDoc"
 import { TokensDoc } from "../documents/TokensDoc"
 import type { SetValue } from "../documents"
@@ -18,6 +19,8 @@ export function DocumentView({ doc, layers, set, gesture }: { doc: Row | null; l
       return <PrimitivesDoc row={doc} set={set} gesture={gesture} />
     case "card":
       return <CardDoc layers={layers} set={set} />
+    case "messages":
+      return <MessagesDoc />
     default:
       return (
         <EmptyState

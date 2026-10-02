@@ -4,6 +4,7 @@ import { Button, ColorSwatch, Input, Label, SidePanelContent, SidePanelHeader } 
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
 import { BoolField, NumbersField, nums, TextField } from "../documents/fields"
+import { system } from "../documents/messages"
 import { ROLES, SIZES, WEIGHTS } from "../documents/fonts"
 import { TOKENS } from "../documents/tokens"
 import type { Gesture, History, Row, Schema, ValueSchema } from "../rhizome"
@@ -174,6 +175,29 @@ function FontInspector({ role }: { role: string }) {
   )
 }
 
+/** A toast system: what it is and how it is used. Read-only. */
+function SystemInspector({ id }: { id: string }) {
+  const s = system(id)
+  if (!s) return null
+  return (
+    <>
+      <Section title="Toast system">
+        <div className="text-sm font-medium">{s.label}</div>
+        <p className="text-xs text-muted-foreground">{s.tagline}</p>
+      </Section>
+      <Section title="Facts">
+        <Props>
+          {s.facts.map((f) => (
+            <Prop key={f.k} k={f.k}>
+              {f.v}
+            </Prop>
+          ))}
+        </Props>
+      </Section>
+    </>
+  )
+}
+
 /** The editor for one value, by its kind. Same rhizome edit as the row in the centre. */
 function ValueEditor({ doc, spec, set, gesture }: { doc: Row; spec: ValueSchema; set: SetValue; gesture: Gesture }) {
   const current = doc.values?.[spec.key]
@@ -288,6 +312,8 @@ export function Inspector({
           <TokenInspector name={selection.name} />
         ) : selection.kind === "font" ? (
           <FontInspector role={selection.role} />
+        ) : selection.kind === "system" ? (
+          <SystemInspector id={selection.id} />
         ) : selection.kind === "value" && doc ? (
           <ValueInspector doc={doc} valueKey={selection.key} schema={schema} set={set} gesture={gesture} reset={reset} />
         ) : layer ? (

@@ -31,6 +31,8 @@ export function resetTarget(
     case "token":
     case "font":
       return { target: null, reason: "Tokens and fonts are read-only" }
+    case "system":
+      return { target: null, reason: "Nothing to reset on a toast system" }
     default:
       if (doc.type === "primitives")
         return doc.set?.length
