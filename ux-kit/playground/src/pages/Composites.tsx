@@ -12,16 +12,20 @@ type Row = {
   role: "root" | "category" | "group" | "node" | "opaque"
 }
 type Commit = { seq: number; label: string }
-// Tree::undo_label, Tree::redo_label, Tree::history_len.
-type History = { undo_label: string | null; redo_label: string | null; history_len: number }
+// Tree::undo_label, Tree::redo_label, Tree::history_len, Tree::undo_labels, Tree::redo_labels.
+type History = {
+  undo_label: string | null
+  redo_label: string | null
+  history_len: number
+  undo_labels: string[] // oldest first
+  redo_labels: string[] // next first
+}
 
 const NOTE_PREFIX = "/notes/"
 
 export function Composites() {
   const [rows, setRows] = useState<Row[] | null>(null)
   const [history, setHistory] = useState<History | null>(null)
-  // Commits seen since this page opened, newest first. rhizome keeps no list of its own.
-  const [commits, setCommits] = useState<Commit[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
@@ -35,10 +39,7 @@ export function Composites() {
 
   useEffect(() => {
     refresh()
-    const un = listen<Commit>("rhizome://commit", (e) => {
-      setCommits((c) => [e.payload, ...c].slice(0, 20))
-      refresh()
-    })
+    const un = listen<Commit>("rhizome://commit", refresh)
     return () => {
       un.then((f) => f())
     }
@@ -134,15 +135,21 @@ export function Composites() {
           <dd>{history.history_len}</dd>
         </dl>
       )}
-      <h3 className="mt-4 text-sm font-medium">Commits this session</h3>
-      <ol className="mt-1 space-y-0.5 font-mono text-sm">
-        {commits.map((c) => (
-          <li key={c.seq}>
-            <span className="text-muted-foreground">#{c.seq}</span> {c.label}
-          </li>
-        ))}
-        {commits.length === 0 && <li className="text-muted-foreground">none yet</li>}
-      </ol>
+      {history && (
+        <ol className="mt-4 space-y-0.5 font-mono text-sm">
+          {history.undo_labels.map((label, i) => (
+            <li key={`u${i}`}>
+              <span className="text-muted-foreground">{i + 1}</span> {label}
+            </li>
+          ))}
+          <li className="text-primary">— now —</li>
+          {history.redo_labels.map((label, i) => (
+            <li key={`r${i}`} className="text-muted-foreground">
+              {history.history_len + i + 1} {label}
+            </li>
+          ))}
+        </ol>
+      )}
     </section>
   )
 }

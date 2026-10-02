@@ -51,13 +51,17 @@ pub fn rhizome_rows(doc: State<'_, Doc>) -> Vec<Row> {
     doc.0.lock().expect("tree lock").rows()
 }
 
-/// What undo and redo would do now, straight from the tree: `Tree::undo_label`,
-/// `Tree::redo_label`, `Tree::history_len`.
+/// The tree's history as it stands: `Tree::undo_label`, `Tree::redo_label`,
+/// `Tree::history_len`, and every step from `Tree::undo_labels` / `Tree::redo_labels`.
 #[derive(Clone, Debug, Default, Serialize)]
 pub struct HistoryState {
     pub undo_label: Option<String>,
     pub redo_label: Option<String>,
     pub history_len: usize,
+    /// Oldest first.
+    pub undo_labels: Vec<String>,
+    /// Next first.
+    pub redo_labels: Vec<String>,
 }
 
 impl HistoryState {
@@ -66,6 +70,8 @@ impl HistoryState {
             undo_label: tree.undo_label().map(str::to_string),
             redo_label: tree.redo_label().map(str::to_string),
             history_len: tree.history_len(),
+            undo_labels: tree.undo_labels().map(str::to_string).collect(),
+            redo_labels: tree.redo_labels().map(str::to_string).collect(),
         }
     }
 }
