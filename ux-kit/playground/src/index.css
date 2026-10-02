@@ -1,0 +1,4 @@
+@import "tailwindcss";
+/* The kit ships unbuilt source, which Tailwind does not scan on its own. */
+@source "../../src";
+@import "@preset.nz/ux-kit/index.css";

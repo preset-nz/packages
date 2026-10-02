@@ -1,0 +1,22 @@
+[package]
+name = "ux-kit-playground"
+version = "0.0.1"
+description = "Playground for @preset.nz/ux-kit"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[lib]
+name = "ux_kit_playground_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# rhizome is a path dependency while one consumer uses it (see packages/CLAUDE.md).
+# Only the playground depends on it; the kit's TypeScript does not.
+rhizome-core = { path = "/Users/georg/rhizomatic-preset/packages/rhizome/crates/rhizome-core" }
