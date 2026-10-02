@@ -6,12 +6,14 @@ import { MENU_EVENTS, type MenuEvent } from "./menu"
 import { Tokens } from "./pages/Tokens"
 import { Primitives } from "./pages/Primitives"
 import { Composites } from "./pages/Composites"
+import { ToolbarPage } from "./pages/Toolbar"
 import { Placeholder } from "./pages/Placeholder"
 
 const SECTIONS = [
   { id: "tokens", label: "Tokens", Icon: Icons.PaletteIcon },
   { id: "primitives", label: "Primitives", Icon: Icons.CubeIcon },
   { id: "composites", label: "Composites", Icon: Icons.TreeStructureIcon },
+  { id: "toolbar", label: "Toolbar and colour", Icon: Icons.ToolboxIcon },
   { id: "native", label: "Native", Icon: Icons.AppWindowIcon },
   { id: "settings", label: "Settings", Icon: Icons.GearIcon },
 ] as const
@@ -71,6 +73,7 @@ export function App() {
         {section === "tokens" && <Tokens dark={dark} onToggleTheme={toggleTheme} />}
         {section === "primitives" && <Primitives />}
         {section === "composites" && <Composites />}
+        {section === "toolbar" && <ToolbarPage />}
         {section === "native" && (
           <Placeholder title="Native" note="Menu, undo, window restore: the rules in native-apps.md, as components." />
         )}
