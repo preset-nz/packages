@@ -81,6 +81,9 @@ importers:
 
   playground:
     dependencies:
+      '@preset.nz/facets':
+        specifier: link:../../facets
+        version: link:../../facets
       '@preset.nz/ux-kit':
         specifier: link:..
         version: link:..
