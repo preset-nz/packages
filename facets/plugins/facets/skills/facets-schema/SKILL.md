@@ -114,7 +114,7 @@ registerFieldRenderer("swatches", Swatches as FieldRenderer) // the cast is need
 
 facets ships unbuilt TypeScript that imports the host's shadcn primitives. All four steps are needed. The first three fail silently or late.
 
-1. **Primitives** at `@/components/ui/*`, with the `@` alias pointing at `src/`: `input` (`Input`), `label` (`Label`), `checkbox` (`Checkbox`), `separator` (`Separator`), and `select` (`Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`). Base UI or Radix both work.
+1. **Primitives** at `@/components/ui/*`, with the `@` alias pointing at `src/`: `input` (`Input`), `label` (`Label`), `checkbox` (`Checkbox`), `separator` (`Separator`), and `select` (`Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`), and, from 0.2.0, `number-field` (`NumberField`), `slider` (`Slider`) and `color-field` (`ColorField`). Base UI or Radix both work. Scopes may add `gesture: { begin, end, cancel? }` so a drag is one undo step.
 2. **Tailwind 4 `@source`** in the CSS entry, relative to that file. Without it the build passes and the panel renders unstyled:
    ```css
    @import "tailwindcss";

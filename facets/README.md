@@ -44,8 +44,28 @@ the conventional shadcn path, and your bundler's `@` alias resolves it:
 | `@/components/ui/checkbox` | `Checkbox` |
 | `@/components/ui/separator` | `Separator` |
 | `@/components/ui/select` | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem` |
+| `@/components/ui/number-field` | `NumberField` |
+| `@/components/ui/slider` | `Slider` |
+| `@/components/ui/color-field` | `ColorField` |
 
-So you need an `@/*` alias pointing at your `src/`, those five modules present,
+The last three are what make a panel feel like the rest of your app: a number
+you drag, a square slider, your colour picker. They are the **minimum** facets
+reads (typed in `dev/ui/` in this repo):
+
+- `NumberField`: `value: number`, `onValueChange(value, { reason })`, `min`,
+  `max`, `step`, `integer`, `precision`, `label` (the scrub handle: the field
+  draws its own label, so the panel adds none), `disabled`, and
+  `onScrubStart` / `onScrubEnd` / `onScrubCancel`. Facets uses it for `number`
+  and for each slot of `vector`. A vector slot's `suffix` shows in read-only
+  mode only.
+- `Slider`: `value: number`, `onValueChange(value)` (a number or an array, facets
+  takes the first), `onValueCommitted()`, `min`, `max`, `step`, `disabled`,
+  `aria-label`. One thumb.
+- `ColorField`: `value: string | null`, `onChange(value | null)`, `label`,
+  `presets`, `disabled`, `onPickStart` / `onPickEnd`. No `onChange` means
+  read-only.
+
+So you need an `@/*` alias pointing at your `src/`, those eight modules present,
 and Tailwind with shadcn's theme tokens (`muted-foreground`, `border` and
 friends are used throughout).
 
@@ -165,6 +185,32 @@ each field to its renderer. Props: `scopeKey`, `selection`, `ctx`, plus optional
 `ctx` is yours. The package treats it as opaque and passes it through to every
 `read`, `write`, renderer and options provider. Put your app's API in it.
 
+### Drags as one undo step
+
+A scrubbed number, a dragged slider and an open colour picker produce many
+`write`s. Say where they begin and end and your undo stack can fold them into
+one step: add `gesture` to the scope.
+
+```ts
+registerScope("blur", {
+  schema, read, write,
+  gesture: {
+    begin: (path, sel, ctx) => ctx.beginGesture(sel.id, path),
+    end: (path, sel, ctx) => ctx.endGesture(),
+    cancel: (path, sel, ctx) => ctx.cancelGesture(), // optional: Escape during a scrub
+  },
+})
+```
+
+Every `write` between `begin` and `end` belongs to the gesture (apply them
+live, close one undo step at `end`). `cancel` fires instead of `end` when the
+user abandons a scrub; put the value back. Typed values and arrow-key steps are
+single writes outside any gesture. Omit `gesture` and drags are plain repeated
+`write`s, as before. The renderers receive the same hooks as optional
+`onGestureBegin` / `onGestureEnd` / `onGestureCancel` props, set only when the
+scope declares `gesture`; a custom renderer with a continuous control can call
+them too.
+
 ### How `path` resolves
 
 `read()` returns a record, and `path` is a **key into that record** — a flat
@@ -181,11 +227,11 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 |---|---|---|
 | `text` | string | `placeholder` |
 | `textarea` | string | `placeholder`, `rows` |
-| `number` | number | `min`, `max`, `step` |
-| `slider` | number | same, rendered as a slider |
+| `number` | number | `min`, `max`, `step`; drag the label to scrub (host `NumberField`) |
+| `slider` | number | same, drawn by the host's `Slider` |
 | `checkbox` | boolean | |
 | `select` | string | `options`, or `optionsProvider(ctx)` for dynamic lists |
-| `color` | hex string | `presets`; shows a swatch |
+| `color` | hex string | `presets`; the host's `ColorField` |
 | `vector` | number array | N scalars in one row — Houdini's `float3` / `int2`. `components` sets arity and per-slot label, suffix and range |
 | `file` | `{ name }` | display only |
 | `separator` | none | a horizontal rule, with `label` as an optional caption. No `path` |

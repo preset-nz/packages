@@ -198,6 +198,20 @@ export interface Scope<S = unknown, V = Record<string, unknown>> {
     selection: S,
     ctx: ScopeContext,
   ) => void
+  /**
+   * One drag as one undo step. A drag is a scrubbed number, a dragged slider
+   * thumb or an open colour picker; `begin` fires when it starts, every
+   * `write` until `end` is part of it, and `end` closes it. `cancel` fires
+   * instead of `end` when the user abandons it (Escape during a scrub): put
+   * the value back. Omit `gesture` and drags are plain repeated `write`s.
+   */
+  gesture?: ScopeGesture<S>
+}
+
+export interface ScopeGesture<S = unknown> {
+  begin: (path: string, selection: S, ctx: ScopeContext) => void
+  end: (path: string, selection: S, ctx: ScopeContext) => void
+  cancel?: (path: string, selection: S, ctx: ScopeContext) => void
 }
 
 export interface FieldRendererProps<F extends FieldDef = FieldDef> {
@@ -205,6 +219,15 @@ export interface FieldRendererProps<F extends FieldDef = FieldDef> {
   value: unknown
   disabled: boolean
   onChange?: (next: unknown) => void
+  /**
+   * A drag began, ended, or was abandoned: see `Scope.gesture`. Set only when
+   * the scope declares `gesture` and the panel is editable. The built-in
+   * number, vector, slider and colour renderers call them around their drags;
+   * a custom renderer with a continuous control may too.
+   */
+  onGestureBegin?: () => void
+  onGestureEnd?: () => void
+  onGestureCancel?: () => void
   ctx: ScopeContext
   /**
    * The view the field is drawn in. In `"collapsed"` it shares a line with

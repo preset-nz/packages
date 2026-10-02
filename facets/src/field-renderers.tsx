@@ -3,7 +3,7 @@
  * components plus a single `registerBuiltinRenderers` entry point. Splitting
  * each renderer into its own file would be over-organisation for code that
  * never hot-reloads in isolation. */
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
+import { NumberField } from "@/components/ui/number-field"
+import { Slider } from "@/components/ui/slider"
+import { ColorField } from "@/components/ui/color-field"
 import { registerFieldRenderer } from "./registry"
 import type {
   CheckboxFieldDef,
@@ -152,7 +155,9 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
   value,
   disabled,
   onChange,
-  view,
+  onGestureBegin,
+  onGestureEnd,
+  onGestureCancel,
 }) => {
   const num =
     typeof value === "number"
@@ -160,29 +165,29 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
       : value != null && value !== ""
       ? Number(value)
       : null
-  const display =
-    num != null && Number.isFinite(num) ? num.toLocaleString() : ""
+  const finite = num != null && Number.isFinite(num)
+  const label = field.label ?? field.id
+  if (!onChange) {
+    return (
+      <FieldShell label={label}>
+        <ReadOnlyText>{finite ? num.toLocaleString() : <Empty />}</ReadOnlyText>
+      </FieldShell>
+    )
+  }
+  // The field's own label is the scrub handle, so no label above it.
   return (
-    <FieldShell label={field.label ?? field.id} view={view}>
-      {onChange ? (
-        <Input
-          type="number"
-          aria-label={field.label ?? field.id}
-          value={num != null && Number.isFinite(num) ? String(num) : ""}
-          min={field.min}
-          max={field.max}
-          step={field.step ?? 1}
-          disabled={disabled}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
-      ) : display ? (
-        <ReadOnlyText>{display}</ReadOnlyText>
-      ) : (
-        <ReadOnlyText>
-          <Empty />
-        </ReadOnlyText>
-      )}
-    </FieldShell>
+    <NumberField
+      label={label}
+      value={finite ? num : (field.min ?? 0)}
+      min={field.min}
+      max={field.max}
+      step={field.step ?? 1}
+      disabled={disabled}
+      onValueChange={(next) => onChange(next)}
+      onScrubStart={onGestureBegin}
+      onScrubEnd={onGestureEnd}
+      onScrubCancel={onGestureCancel}
+    />
   )
 }
 
@@ -192,22 +197,45 @@ const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
   disabled,
   onChange,
   view,
+  onGestureBegin,
+  onGestureEnd,
 }) => {
   const num = typeof value === "number" ? value : Number(value ?? 0)
+  // A drag is a pointer press that moves the value; arrow keys are plain edits.
+  const pressed = useRef(false)
+  const dragging = useRef(false)
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
-        <input
-          type="range"
-          aria-label={field.label ?? field.id}
-          value={Number.isFinite(num) ? num : (field.min ?? 0)}
-          min={field.min}
-          max={field.max}
-          step={field.step ?? 1}
-          disabled={disabled}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="w-full"
-        />
+        <div
+          className="py-1"
+          onPointerDownCapture={() => {
+            pressed.current = true
+          }}
+        >
+          <Slider
+            aria-label={field.label ?? field.id}
+            value={Number.isFinite(num) ? num : (field.min ?? 0)}
+            min={field.min}
+            max={field.max}
+            step={field.step ?? 1}
+            disabled={disabled}
+            onValueChange={(next) => {
+              if (pressed.current && !dragging.current) {
+                dragging.current = true
+                onGestureBegin?.()
+              }
+              onChange(Array.isArray(next) ? next[0] : next)
+            }}
+            onValueCommitted={() => {
+              pressed.current = false
+              if (dragging.current) {
+                dragging.current = false
+                onGestureEnd?.()
+              }
+            }}
+          />
+        </div>
       ) : (
         <ReadOnlyText>
           {Number.isFinite(num) ? num.toLocaleString() : <Empty />}
@@ -270,36 +298,29 @@ const ColorRenderer: FieldRenderer<ColorFieldDef> = ({
   disabled,
   onChange,
   view,
+  onGestureBegin,
+  onGestureEnd,
 }) => {
   const hex = typeof value === "string" && value.length > 0 ? value : null
-  return (
-    <FieldShell label={field.label ?? field.id} view={view}>
-      <div className="flex items-center gap-2">
-        {hex ? (
-          <span
-            aria-hidden
-            className="inline-block size-4 shrink-0 border border-border"
-            style={{ backgroundColor: hex }}
-          />
-        ) : (
-          <span className="inline-block size-4 shrink-0 border border-dashed border-border" />
-        )}
-        {onChange ? (
-          <Input
-            type="text"
-            aria-label={field.label ?? field.id}
-            value={hex ?? ""}
-            disabled={disabled}
-            onChange={(e) => onChange(e.target.value)}
-            className="font-mono"
-          />
-        ) : (
-          <ReadOnlyText>
-            <span className="font-mono">{hex ?? <Empty />}</span>
-          </ReadOnlyText>
-        )}
-      </div>
+  const label = field.label ?? field.id
+  // Collapsed rows keep the label in their column; otherwise the field draws it.
+  const picker = (
+    <ColorField
+      label={view === "collapsed" ? undefined : label}
+      value={hex}
+      presets={field.presets}
+      disabled={disabled}
+      onChange={onChange ? (next) => onChange(next ?? "") : undefined}
+      onPickStart={onGestureBegin}
+      onPickEnd={onGestureEnd}
+    />
+  )
+  return view === "collapsed" ? (
+    <FieldShell label={label} view={view}>
+      {picker}
     </FieldShell>
+  ) : (
+    picker
   )
 }
 
@@ -380,12 +401,17 @@ function formatComponent(
   return n.toLocaleString()
 }
 
+const AXES = ["X", "Y", "Z", "W"]
+
 const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   field,
   value,
   disabled,
   onChange,
   view,
+  onGestureBegin,
+  onGestureEnd,
+  onGestureCancel,
 }) => {
   const arity = field.components.length
   const values = toNumberArray(value, arity)
@@ -427,38 +453,29 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
       <div
-        className="grid gap-x-2"
+        className="grid gap-x-1"
         style={{ gridTemplateColumns: `repeat(${arity}, minmax(0, 1fr))` }}
       >
         {field.components.map((c, i) => (
-          <div key={i} className="flex flex-col gap-0.5 min-w-0">
-            {c.label && (
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                {c.label}
-              </span>
-            )}
-            <Input
-              type="number"
-              aria-label={c.label ?? `${field.id}[${i}]`}
-              value={values[i] != null ? String(values[i]) : ""}
-              min={c.min}
-              max={c.max}
-              step={c.step ?? (isInt ? 1 : 0.01)}
-              disabled={disabled}
-              onChange={(e) => {
-                const raw = e.target.value
-                const parsed = raw === "" ? null : Number(raw)
-                const next = values.slice()
-                next[i] =
-                  parsed != null && Number.isFinite(parsed)
-                    ? isInt
-                      ? Math.trunc(parsed)
-                      : parsed
-                    : null
-                onChange(next)
-              }}
-            />
-          </div>
+          <NumberField
+            key={i}
+            label={c.label ?? AXES[i] ?? String(i + 1)}
+            value={values[i] ?? c.min ?? 0}
+            min={c.min}
+            max={c.max}
+            step={c.step ?? (isInt ? 1 : 0.01)}
+            integer={isInt}
+            precision={field.precision}
+            disabled={disabled}
+            onValueChange={(next) => {
+              const out = values.map((v) => v ?? 0)
+              out[i] = isInt ? Math.trunc(next) : next
+              onChange(out)
+            }}
+            onScrubStart={onGestureBegin}
+            onScrubEnd={onGestureEnd}
+            onScrubCancel={onGestureCancel}
+          />
         ))}
       </div>
     </FieldShell>

@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react"
+import { createContext, useContext, useId, useMemo, useState } from "react"
 import { Separator } from "@/components/ui/separator"
 import { getFieldRenderer, getScope } from "./registry"
 import type {
@@ -20,6 +20,14 @@ interface PropertyPanelProps {
   /** The card's heading. Overrides the schema's `title`; neither means no heading. */
   title?: React.ReactNode
 }
+
+/** The scope's gesture, bound to its selection and ctx, for the field slots below. */
+interface GestureHandlers {
+  begin: (path: string) => void
+  end: (path: string) => void
+  cancel: (path: string) => void
+}
+const GestureContext = createContext<GestureHandlers | null>(null)
 
 type Row = Array<FieldDef | FieldDef[]>[number]
 
@@ -43,7 +51,28 @@ function rowsIn(rows: Row[], view: PanelView): FieldDef[][] {
     .filter((fields) => fields.length > 0)
 }
 
-export function PropertyPanel({
+export function PropertyPanel(props: PropertyPanelProps) {
+  const { scopeKey, selection, ctx, readOnly = false } = props
+  const gesture = getScope(scopeKey)?.gesture
+  const handlers = useMemo<GestureHandlers | null>(
+    () =>
+      readOnly || !gesture
+        ? null
+        : {
+            begin: (path) => gesture.begin(path, selection, ctx),
+            end: (path) => gesture.end(path, selection, ctx),
+            cancel: (path) => gesture.cancel?.(path, selection, ctx),
+          },
+    [readOnly, gesture, selection, ctx],
+  )
+  return (
+    <GestureContext.Provider value={handlers}>
+      <PanelBody {...props} />
+    </GestureContext.Provider>
+  )
+}
+
+function PanelBody({
   scopeKey,
   selection,
   ctx,
@@ -266,6 +295,7 @@ function FieldSlot({
   onChange?: (path: string, val: unknown) => void
   view: PanelView
 }) {
+  const gesture = useContext(GestureContext)
   const renderer = getFieldRenderer(field.kind)
   if (!renderer) {
     console.warn("[properties] no renderer for kind:", field.kind)
@@ -292,6 +322,9 @@ function FieldSlot({
     disabled,
     onChange:
       onChange && path !== undefined ? (val) => onChange(path, val) : undefined,
+    onGestureBegin: gesture && path !== undefined ? () => gesture.begin(path) : undefined,
+    onGestureEnd: gesture && path !== undefined ? () => gesture.end(path) : undefined,
+    onGestureCancel: gesture && path !== undefined ? () => gesture.cancel(path) : undefined,
     ctx,
     view,
   })
