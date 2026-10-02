@@ -36,8 +36,7 @@ Union of the `src/components/ui` folders in Strata, Oblique, Shard and Map & Ter
 | dropdown-menu | yes | Shard, M&T | M&T's fuller variant. `DropdownMenuLabel` is Base UI's `GroupLabel`, so it must sit inside a `DropdownMenuGroup` |
 | context-menu | yes | Shard | Same shape as dropdown-menu, same `Label` caveat |
 | navigation-menu | yes | M&T | Always the shared-viewport form. Radix's `NavigationMenuIndicator` and the `viewport={false}` mode are gone |
-| sonner | yes | Oblique | Third-party, not Base UI. Theme is a `theme` prop (next-themes dropped). Also re-exports `toast` |
-| snackbar | yes | Strata | Base UI Toast, with `useSnackbar`. **Both sonner and snackbar kept, pick one** |
+| snackbar | yes | Strata, Oblique | The kit's one toast, on Base UI Toast. `useSnackbar().show({ message, kind, description, action, persistent, timeout })` returns an id and `dismiss(id?)` closes one or all; kinds are `plain`, `success`, `warning`, `error`. Mount `SnackbarProvider` once and a `SnackbarViewport` inside it. `notify(opts)` and `dismissNotification(id?)` do the same from outside React |
 | avatar | yes | M&T | Base UI Avatar |
 | badge | yes | M&T | Plain, `render` prop replaces `asChild` |
 | breadcrumb | yes | M&T | Plain `<a>`, no `next/link`. Use `render` for a router link |

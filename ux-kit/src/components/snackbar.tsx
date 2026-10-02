@@ -4,9 +4,12 @@ import { CheckCircleIcon, WarningIcon, XCircleIcon, XIcon } from "@phosphor-icon
 
 import { cn } from "../lib/utils"
 
-// Strata's snackbar, on Base UI Toast. Kept next to sonner for now; apps pick one.
+// The kit's one toast: Strata's snackbar, on Base UI Toast.
+// One manager for the module, so `notify()` works outside React. Mount one provider per window.
+const manager = Toast.createToastManager()
+
 export function SnackbarProvider({ children }: { children: React.ReactNode }) {
-  return <Toast.Provider>{children}</Toast.Provider>
+  return <Toast.Provider toastManager={manager}>{children}</Toast.Provider>
 }
 
 export function SnackbarViewport({ className }: { className?: string }) {
@@ -89,7 +92,7 @@ function SnackbarList() {
   )
 }
 
-type ShowOptions = {
+export type SnackbarOptions = {
   message: string
   /** A second line under the message. */
   description?: React.ReactNode
@@ -102,22 +105,37 @@ type ShowOptions = {
   persistent?: boolean
 }
 
+type Manager = Pick<ReturnType<typeof Toast.createToastManager>, "add" | "close">
+
+const show = (m: Manager, opts: SnackbarOptions) =>
+  m.add({
+    title: opts.message,
+    description: opts.description,
+    type: opts.kind ?? "plain",
+    timeout: opts.persistent ? 0 : (opts.timeout ?? 5000),
+    actionProps: opts.action ? { children: opts.action.label, onClick: opts.action.onClick } : undefined,
+  })
+
 // Must be called under a SnackbarProvider.
 export function useSnackbar() {
-  const manager = Toast.useToastManager()
+  const m = Toast.useToastManager()
   return {
     /** Returns the toast's id, for `dismiss`. */
-    show: (opts: ShowOptions) =>
-      manager.add({
-        title: opts.message,
-        description: opts.description,
-        type: opts.kind ?? "plain",
-        timeout: opts.persistent ? 0 : (opts.timeout ?? 5000),
-        actionProps: opts.action
-          ? { children: opts.action.label, onClick: opts.action.onClick }
-          : undefined,
-      }),
+    show: (opts: SnackbarOptions) => show(m, opts),
     /** One toast by id, or every toast with no id. */
-    dismiss: (id?: string) => manager.close(id),
+    dismiss: (id?: string) => m.close(id),
   }
+}
+
+/**
+ * Raise a snackbar from anywhere, no hook: command handlers, stores, event listeners. Needs a
+ * mounted SnackbarProvider to show it. Same options as `useSnackbar().show`; returns the id.
+ */
+export function notify(opts: SnackbarOptions): string {
+  return show(manager, opts)
+}
+
+/** Dismiss one toast by id, or every toast with no id; the counterpart of `notify`. */
+export function dismissNotification(id?: string) {
+  manager.close(id)
 }
