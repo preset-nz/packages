@@ -42,11 +42,19 @@ pub fn sync_history(app: &AppHandle) {
     if let Some(items) = app.try_state::<Items<tauri::Wry>>() {
         let items = items.0.lock().expect("menu items lock");
         if let Some(undo) = items.get("edit.undo").and_then(|i| i.as_menuitem()) {
-            let _ = undo.set_text(if text { "Undo".into() } else { title("Undo", &state.undo_label) });
+            let _ = undo.set_text(if text {
+                "Undo".into()
+            } else {
+                title("Undo", &state.undo_label)
+            });
             let _ = undo.set_enabled(text || state.undo_label.is_some());
         }
         if let Some(redo) = items.get("edit.redo").and_then(|i| i.as_menuitem()) {
-            let _ = redo.set_text(if text { "Redo".into() } else { title("Redo", &state.redo_label) });
+            let _ = redo.set_text(if text {
+                "Redo".into()
+            } else {
+                title("Redo", &state.redo_label)
+            });
             let _ = redo.set_enabled(text || state.redo_label.is_some());
         }
     }
@@ -117,7 +125,11 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
     };
     let mut items: HashMap<String, MenuItemKind<tauri::Wry>> = HashMap::new();
 
-    let mut plain = |id: &str, text: &str, enabled: bool, accel: Option<&str>| -> tauri::Result<MenuItem<tauri::Wry>> {
+    let mut plain = |id: &str,
+                     text: &str,
+                     enabled: bool,
+                     accel: Option<&str>|
+     -> tauri::Result<MenuItem<tauri::Wry>> {
         let item = MenuItem::with_id(app, id, text, enabled, accel)?;
         items.insert(id.to_string(), MenuItemKind::MenuItem(item.clone()));
         Ok(item)
@@ -125,9 +137,13 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let settings = plain("app.settings", "Settings…", true, Some("CmdOrCtrl+,"))?;
     let undo = plain("edit.undo", "Undo", false, Some("CmdOrCtrl+Z"))?;
     let redo = plain("edit.redo", "Redo", false, Some("CmdOrCtrl+Shift+Z"))?;
-    let add = plain("note.add", "Add Note", true, Some("CmdOrCtrl+N"))?;
-    let remove = plain("note.remove", "Remove Note", false, Some("CmdOrCtrl+Backspace"))?;
-    let theme = plain("view.theme", "Toggle Dark Mode", true, Some("CmdOrCtrl+Shift+L"))?;
+    let reset = plain("doc.reset", "Reset Values", false, Some("CmdOrCtrl+Alt+R"))?;
+    let theme = plain(
+        "view.theme",
+        "Toggle Dark Mode",
+        true,
+        Some("CmdOrCtrl+Shift+L"),
+    )?;
     let gallery = plain("window.gallery", "Gallery", true, Some("CmdOrCtrl+Shift+G"))?;
 
     let check = |id: &str, text: &str, accel: &str| -> tauri::Result<CheckMenuItem<tauri::Wry>> {
@@ -162,7 +178,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         app,
         "File",
         true,
-        &[&add, &remove, &PredefinedMenuItem::separator(app)?, &PredefinedMenuItem::close_window(app, None)?],
+        &[&PredefinedMenuItem::close_window(app, None)?],
     )?;
 
     let edit_menu = Submenu::with_items(
@@ -172,6 +188,8 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         &[
             &undo,
             &redo,
+            &PredefinedMenuItem::separator(app)?,
+            &reset,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::cut(app, None)?,
             &PredefinedMenuItem::copy(app, None)?,
@@ -206,7 +224,10 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         ],
     )?;
 
-    let menu = Menu::with_items(app, &[&app_menu, &file_menu, &edit_menu, &view_menu, &window_menu])?;
+    let menu = Menu::with_items(
+        app,
+        &[&app_menu, &file_menu, &edit_menu, &view_menu, &window_menu],
+    )?;
     app.set_menu(menu)?;
 
     sync_history(app);

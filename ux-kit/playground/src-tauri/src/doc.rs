@@ -1,16 +1,20 @@
-//! An in-memory rhizome tree with a few sample nodes, and one command to list them.
+//! An in-memory rhizome tree of four documents, and the commands that read and edit it.
 //!
-//! Uses rhizome-core as it is: `Registry`, `Tree`, `Edit::add`, `Tree::rows`. The node
-//! type and category below are made up for the playground, not an app's object model.
-//! Edits are labelled `Tree::edit` calls; undo and redo are `Tree::undo` / `Tree::redo`.
-//! Every change emits `rhizome://commit` (the `Commit`) and refreshes the Edit menu.
+//! Uses rhizome-core as it is: `Registry`, `Tree`, `Tree::rows`, `Op::Set` / `Op::Reset`
+//! through `Tree::edit_ops` and `Tree::edit_coalesced`. The category and node types below are
+//! made up for the playground, not an app's object model. `tokens` and `fonts` hold no
+//! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
+//! of every kind the documents edit. Edits are labelled; undo and redo are
+//! `Tree::undo` / `Tree::redo`. Every change emits `rhizome://commit` (the `Commit`) and
+//! refreshes the Edit menu.
 //! TODO: move to rhizome-pom / rhizome-pom-tauri (open document, commit events,
 //! undo wired to the Edit menu) once that exists; this is the hand-rolled version.
 
 use std::sync::Mutex;
 
-use rhizome_core::{Commit, NodeId, NodeType, Origin, Registry, Row, Tree, Value};
+use rhizome_core::{Commit, NodeType, Op, Origin, Registry, Row, Tree};
 use serde::Serialize;
+use serde_json::Value as Json;
 use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::menu;
@@ -20,27 +24,52 @@ pub struct Doc(pub(crate) Mutex<Tree>);
 
 impl Doc {
     pub fn sample() -> Doc {
+        let docs = &["documents"];
         let registry = Registry::builder()
-            .category("notes", Origin::Loaded)
+            .category("documents", Origin::Loaded)
+            .node(NodeType::new("tokens").in_categories(docs))
+            .node(NodeType::new("fonts").in_categories(docs))
             .node(
-                NodeType::new("note")
-                    .in_categories(&["notes"])
-                    .text("body", "")
-                    .colour("colour", [0.97, 0.96, 0.91, 1.0]),
+                NodeType::new("primitives")
+                    .in_categories(docs)
+                    .text("title", "Primitives")
+                    .bool("visible", true)
+                    .bool("locked", false)
+                    .vec3("position", [0.0, 0.0, 0.0])
+                    .vec2("size", [40.0, 60.0])
+                    .floats("weights", &[0.25, 0.25, 0.25, 0.25])
+                    .text("notes", ""),
+            )
+            .node(
+                NodeType::new("card")
+                    .in_categories(docs)
+                    .text("name", "Layer")
+                    .bool("visible", true)
+                    .float("opacity", 0.0..=1.0, 1.0)
+                    .choice(
+                        "blend",
+                        &["normal", "multiply", "screen", "overlay"],
+                        "normal",
+                    )
+                    .colour("tint", [0.24, 0.39, 0.87, 1.0])
+                    .vec2("offset", [0.0, 0.0])
+                    .float("rotation", -180.0..=180.0, 0.0)
+                    .text("notes", ""),
             )
             .build()
             .expect("sample registry");
 
-        let mut tree = Tree::new(registry);
-        tree.edit("Add sample notes", |tx| {
-            let welcome = tx.add("/notes", "note", "welcome")?;
-            tx.set_value(welcome, "body", Value::Text("Hello from rhizome".into()))?;
-            tx.add(welcome, "note", "reply")?;
-            tx.add("/notes", "note", "todo")?;
-            tx.add("/notes", "note", "ideas")?;
+        let mut seed = Tree::new(registry.clone());
+        seed.edit("Add documents", |tx| {
+            tx.add("/documents", "tokens", "tokens")?;
+            tx.add("/documents", "fonts", "fonts")?;
+            tx.add("/documents", "primitives", "primitives")?;
+            tx.add("/documents", "card", "card")?;
             Ok(())
         })
-        .expect("sample nodes");
+        .expect("sample documents");
+        // Load the seed back so history starts empty: undo must not remove the documents.
+        let (tree, _report) = Tree::load(&seed.serialise(), registry).expect("seed loads");
 
         Doc(Mutex::new(tree))
     }
@@ -100,55 +129,56 @@ pub fn rhizome_history(doc: State<'_, Doc>) -> HistoryState {
     HistoryState::of(&doc.0.lock().expect("tree lock"))
 }
 
+/// Sets one value, as one labelled edit. `coalesce` is for input that arrives as a stream (a
+/// slider, typing in a number field): consecutive sets of the same key share one undo step
+/// (`Tree::edit_coalesced`). `value` is plain JSON, read against the node's schema.
 #[tauri::command]
-pub fn rhizome_add_note(app: AppHandle, doc: State<'_, Doc>) -> Result<NodeId, String> {
-    run(&app, &doc, |t| t.edit("Add Note", |tx| tx.add_unique("/notes", "note", "note")))
-}
-
-#[tauri::command]
-pub fn rhizome_set_body(
+pub fn rhizome_set(
     app: AppHandle,
     doc: State<'_, Doc>,
     path: String,
-    body: String,
+    key: String,
+    value: Json,
+    coalesce: bool,
 ) -> Result<(), String> {
     run(&app, &doc, |t| {
-        let label = format!("Edit {}", leaf(&path));
-        t.edit(&label, |tx| tx.set_value(path.as_str(), "body", Value::Text(body)))
+        let label = format!("Set {key} of {}", leaf(&path));
+        let coalesce_key = format!("{path}:{key}");
+        let op = Op::Set {
+            at: path,
+            key,
+            value,
+        };
+        if coalesce {
+            t.edit_coalesced(&label, &coalesce_key, |tx| tx.apply(&op).map(|_| ()))
+        } else {
+            t.edit(&label, |tx| tx.apply(&op).map(|_| ()))
+        }
     })
 }
 
+/// Resets every value of a node to its default, as one edit.
 #[tauri::command]
-pub fn rhizome_set_colour(
-    app: AppHandle,
-    doc: State<'_, Doc>,
-    path: String,
-    colour: [f64; 4],
-) -> Result<(), String> {
+pub fn rhizome_reset(app: AppHandle, doc: State<'_, Doc>, path: String) -> Result<(), String> {
     run(&app, &doc, |t| {
-        let label = format!("Colour {}", leaf(&path));
-        t.edit(&label, |tx| tx.set_value(path.as_str(), "colour", Value::Colour(colour)))
-    })
-}
-
-#[tauri::command]
-pub fn rhizome_rename(
-    app: AppHandle,
-    doc: State<'_, Doc>,
-    path: String,
-    name: String,
-) -> Result<(), String> {
-    run(&app, &doc, |t| {
-        let label = format!("Rename {}", leaf(&path));
-        t.edit(&label, |tx| tx.rename(path.as_str(), &name))
-    })
-}
-
-#[tauri::command]
-pub fn rhizome_remove(app: AppHandle, doc: State<'_, Doc>, path: String) -> Result<(), String> {
-    run(&app, &doc, |t| {
-        let label = format!("Remove {}", leaf(&path));
-        t.edit(&label, |tx| tx.remove(path.as_str()))
+        let keys: Vec<String> = t
+            .at(path.as_str())
+            .and_then(|n| {
+                n.node_type()
+                    .map(|nt| nt.values().iter().map(|v| v.key.clone()).collect())
+            })
+            .unwrap_or_default();
+        let ops: Vec<Op> = keys
+            .into_iter()
+            .map(|key| Op::Reset {
+                at: path.clone(),
+                key,
+            })
+            .collect();
+        let label = format!("Reset {}", leaf(&path));
+        t.edit(&label, |tx| {
+            ops.iter().try_for_each(|op| tx.apply(op).map(|_| ()))
+        })
     })
 }
 
@@ -175,4 +205,57 @@ pub fn rhizome_undo(app: AppHandle) -> Result<(), String> {
 #[tauri::command]
 pub fn rhizome_redo(app: AppHandle) -> Result<(), String> {
     redo(&app)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn sample_has_four_documents_and_no_history() {
+        let doc = Doc::sample();
+        let tree = doc.0.lock().unwrap();
+        let types: Vec<String> = tree
+            .rows()
+            .into_iter()
+            .filter(|r| r.path.as_str().starts_with("/documents/"))
+            .map(|r| r.type_name)
+            .collect();
+        assert_eq!(types.len(), 4);
+        assert_eq!(tree.history_len(), 0);
+    }
+
+    #[test]
+    fn vector_and_list_values_set_and_reset_as_one_step() {
+        let doc = Doc::sample();
+        let mut tree = doc.0.lock().unwrap();
+        let set = |key: &str, value: Json| Op::Set {
+            at: "/documents/primitives".into(),
+            key: key.into(),
+            value,
+        };
+        tree.edit_ops(
+            "Set",
+            &[
+                set("position", json!([1.0, 2.0, 3.0])),
+                set("weights", json!([1, 0, 0, 0])),
+            ],
+        )
+        .unwrap();
+        assert_eq!(tree.undo_labels().count(), 1);
+        let reset: Vec<Op> = ["position", "weights"]
+            .iter()
+            .map(|k| Op::Reset {
+                at: "/documents/primitives".into(),
+                key: (*k).into(),
+            })
+            .collect();
+        tree.edit_ops("Reset", &reset).unwrap();
+        assert_eq!(tree.undo_labels().count(), 2);
+        // A value of the wrong length is refused.
+        assert!(tree
+            .edit_ops("Bad", &[set("weights", json!([1, 2]))])
+            .is_err());
+    }
 }

@@ -21,14 +21,14 @@ export interface Command {
 }
 
 export interface CommandContext {
-  hasSelection: boolean
+  /** The selected document has values to reset. */
+  canReset: boolean
   undoLabel: string | null
   redoLabel: string | null
   leftOpen: boolean
   rightOpen: boolean
   dark: boolean
-  addNote: () => void
-  removeNote: () => void
+  reset: () => void
   undo: () => void
   redo: () => void
   toggleLeft: () => void
@@ -59,15 +59,14 @@ export function buildCommands(c: CommandContext): Command[] {
       pressed: c.rightOpen,
       run: c.toggleRight,
     },
-    { id: "note.add", label: "Add note", icon: icon("PlusIcon"), shortcut: "⌘N", enabled: true, run: c.addNote },
     {
-      id: "note.remove",
-      label: "Remove note",
-      icon: icon("TrashIcon"),
-      shortcut: "⌘⌫",
-      enabled: c.hasSelection,
-      disabledReason: "Nothing selected",
-      run: c.removeNote,
+      id: "doc.reset",
+      label: "Reset values",
+      icon: icon("EraserIcon"),
+      shortcut: "⌥⌘R",
+      enabled: c.canReset,
+      disabledReason: "This document has no values to reset",
+      run: c.reset,
     },
     {
       id: "edit.undo",
@@ -101,7 +100,7 @@ export function buildCommands(c: CommandContext): Command[] {
 /** The toolbar is a subset of the menu: these ids, in this order, in these groups. */
 export const TOOLBAR = {
   leading: ["panel.left"],
-  groups: [["note.add", "note.remove"], ["edit.undo", "edit.redo"], ["view.theme"]],
+  groups: [["doc.reset"], ["edit.undo", "edit.redo"], ["view.theme"]],
   trailing: ["panel.right"],
 }
 

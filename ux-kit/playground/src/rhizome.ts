@@ -10,7 +10,7 @@ export type Row = {
   name: string
   type: string
   role: "root" | "category" | "group" | "node" | "opaque"
-  /** Every value in the schema, resolved. */
+  /** Every value in the schema, resolved, as the file format writes it (colour is [r, g, b, a]). */
   values?: Record<string, unknown>
 }
 export type Commit = { seq: number; label: string }
@@ -22,7 +22,7 @@ export type History = {
   redo_labels: string[] // next first
 }
 
-export const NOTE_PREFIX = "/notes/"
+export const DOC_PREFIX = "/documents/"
 
 export const fetchRows = () => invoke<Row[]>("rhizome_rows")
 
@@ -64,5 +64,15 @@ export function useRhizome() {
     [],
   )
 
-  return { rows, history, error, call }
+  /**
+   * Sets one value on a node: one labelled edit. `coalesce` is for streamed input (typing,
+   * a nudge): consecutive sets of the same key share one undo step.
+   */
+  const set = useCallback(
+    (path: string, key: string, value: unknown, coalesce = false) =>
+      call("rhizome_set", { path, key, value, coalesce }),
+    [call],
+  )
+
+  return { rows, history, error, call, set }
 }
