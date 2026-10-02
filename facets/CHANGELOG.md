@@ -32,6 +32,13 @@ imports.
   scrub, slider drag or colour pick is one undo step. Optional: without it
   drags are repeated `write`s, as before.
 
+- `labelLayout` on `PropertyPanel`: `"auto"` (default, the layout as before),
+  `"column"` (one shared label column per panel, controls on a common edge,
+  numbers right-aligned with a muted unit) or `"stacked"` (every label above).
+  `labelWidth` sets the column's width. Number fields gain `integer` and
+  `suffix`; the host's `NumberField` may take optional `labelPlacement` and
+  `suffix` props, which a host can ignore. Default output is unchanged.
+
 ### Changed
 
 - `number` and `vector` edit through `NumberField`: the label is the scrub

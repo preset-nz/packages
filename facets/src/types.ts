@@ -39,6 +39,15 @@ export type PromoteView = "card" | "collapsed"
 export type PanelView = "inspector" | "card" | "collapsed"
 
 /**
+ * Where a field's label sits, for the inspector and card views. `"auto"` (the default) is the
+ * original layout: number and vector fields carry their label inside the box as the scrub
+ * handle, other fields stack it above. `"column"` puts every label in one shared column to the
+ * left, so the controls start on one edge. `"stacked"` puts every label above its control.
+ * Paired rows (`[a, b]`) draw one field per row in `"column"`.
+ */
+export type LabelLayout = "auto" | "column" | "stacked"
+
+/**
  * Disables a field based on one other field's value. Exactly one operator is
  * meant to be set; if several are, the first present in the order
  * `equals`, `notEquals`, `in`, `notIn` wins. `in`/`notIn` match a list of
@@ -91,6 +100,10 @@ export interface NumberFieldDef extends BaseField {
   min?: number
   max?: number
   step?: number
+  /** Whole numbers only: no fractional display, and a fine-step modifier never goes finer than `step`. */
+  integer?: boolean
+  /** A unit after the number, e.g. `px` or `°`. Shown when the panel's `labelLayout` is `"column"` or `"stacked"`. */
+  suffix?: string
 }
 
 export interface SliderFieldDef extends BaseField {

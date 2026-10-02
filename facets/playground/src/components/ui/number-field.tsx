@@ -13,6 +13,9 @@ interface NumberFieldProps {
   step?: number
   integer?: boolean
   precision?: number
+  /** Optional host props facets passes when a panel sets labelLayout; this stand-in ignores them. */
+  labelPlacement?: "inside" | "column" | "above"
+  suffix?: import("react").ReactNode
   label: string
   disabled?: boolean
   readOnly?: boolean

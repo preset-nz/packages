@@ -57,7 +57,10 @@ reads (typed in `dev/ui/` in this repo):
   draws its own label, so the panel adds none), `disabled`, and
   `onScrubStart` / `onScrubEnd` / `onScrubCancel`. Facets uses it for `number`
   and for each slot of `vector`. A vector slot's `suffix` shows in read-only
-  mode only.
+  mode only, unless the panel sets `labelLayout` (below). Two **optional** props
+  serve that: `labelPlacement` (`"inside"` default, `"column"`, `"above"`) and
+  `suffix` (a muted unit inside the box). A host that ignores them keeps the
+  label inside the box, so nothing doubles.
 - `Slider`: `value: number`, `onValueChange(value)` (a number or an array, facets
   takes the first), `onValueCommitted()`, `min`, `max`, `step`, `disabled`,
   `aria-label`. One thumb.
@@ -154,7 +157,26 @@ Select a blur and the blur panel appears. Add a new filter type later by
 registering another scope — the panel does not change.
 
 A row holding an array renders as a two-column grid. Everything else is full
-width. That is the whole layout system, on purpose.
+width. That is the whole layout system, on purpose, with one switch: where the
+labels go.
+
+### Label layout
+
+`labelLayout` on `PropertyPanel` (inspector and card views; collapsed ignores it):
+
+| Value | Labels | Numbers |
+|---|---|---|
+| `"auto"` (default) | Above their control; a checkbox's beside it | The label is the scrub handle, inside the box |
+| `"column"` | One shared column to the left, truncated with the full text as a tooltip; controls start on one edge | Label in the column (still the scrub handle), number right-aligned, `suffix` as a muted unit |
+| `"stacked"` | All above their control | Label above the box, `suffix` as a unit |
+
+In `"column"` the label column's width is one CSS variable on the panel root
+(`--facets-label-w`), set from the longest label (8ch to 16ch) or from the
+`labelWidth` prop. A vector keeps its axis labels inside its slots, so its
+fields share the column the scalars start on. A paired row (`[a, b]`) draws one
+field per row, and a slider shows its value to the right. Custom renderers can
+follow the layout with `useLabelLayout()` and `COLUMN_ROW`, or
+ignore it.
 
 ---
 
@@ -180,7 +202,8 @@ Built-ins register through the same call you would use, with no special casing.
 
 **`PropertyPanel`** — looks up the scope, calls `read`, walks the groups, hands
 each field to its renderer. Props: `scopeKey`, `selection`, `ctx`, plus optional
-`readOnly`, `emptyState`, `view` and `title` (see [Views](#views-inspector-card-collapsed)).
+`readOnly`, `emptyState`, `view`, `title` (see [Views](#views-inspector-card-collapsed)),
+`labelLayout` and `labelWidth` (see [Label layout](#label-layout)).
 
 `ctx` is yours. The package treats it as opaque and passes it through to every
 `read`, `write`, renderer and options provider. Put your app's API in it.
@@ -227,7 +250,7 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 |---|---|---|
 | `text` | string | `placeholder` |
 | `textarea` | string | `placeholder`, `rows` |
-| `number` | number | `min`, `max`, `step`; drag the label to scrub (host `NumberField`) |
+| `number` | number | `min`, `max`, `step`, `integer`, `suffix` (a unit, with `labelLayout`); drag the label to scrub (host `NumberField`) |
 | `slider` | number | same, drawn by the host's `Slider` |
 | `checkbox` | boolean | |
 | `select` | string | `options`, or `optionsProvider(ctx)` for dynamic lists |

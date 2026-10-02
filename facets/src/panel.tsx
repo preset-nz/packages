@@ -1,8 +1,10 @@
 import { createContext, useContext, useId, useMemo, useState } from "react"
 import { Separator } from "@/components/ui/separator"
 import { getFieldRenderer, getScope } from "./registry"
+import { LABEL_WIDTH_VAR, LabelLayoutContext, labelColumnWidth, useLabelLayout } from "./layout"
 import type {
   FieldDef,
+  LabelLayout,
   PanelView,
   PropertyGroupDef,
   PropertySchema,
@@ -19,6 +21,14 @@ interface PropertyPanelProps {
   view?: PanelView
   /** The card's heading. Overrides the schema's `title`; neither means no heading. */
   title?: React.ReactNode
+  /**
+   * Where labels sit in the inspector and card views: `"auto"` (default, as before), `"column"`
+   * (one shared label column) or `"stacked"` (label above). See `LabelLayout`. The collapsed view
+   * ignores it.
+   */
+  labelLayout?: LabelLayout
+  /** `"column"` only: the label column's width as a CSS length. Default: fits the longest label, 8ch to 16ch. */
+  labelWidth?: string
 }
 
 /** The scope's gesture, bound to its selection and ctx, for the field slots below. */
@@ -80,6 +90,8 @@ function PanelBody({
   emptyState,
   view = "inspector",
   title,
+  labelLayout = "auto",
+  labelWidth,
 }: PropertyPanelProps) {
   const scope = getScope(scopeKey)
 
@@ -119,23 +131,27 @@ function PanelBody({
     const heading = title ?? scope.schema.title
     if (rows.length === 0 && !heading) return null
     return (
-      <div className="flex flex-col">
+      <LabelLayoutContext.Provider value={labelLayout}>
+      <div className="flex flex-col" style={columnStyle(labelLayout, labelWidth, rows.flat())}>
         {heading && (
           <header className="border-b border-border px-3 py-2 text-xs font-semibold">
             {heading}
           </header>
         )}
         {rows.length > 0 && (
-          <div className="flex flex-col gap-3 px-3 py-3">
+          <div className={`flex flex-col px-3 py-3 ${rowGap(labelLayout)}`}>
             <Rows rows={rows} values={values} ctx={ctx} onChange={onChange} view="card" />
           </div>
         )}
       </div>
+      </LabelLayoutContext.Provider>
     )
   }
 
+  const all = scope.schema.groups.flatMap((g) => rowsIn(g.rows, "inspector")).flat()
   return (
-    <div className="flex flex-col">
+    <LabelLayoutContext.Provider value={labelLayout}>
+    <div className="flex flex-col" style={columnStyle(labelLayout, labelWidth, all)}>
       {scope.schema.groups.map((group, idx) => (
         <PropertyGroup
           key={group.id}
@@ -147,8 +163,19 @@ function PanelBody({
         />
       ))}
     </div>
+    </LabelLayoutContext.Provider>
   )
 }
+
+/** The shared label width, as a style on the panel root; nothing outside `"column"`. */
+function columnStyle(layout: LabelLayout, width: string | undefined, fields: FieldDef[]) {
+  return layout === "column"
+    ? ({ [LABEL_WIDTH_VAR]: width ?? labelColumnWidth(fields) } as React.CSSProperties)
+    : undefined
+}
+
+/** Space between rows: tighter in a label column, where the rows read as a table. */
+const rowGap = (layout: LabelLayout) => (layout === "column" ? "gap-1.5" : "gap-3")
 
 function PropertyGroup({
   group,
@@ -170,6 +197,7 @@ function PropertyGroup({
     collapsible && Boolean(group.defaultCollapsed),
   )
   const bodyId = useId()
+  const layout = useLabelLayout()
   // A closed group keeps its "collapsed" fields, as compact rows under its title.
   const headerFields = collapsible && collapsed ? rowsIn(group.rows, "collapsed").flat() : []
   const titleClass =
@@ -215,7 +243,7 @@ function PropertyGroup({
       {headerFields.length > 0 && (
         <CompactRows fields={headerFields} values={values} ctx={ctx} onChange={onChange} />
       )}
-      <div id={bodyId} hidden={collapsible && collapsed} className="flex flex-col gap-3">
+      <div id={bodyId} hidden={collapsible && collapsed} className={`flex flex-col ${rowGap(layout)}`}>
         <Rows
           rows={rowsIn(group.rows, "inspector")}
           values={values}
@@ -263,10 +291,18 @@ function Rows({
   onChange?: (path: string, val: unknown) => void
   view: PanelView
 }) {
+  // In a label column a pair has no room for two labels: its fields take a row each.
+  const layout = useLabelLayout()
   return rows.map((fields, idx) => (
     <div
       key={idx}
-      className={fields.length > 1 ? "grid grid-cols-2 gap-2" : undefined}
+      className={
+        fields.length > 1
+          ? layout === "column"
+            ? "contents"
+            : "grid grid-cols-2 gap-2"
+          : undefined
+      }
     >
       {fields.map((f) => (
         <FieldSlot

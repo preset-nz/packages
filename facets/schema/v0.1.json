@@ -505,6 +505,14 @@
           "type": "number",
           "description": "Increment. Default 1."
         },
+        "integer": {
+          "type": "boolean",
+          "description": "Whole numbers only: no fractional display, and a fine-step modifier never goes finer than step."
+        },
+        "suffix": {
+          "type": "string",
+          "description": "Unit after the number, e.g. px or °. Shown when the panel sets labelLayout to column or stacked."
+        },
         "promote": {
           "$ref": "#/definitions/promote"
         }

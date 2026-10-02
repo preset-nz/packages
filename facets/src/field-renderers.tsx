@@ -19,6 +19,7 @@ import { NumberField } from "@/components/ui/number-field"
 import { Slider } from "@/components/ui/slider"
 import { ColorField } from "@/components/ui/color-field"
 import { registerFieldRenderer } from "./registry"
+import { COLUMN_ROW, useLabelLayout } from "./layout"
 import type {
   CheckboxFieldDef,
   ColorFieldDef,
@@ -51,17 +52,38 @@ function Empty() {
 function FieldShell({
   label,
   view,
+  top,
   children,
 }: {
   label?: string
   view?: PanelView
+  /** In a label column: align the label to the top of a tall control. */
+  top?: boolean
   children: React.ReactNode
 }) {
+  const layout = useLabelLayout()
   // Collapsed: one compact row, label in a fixed column beside the control.
   if (view === "collapsed") {
     return (
       <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
         <Label className="truncate text-[11px] font-medium text-muted-foreground tracking-wide">
+          {label}
+        </Label>
+        <div className="min-w-0">{children}</div>
+      </div>
+    )
+  }
+  // Column: one label column shared by the panel, the control on a common edge.
+  if (layout === "column") {
+    return (
+      <div className={top ? COLUMN_ROW.replace("items-center", "items-start") : COLUMN_ROW}>
+        <Label
+          title={label}
+          className={
+            "block truncate text-[11px] font-medium text-muted-foreground tracking-wide" +
+            (top ? " pt-2" : "")
+          }
+        >
           {label}
         </Label>
         <div className="min-w-0">{children}</div>
@@ -78,6 +100,14 @@ function FieldShell({
       {children}
     </div>
   )
+}
+
+/** Decimal places a step implies: 0.05 gives 2, 5 gives 0. */
+function placesOf(step: number): number {
+  const s = String(step)
+  if (s.includes("e-")) return Number(s.split("e-")[1])
+  const dot = s.indexOf(".")
+  return dot === -1 ? 0 : s.length - dot - 1
 }
 
 function formatPrimitive(value: unknown): string {
@@ -126,7 +156,7 @@ const TextareaRenderer: FieldRenderer<TextareaFieldDef> = ({
 }) => {
   const display = formatPrimitive(value)
   return (
-    <FieldShell label={field.label ?? field.id} view={view}>
+    <FieldShell label={field.label ?? field.id} view={view} top>
       {onChange ? (
         <textarea
           aria-label={field.label ?? field.id}
@@ -159,6 +189,7 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
   onGestureEnd,
   onGestureCancel,
 }) => {
+  const layout = useLabelLayout()
   const num =
     typeof value === "number"
       ? value
@@ -174,14 +205,21 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
       </FieldShell>
     )
   }
-  // The field's own label is the scrub handle, so no label above it.
-  return (
+  // The field's own label is the scrub handle, so the panel draws none beside it: in "column" and
+  // "stacked" it tells the field where to put it. Hosts that ignore labelPlacement keep it inside.
+  const placed =
+    layout === "auto"
+      ? {}
+      : { labelPlacement: layout === "column" ? ("column" as const) : ("above" as const), suffix: field.suffix }
+  const input = (
     <NumberField
       label={label}
       value={finite ? num : (field.min ?? 0)}
       min={field.min}
       max={field.max}
       step={field.step ?? 1}
+      integer={field.integer}
+      {...placed}
       disabled={disabled}
       onValueChange={(next) => onChange(next)}
       onScrubStart={onGestureBegin}
@@ -189,6 +227,8 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
       onScrubCancel={onGestureCancel}
     />
   )
+  // The field spans the label and control columns of a row of its own.
+  return layout === "column" ? <div className={COLUMN_ROW}>{input}</div> : input
 }
 
 const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
@@ -204,16 +244,20 @@ const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
   // A drag is a pointer press that moves the value; arrow keys are plain edits.
   const pressed = useRef(false)
   const dragging = useRef(false)
+  const layout = useLabelLayout()
+  // With labels in a column or above, the value reads out to the right, on a shared edge.
+  const readout = layout !== "auto" && view !== "collapsed"
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
         <div
-          className="py-1"
+          className={readout ? "flex items-center gap-2 py-1" : "py-1"}
           onPointerDownCapture={() => {
             pressed.current = true
           }}
         >
           <Slider
+            className={readout ? "min-w-0 flex-1" : undefined}
             aria-label={field.label ?? field.id}
             value={Number.isFinite(num) ? num : (field.min ?? 0)}
             min={field.min}
@@ -235,6 +279,11 @@ const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
               }
             }}
           />
+          {readout && (
+            <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
+              {Number.isFinite(num) ? num.toFixed(placesOf(field.step ?? 1)) : ""}
+            </span>
+          )}
         </div>
       ) : (
         <ReadOnlyText>
@@ -303,10 +352,12 @@ const ColorRenderer: FieldRenderer<ColorFieldDef> = ({
 }) => {
   const hex = typeof value === "string" && value.length > 0 ? value : null
   const label = field.label ?? field.id
-  // Collapsed rows keep the label in their column; otherwise the field draws it.
+  const layout = useLabelLayout()
+  // Collapsed rows and a label column keep the label in their column; otherwise the field draws it.
+  const inColumn = view === "collapsed" || layout === "column"
   const picker = (
     <ColorField
-      label={view === "collapsed" ? undefined : label}
+      label={inColumn ? undefined : label}
       value={hex}
       presets={field.presets}
       disabled={disabled}
@@ -315,7 +366,7 @@ const ColorRenderer: FieldRenderer<ColorFieldDef> = ({
       onPickEnd={onGestureEnd}
     />
   )
-  return view === "collapsed" ? (
+  return inColumn ? (
     <FieldShell label={label} view={view}>
       {picker}
     </FieldShell>
@@ -332,6 +383,7 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
   view,
 }) => {
   const checked = Boolean(value)
+  const layout = useLabelLayout()
   if (!onChange) {
     return (
       <FieldShell label={field.label ?? field.id} view={view}>
@@ -339,8 +391,8 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
       </FieldShell>
     )
   }
-  // Collapsed rows keep the label in their column, like every other kind.
-  if (view === "collapsed") {
+  // Collapsed rows and a label column keep the label in their column, like every other kind.
+  if (view === "collapsed" || layout === "column") {
     return (
       <FieldShell label={field.label ?? field.id} view={view}>
         <Checkbox
@@ -413,6 +465,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   onGestureEnd,
   onGestureCancel,
 }) => {
+  const layout = useLabelLayout()
   const arity = field.components.length
   const values = toNumberArray(value, arity)
   const isInt = Boolean(field.integer)
@@ -466,6 +519,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
             step={c.step ?? (isInt ? 1 : 0.01)}
             integer={isInt}
             precision={field.precision}
+            suffix={layout === "auto" ? undefined : c.suffix}
             disabled={disabled}
             onValueChange={(next) => {
               const out = values.map((v) => v ?? 0)
