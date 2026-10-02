@@ -29,7 +29,7 @@ export function Tokens({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
         ))}
       </div>
       <h2 className="mt-8 font-heading text-lg font-semibold">Type</h2>
-      <p className="mt-2 font-heading text-xl">Heading: Barlow, then Saira</p>
+      <p className="mt-2 font-heading text-xl">Heading: Geist (size and weight carry the hierarchy)</p>
       <p className="mt-1 text-sm">Body: Geist Variable</p>
       <p className="mt-1 font-mono text-sm">Mono: JetBrains Mono Variable</p>
     </section>

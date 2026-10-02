@@ -9,24 +9,15 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Body text */
+/* Two families only (Georg 2026-10-03): Geist for the interface, JetBrains Mono for values and code. */
 @import "@fontsource-variable/geist";
-/* Headings — DIN-adjacent industrial sans. Barlow is the current pick. */
-@import "@fontsource/barlow/400.css";
-@import "@fontsource/barlow/500.css";
-@import "@fontsource/barlow/600.css";
-@import "@fontsource/barlow/700.css";
-/* Monospace */
 @import "@fontsource-variable/jetbrains-mono";
-
-/* Fallback heading face. */
-@import "@fontsource-variable/saira";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    /* Heading face: DIN-adjacent. Saira is the fallback. */
-    --font-heading: 'Barlow', 'Saira Variable', sans-serif;
+    /* Headings use the interface face; hierarchy comes from size and weight. */
+    --font-heading: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
     /* Body text face. */
     --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'JetBrains Mono Variable', monospace;

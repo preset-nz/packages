@@ -27,8 +27,6 @@
     "@base-ui/react": "^1.6.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
-    "@fontsource-variable/saira": "^5.2.11",
-    "@fontsource/barlow": "^5.2.8",
     "@phosphor-icons/react": "^2.1.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
