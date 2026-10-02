@@ -288,7 +288,10 @@ export function Inspector({
           <ValueInspector doc={doc} valueKey={selection.key} schema={schema} set={set} reset={reset} />
         ) : layer ? (
           <Section title={String(layer.values?.name ?? layer.name)}>
-            <CardPanel key={layer.id} row={layer} set={set} view="inspector" />
+            {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
+            <div className="-mx-3">
+              <CardPanel key={layer.id} row={layer} set={set} view="inspector" />
+            </div>
           </Section>
         ) : (
           <DocSummary doc={doc} layers={layers} />
