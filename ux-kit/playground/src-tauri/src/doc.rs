@@ -1,4 +1,5 @@
-//! An in-memory rhizome tree of four documents, and the commands that read and edit it.
+//! An in-memory rhizome tree of four documents (and the layers the Card document holds), and
+//! the commands that read and edit it.
 //!
 //! Uses rhizome-core as it is: `Registry`, `Tree`, `Tree::rows`, `Op::Set` / `Op::Reset`
 //! through `Tree::edit_ops` and `Tree::edit_coalesced`. The category and node types below are
@@ -27,8 +28,10 @@ impl Doc {
         let docs = &["documents"];
         let registry = Registry::builder()
             .category("documents", Origin::Loaded)
+            .category("layers", Origin::Loaded)
             .node(NodeType::new("tokens").in_categories(docs))
             .node(NodeType::new("fonts").in_categories(docs))
+            .node(NodeType::new("card").in_categories(docs))
             .node(
                 NodeType::new("primitives")
                     .in_categories(docs)
@@ -41,8 +44,8 @@ impl Doc {
                     .text("notes", ""),
             )
             .node(
-                NodeType::new("card")
-                    .in_categories(docs)
+                NodeType::new("layer")
+                    .in_categories(&["layers"])
                     .text("name", "Layer")
                     .bool("visible", true)
                     .float("opacity", 0.0..=1.0, 1.0)
@@ -65,6 +68,20 @@ impl Doc {
             tx.add("/documents", "fonts", "fonts")?;
             tx.add("/documents", "primitives", "primitives")?;
             tx.add("/documents", "card", "card")?;
+            tx.add("/layers", "layer", "background")?;
+            tx.add("/layers", "layer", "figure")?;
+            tx.add("/layers", "layer", "shadow")?;
+            for (path, name) in [
+                ("/layers/background", "Background"),
+                ("/layers/figure", "Figure"),
+                ("/layers/shadow", "Shadow"),
+            ] {
+                tx.apply(&Op::Set {
+                    at: path.into(),
+                    key: "name".into(),
+                    value: Json::from(name),
+                })?;
+            }
             Ok(())
         })
         .expect("sample documents");
@@ -124,6 +141,13 @@ fn run<T>(
     Ok(out.0)
 }
 
+/// The registry as plain data (`Registry::schema`): each node type's values with kind, default,
+/// range and choices, so the webview can show a value's default without copying it.
+#[tauri::command]
+pub fn rhizome_schema(doc: State<'_, Doc>) -> rhizome_core::Schema {
+    doc.0.lock().expect("tree lock").registry().schema()
+}
+
 #[tauri::command]
 pub fn rhizome_history(doc: State<'_, Doc>) -> HistoryState {
     HistoryState::of(&doc.0.lock().expect("tree lock"))
@@ -157,17 +181,24 @@ pub fn rhizome_set(
     })
 }
 
-/// Resets every value of a node to its default, as one edit.
+/// Resets values of a node to their defaults, as one edit: the `keys` given, or every value
+/// when there are none.
 #[tauri::command]
-pub fn rhizome_reset(app: AppHandle, doc: State<'_, Doc>, path: String) -> Result<(), String> {
+pub fn rhizome_reset(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    path: String,
+    keys: Option<Vec<String>>,
+) -> Result<(), String> {
     run(&app, &doc, |t| {
-        let keys: Vec<String> = t
-            .at(path.as_str())
-            .and_then(|n| {
-                n.node_type()
-                    .map(|nt| nt.values().iter().map(|v| v.key.clone()).collect())
-            })
-            .unwrap_or_default();
+        let keys: Vec<String> = keys.unwrap_or_else(|| {
+            t.at(path.as_str())
+                .and_then(|n| {
+                    n.node_type()
+                        .map(|nt| nt.values().iter().map(|v| v.key.clone()).collect())
+                })
+                .unwrap_or_default()
+        });
         let ops: Vec<Op> = keys
             .into_iter()
             .map(|key| Op::Reset {
@@ -175,11 +206,22 @@ pub fn rhizome_reset(app: AppHandle, doc: State<'_, Doc>, path: String) -> Resul
                 key,
             })
             .collect();
-        let label = format!("Reset {}", leaf(&path));
+        let label = match keys_label(&ops) {
+            Some(key) => format!("Reset {key} of {}", leaf(&path)),
+            None => format!("Reset {}", leaf(&path)),
+        };
         t.edit(&label, |tx| {
             ops.iter().try_for_each(|op| tx.apply(op).map(|_| ()))
         })
     })
+}
+
+/// The key, when a reset touches exactly one.
+fn keys_label(ops: &[Op]) -> Option<&str> {
+    match ops {
+        [Op::Reset { key, .. }] => Some(key),
+        _ => None,
+    }
 }
 
 fn leaf(path: &str) -> &str {
@@ -213,7 +255,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn sample_has_four_documents_and_no_history() {
+    fn sample_has_four_documents_three_layers_and_no_history() {
         let doc = Doc::sample();
         let tree = doc.0.lock().unwrap();
         let types: Vec<String> = tree
@@ -223,6 +265,12 @@ mod tests {
             .map(|r| r.type_name)
             .collect();
         assert_eq!(types.len(), 4);
+        let layers = tree
+            .rows()
+            .into_iter()
+            .filter(|r| r.type_name == "layer")
+            .count();
+        assert_eq!(layers, 3);
         assert_eq!(tree.history_len(), 0);
     }
 

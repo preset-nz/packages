@@ -12,6 +12,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             doc::rhizome_rows,
             doc::rhizome_history,
+            doc::rhizome_schema,
             doc::rhizome_set,
             doc::rhizome_reset,
             doc::rhizome_undo,
