@@ -60,7 +60,7 @@ const CMYK_HALFTONE: PropertySchema = {
           id: "mode",
           label: "Mode",
           path: "mode",
-          options: ["paper", "over"].map((c) => ({ value: c, label: c })),
+          options: ["paper", "over"].map((c) => ({ value: c, label: choiceLabel(c) })),
           promote: ["card"],
         },
         { kind: "checkbox", id: "white_is_alpha", label: "Paper is transparent", path: "white_is_alpha" },
@@ -87,7 +87,7 @@ const FILM_STOCK: PropertySchema = {
           id: "stock",
           label: "Stock",
           path: "stock",
-          options: ["polaroid_600", "sx70", "cross_process", "bleach_bypass", "expired"].map((c) => ({ value: c, label: c })),
+          options: ["polaroid_600", "sx70", "cross_process", "bleach_bypass", "expired"].map((c) => ({ value: c, label: choiceLabel(c) })),
           promote: ["card"],
         },
         slider("amount", "Amount", 0.05, { promote: ["card"] }),
@@ -190,4 +190,11 @@ export const setOpsLayout = (v: OpsLayout) => {
   } catch {
     // not remembered
   }
+}
+
+/** Oblique's choices are bare values ("bleach_bypass"); the panel shows them as words ("Bleach bypass"). */
+function choiceLabel(value: string): string {
+  if (value === "sx70") return "SX-70"
+  const words = value.replace(/_/g, " ")
+  return words.charAt(0).toUpperCase() + words.slice(1)
 }

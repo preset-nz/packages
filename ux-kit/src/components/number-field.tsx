@@ -331,7 +331,7 @@ function NumberField({
       <NumberFieldPrimitive.ScrubArea
         data-slot="number-field-label"
         title={outside ? label : undefined}
-        pixelSensitivity={1}
+        pixelSensitivity={pixelsPerStep(min, max, step)}
         className={cn(
           outside
             ? "block min-w-0 truncate text-[11px] font-medium tracking-wide text-muted-foreground select-none"
@@ -416,3 +416,13 @@ function VectorField({
 
 export { NumberField, VectorField }
 export type { NumberChange, NumberFieldProps, VectorFieldProps }
+
+/**
+ * Pixels of drag per step, so a full-range scrub is about 300px whatever the step: a 0–8 field
+ * with 0.25 steps moves one step per ~9px instead of per pixel, which read as jumping.
+ * Unbounded ranges keep one step per pixel.
+ */
+function pixelsPerStep(min: number | undefined, max: number | undefined, step: number | undefined): number {
+  if (min == null || max == null || !step || max <= min) return 1
+  return Math.min(12, Math.max(1, Math.round((300 * step) / (max - min))))
+}
