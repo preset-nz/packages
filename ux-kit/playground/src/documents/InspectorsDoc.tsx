@@ -79,9 +79,10 @@ export function InspectorsDoc() {
     <div className={DOC_PAGE}>
       <DocHeader title="Inspectors">
         Strata's read-only inspectors with made-up files, to tune how facets shows values it can't
-        edit. "As shipped" is facets 0.1, which Strata renders today. Strata's own renderers (dates,
-        size, status, keywords, colour bucket) put their label on top whatever the layout; that
-        mismatch is on show, not fixed. A copy: changes here don't reach Strata.
+        edit. "As shipped" is facets 0.1's layout, which Strata renders today. Strata's own renderers
+        (dates, size, status, keywords, colour bucket) sit in facets' field shell here, so they
+        follow the layout; in Strata they still put their label on top until it moves to facets
+        0.2. A copy: changes here don't reach Strata.
       </DocHeader>
       <div className="mb-4 flex flex-col gap-2">
         <Choice label="Label layout" value={view.layout} options={STRATA_LAYOUTS} onChange={(layout) => setStrataView({ layout })} />
