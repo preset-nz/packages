@@ -86,6 +86,7 @@ pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     AppKit::<R>::new("ux-kit playground")
         .settings()
         .file_type("Rhizome document", crate::doc::EXTENSION)
+        .documents_folder(crate::folders::documents_folder)
         .ask_to_save(|app| {
             crate::prefs::ask_to_save(
                 app.try_state::<preset_preferences::Preferences>()

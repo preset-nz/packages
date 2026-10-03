@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 mod doc;
+mod folders;
 mod menu;
 mod prefs;
 
