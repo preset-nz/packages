@@ -52,6 +52,13 @@ pub fn commands() -> Vec<Command> {
 pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
     AppKit::<R>::new("ux-kit playground")
         .settings()
+        .file_type("Rhizome document", crate::doc::EXTENSION)
+        .ask_to_save(|app| {
+            crate::prefs::ask_to_save(
+                app.try_state::<preset_preferences::Preferences>()
+                    .as_deref(),
+            )
+        })
         .commands(commands())
         .on_command(|app, id| match id {
             "window.gallery" => {

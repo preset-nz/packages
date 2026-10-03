@@ -2,4 +2,5 @@
 /* The kit and facets ship unbuilt source, which Tailwind does not scan on its own. */
 @source "../../src";
 @source "../node_modules/@preset.nz/facets/src";
+@source "../node_modules/@preset.nz/preferences/src-ts";
 @import "@preset.nz/ux-kit/index.css";

@@ -19,6 +19,7 @@ export default defineConfig({
       "@preset.nz/facets",
       "@preset.nz/ux-kit",
       "@preset.nz/app-kit",
+      "@preset.nz/preferences",
     ],
   },
   clearScreen: false,

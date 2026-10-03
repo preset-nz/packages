@@ -14,20 +14,47 @@
 //! TODO: move to rhizome-pom / rhizome-pom-tauri (open document, commit events,
 //! undo wired to the Edit menu) once that exists; this is the hand-rolled version.
 
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-use preset_app_kit::{refresh_history, History};
+use preset_app_kit::{refresh_history, Document, History};
 use rhizome_core::{Commit, Error, GestureId, NodeType, Op, Origin, Registry, Row, Tree};
-use serde_json::Value as Json;
+use serde_json::{json, Value as Json};
 use tauri::{AppHandle, Emitter, Runtime, State};
 
 /// `Tree` is `Send` but not `Sync`, so the one open tree sits behind a mutex. The second field is
 /// the open gesture's id: `GestureId` doesn't cross IPC, so the webview just says begin / apply /
 /// end / cancel and the id stays here. Lock the tree first, then the slot.
-pub struct Doc(pub(crate) Mutex<Tree>, Mutex<Option<GestureId>>);
+pub struct Doc(
+    pub(crate) Mutex<Tree>,
+    Mutex<Option<GestureId>>,
+    Mutex<Meta>,
+);
+
+/// Where the document lives: its file, or its `Untitled-N` number while it has none.
+/// Lock order: tree, then gesture slot, then meta.
+pub(crate) struct Meta {
+    path: Option<PathBuf>,
+    untitled: u32,
+}
 
 impl Doc {
+    /// The playground starts as `Untitled-1`, a sample tree with no history.
     pub fn sample() -> Doc {
+        Doc(
+            Mutex::new(sample_tree()),
+            Mutex::new(None),
+            Mutex::new(Meta {
+                path: None,
+                untitled: 1,
+            }),
+        )
+    }
+}
+
+/// The sample tree, loaded back from its own file text so history starts empty and it is saved.
+fn sample_tree() -> Tree {
+    {
         let docs = &["documents"];
         let registry = Registry::builder()
             .category("documents", Origin::Loaded)
@@ -91,7 +118,13 @@ impl Doc {
                     .in_categories(&["stack"])
                     .choice(
                         "stock",
-                        &["polaroid_600", "sx70", "cross_process", "bleach_bypass", "expired"],
+                        &[
+                            "polaroid_600",
+                            "sx70",
+                            "cross_process",
+                            "bleach_bypass",
+                            "expired",
+                        ],
                         "polaroid_600",
                     )
                     .float("amount", 0.0..=1.0, 1.0)
@@ -140,8 +173,7 @@ impl Doc {
         .expect("sample documents");
         // Load the seed back so history starts empty: undo must not remove the documents.
         let (tree, _report) = Tree::load(&seed.serialise(), registry).expect("seed loads");
-
-        Doc(Mutex::new(tree), Mutex::new(None))
+        tree
     }
 }
 
@@ -188,6 +220,81 @@ impl History for Doc {
     fn redo<R: Runtime>(&self, app: &AppHandle<R>) -> Result<(), String> {
         run(app, self, |t| t.redo().map(|c| ((), c)))
     }
+}
+
+/// The file extension rhizome files carry in the playground (rhizome-api.md names none; its golden
+/// file is `acid.rhizome`).
+pub const EXTENSION: &str = "rhizome";
+
+/// Save, open and new: the playground's half of app-kit's file commands, over rhizome's
+/// `Tree::serialise`, `Tree::load`, `mark_saved` and `is_unsaved`.
+impl Document for Doc {
+    fn is_unsaved(&self) -> bool {
+        self.0.lock().expect("tree lock").is_unsaved()
+    }
+
+    fn path(&self) -> Option<PathBuf> {
+        self.2.lock().expect("meta lock").path.clone()
+    }
+
+    fn untitled_number(&self) -> u32 {
+        self.2.lock().expect("meta lock").untitled
+    }
+
+    fn save<R: Runtime>(&self, _app: &AppHandle<R>, path: &Path) -> Result<(), String> {
+        let mut tree = self.0.lock().expect("tree lock");
+        write_atomically(path, &tree.serialise())?;
+        // Only after the write succeeded: a failed save leaves the document unsaved.
+        tree.mark_saved();
+        self.2.lock().expect("meta lock").path = Some(path.to_path_buf());
+        Ok(())
+    }
+
+    fn open<R: Runtime>(&self, app: &AppHandle<R>, path: &Path) -> Result<(), String> {
+        let text = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+        let registry = self.0.lock().expect("tree lock").registry().clone();
+        let (tree, _report) = Tree::load(&text, registry).map_err(|e| e.to_string())?;
+        self.replace(app, tree, Some(path.to_path_buf()), 0);
+        Ok(())
+    }
+
+    fn new_document<R: Runtime>(&self, app: &AppHandle<R>, untitled: u32) -> Result<(), String> {
+        self.replace(app, sample_tree(), None, untitled);
+        Ok(())
+    }
+}
+
+impl Doc {
+    /// Swap in another tree: any open gesture belonged to the old one, and the webview re-reads.
+    fn replace<R: Runtime>(
+        &self,
+        app: &AppHandle<R>,
+        tree: Tree,
+        path: Option<PathBuf>,
+        untitled: u32,
+    ) {
+        {
+            let mut t = self.0.lock().expect("tree lock");
+            *t = tree;
+            *self.1.lock().expect("gesture lock") = None;
+            let mut meta = self.2.lock().expect("meta lock");
+            meta.path = path;
+            meta.untitled = untitled;
+        }
+        let _ = app.emit("rhizome://commit", json!({ "seq": 0, "label": "Replace" }));
+    }
+}
+
+/// Write beside the target and rename over it, so a crash never leaves half a file.
+fn write_atomically(path: &Path, text: &str) -> Result<(), String> {
+    let mut tmp = path.as_os_str().to_owned();
+    tmp.push(".tmp");
+    let tmp = PathBuf::from(tmp);
+    std::fs::write(&tmp, text).map_err(|e| e.to_string())?;
+    std::fs::rename(&tmp, path).map_err(|e| {
+        let _ = std::fs::remove_file(&tmp);
+        e.to_string()
+    })
 }
 
 /// After any write: tell the webview, and bring the Edit menu in line with the history.
@@ -399,7 +506,11 @@ mod tests {
             .filter(|r| r.path.as_str().starts_with("/stack/"))
             .map(|r| r.type_name)
             .collect();
-        assert_eq!(ops, ["cmyk_halftone", "film_stock", "levels"], "stack order is path order");
+        assert_eq!(
+            ops,
+            ["cmyk_halftone", "film_stock", "levels"],
+            "stack order is path order"
+        );
         assert_eq!(tree.history_len(), 0);
     }
 
@@ -412,11 +523,22 @@ mod tests {
             key: key.into(),
             value,
         };
-        tree.edit_ops("ok", &[set("/stack/cmyk_halftone", "angle_k", json!(90.0))]).unwrap();
-        assert!(tree.edit_ops("high", &[set("/stack/cmyk_halftone", "angle_k", json!(91.0))]).is_err());
-        assert!(tree.edit_ops("low", &[set("/stack/levels", "gamma", json!(0.05))]).is_err());
-        assert!(tree.edit_ops("frac", &[set("/stack/film_stock", "seed", json!(1.5))]).is_err());
-        tree.edit_ops("seed", &[set("/stack/film_stock", "seed", json!(7))]).unwrap();
+        tree.edit_ops("ok", &[set("/stack/cmyk_halftone", "angle_k", json!(90.0))])
+            .unwrap();
+        assert!(tree
+            .edit_ops(
+                "high",
+                &[set("/stack/cmyk_halftone", "angle_k", json!(91.0))]
+            )
+            .is_err());
+        assert!(tree
+            .edit_ops("low", &[set("/stack/levels", "gamma", json!(0.05))])
+            .is_err());
+        assert!(tree
+            .edit_ops("frac", &[set("/stack/film_stock", "seed", json!(1.5))])
+            .is_err());
+        tree.edit_ops("seed", &[set("/stack/film_stock", "seed", json!(7))])
+            .unwrap();
     }
 
     #[test]
@@ -503,5 +625,90 @@ mod tests {
             gesture_end(&mut tree, &mut slot).is_err(),
             "no gesture is open"
         );
+    }
+}
+
+#[cfg(test)]
+mod save_tests {
+    use super::*;
+
+    fn dir() -> PathBuf {
+        let d = std::env::temp_dir().join(format!(
+            "playground-doc-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
+        let _ = std::fs::create_dir_all(&d);
+        d
+    }
+
+    fn edit(doc: &Doc) {
+        doc.0
+            .lock()
+            .unwrap()
+            .edit_ops(
+                "Set",
+                &[Op::Set {
+                    at: "/layers/figure".into(),
+                    key: "opacity".into(),
+                    value: json!(0.5),
+                }],
+            )
+            .unwrap();
+    }
+
+    #[test]
+    fn a_new_document_is_saved_an_edit_marks_it_and_saving_clears_it() {
+        let doc = Doc::sample();
+        assert!(!doc.is_unsaved());
+        assert_eq!((doc.path(), doc.untitled_number()), (None, 1));
+        edit(&doc);
+        assert!(doc.is_unsaved());
+        let path = dir().join("a.rhizome");
+        write_then_mark(&doc, &path);
+        assert!(!doc.is_unsaved());
+        assert_eq!(doc.path(), Some(path.clone()));
+        let _ = std::fs::remove_file(path);
+    }
+
+    #[test]
+    fn undoing_back_to_the_saved_state_clears_the_mark() {
+        let doc = Doc::sample();
+        edit(&doc);
+        assert!(doc.is_unsaved());
+        doc.0.lock().unwrap().undo().unwrap();
+        assert!(!doc.is_unsaved());
+    }
+
+    #[test]
+    fn what_is_saved_loads_back_identical_and_clean() {
+        let doc = Doc::sample();
+        edit(&doc);
+        let path = dir().join("b.rhizome");
+        write_then_mark(&doc, &path);
+        let text = std::fs::read_to_string(&path).unwrap();
+        let registry = doc.0.lock().unwrap().registry().clone();
+        let (loaded, _) = Tree::load(&text, registry).unwrap();
+        assert!(!loaded.is_unsaved());
+        assert_eq!(loaded.serialise(), doc.0.lock().unwrap().serialise());
+        assert_eq!(loaded.history_len(), 0);
+        let _ = std::fs::remove_file(path);
+    }
+
+    /// `Document::save` without an app handle: the same steps.
+    fn write_then_mark(doc: &Doc, path: &Path) {
+        let mut tree = doc.0.lock().unwrap();
+        write_atomically(path, &tree.serialise()).unwrap();
+        tree.mark_saved();
+        doc.2.lock().unwrap().path = Some(path.to_path_buf());
+    }
+
+    #[test]
+    fn a_failed_write_leaves_the_document_unsaved() {
+        let doc = Doc::sample();
+        edit(&doc);
+        let bad = dir().join("no-such-dir").join("x.rhizome");
+        assert!(write_atomically(&bad, "x").is_err());
+        assert!(doc.is_unsaved());
     }
 }

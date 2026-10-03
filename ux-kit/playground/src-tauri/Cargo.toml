@@ -24,3 +24,6 @@ rhizome-core = { path = "../../../rhizome/crates/rhizome-core" }
 # one consumer uses it (see packages/CLAUDE.md). It does not depend on rhizome; doc.rs
 # implements its `History` trait for the open tree.
 preset-app-kit = { path = "../../../app-kit" }
+# preferences: the "Ask to save changes when closing" setting and the Settings window. Path
+# dependency like the others; the `tauri` feature adds the commands and the change event.
+preset-preferences = { path = "../../../preferences", features = ["tauri"] }

@@ -11,7 +11,7 @@ import {
   TooltipProvider,
 } from "@preset.nz/ux-kit"
 
-import { CommandToolbar, useCommands, undo } from "@preset.nz/app-kit"
+import { CommandToolbar, useCommands, useDocument, undo } from "@preset.nz/app-kit"
 
 import { buildBindings, TOOLBAR } from "../commands"
 import { docInfo, sortDocs } from "../documents"
@@ -92,6 +92,7 @@ export function MainApp() {
     [reset.target, reset.reason, selected, canReset, leftOpen, rightOpen, dark, call, setLeftOpen, setRightOpen, toggleTheme],
   )
   const { commands, run, shortcut, history } = useCommands(bindings)
+  const document = useDocument()
 
   const done = history?.historyLen ?? 0
   const total = done + (history?.redoLabels.length ?? 0)
@@ -155,6 +156,9 @@ export function MainApp() {
             </SidePanel>
           </div>
           <StatusBar>
+            {document && (
+              <StatusItem label={document.name}>{document.unsaved ? "Unsaved" : "Saved"}</StatusItem>
+            )}
             <StatusItem label="Documents">{docs.length}</StatusItem>
             <StatusItem label="History">
               {done} of {total}

@@ -78,6 +78,9 @@ importers:
       '@preset.nz/facets':
         specifier: link:../../facets
         version: link:../../facets
+      '@preset.nz/preferences':
+        specifier: link:../../preferences
+        version: link:../../preferences
       '@preset.nz/ux-kit':
         specifier: link:..
         version: link:..
