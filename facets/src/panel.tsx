@@ -22,7 +22,7 @@ interface PropertyPanelProps {
   /** The card's heading. Overrides the schema's `title`; neither means no heading. */
   title?: React.ReactNode
   /**
-   * Where labels sit in the inspector and card views: `"auto"` (default, as before), `"column"`
+   * Where labels sit in the inspector and card views: `"column"` (default since 0.2.0: one shared label column), `"auto"` (the 0.1 layout)
    * (one shared label column) or `"stacked"` (label above). See `LabelLayout`. The collapsed view
    * ignores it.
    */
@@ -90,7 +90,7 @@ function PanelBody({
   emptyState,
   view = "inspector",
   title,
-  labelLayout = "auto",
+  labelLayout = "column",
   labelWidth,
 }: PropertyPanelProps) {
   const scope = getScope(scopeKey)

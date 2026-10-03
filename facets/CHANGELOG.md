@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased, branch `host-fields`)
+## 0.2.0 (unreleased, on `main`)
 
 Breaking: the `number`, `vector`, `slider` and `color` renderers now draw with
 your components, as `input`, `label`, `checkbox`, `select` and `separator`
@@ -27,6 +27,7 @@ imports.
 
 ### Added
 
+- **`labelLayout` defaults to `"column"`**: one label column per panel, so labels and fields line up. Pass `labelLayout="auto"` for the 0.1 layout.
 - `Scope.gesture` (`begin`, `end`, optional `cancel`) and the matching
   `onGestureBegin` / `onGestureEnd` / `onGestureCancel` renderer props, so a
   scrub, slider drag or colour pick is one undo step. Optional: without it
