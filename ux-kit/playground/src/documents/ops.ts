@@ -171,7 +171,7 @@ export const OPS_LAYOUTS: { value: OpsLayout; label: string; hint: string }[] = 
   { value: "auto", label: "Facets as-is", hint: "Facets' default layout, for reference" },
 ]
 
-const KEY = "ux-kit-playground.ops.layout"
+const KEY = "ux-kit-playground.ops.layout.v2"
 const initial = (): OpsLayout => {
   try {
     const v = localStorage.getItem(KEY)
