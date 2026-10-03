@@ -183,6 +183,14 @@ pub fn rhizome_rows(doc: State<'_, Doc>) -> Vec<Row> {
     doc.0.lock().expect("tree lock").rows()
 }
 
+/// The Ops document's effect kinds with their menu label and category: the metadata each op
+/// declares about itself (menu-standard decision 7), read by the Effect menu's `Add ▸`.
+pub const EFFECTS: &[(&str, &str, &str)] = &[
+    ("cmyk_halftone", "CMYK Halftone", "Print"),
+    ("film_stock", "Film Stock", "Print"),
+    ("levels", "Levels", "Tone"),
+];
+
 /// The open tree is the playground's `History`: app-kit reads the labels from it for the Edit
 /// menu and the toolbar, and calls `undo` and `redo` from either. Each read takes the tree lock,
 /// so `refresh_history` must never run while it is held (`run` below drops it first).

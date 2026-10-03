@@ -5,7 +5,7 @@
 //! are built in. The Gallery and Settings windows are opened here; every other command is
 //! forwarded to the main window as a `command` event.
 
-use preset_app_kit::{AppKit, Command, MenuName};
+use preset_app_kit::{shortcut, AppKit, Command, MenuName};
 use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindowBuilder};
 
 use crate::doc::Doc;
@@ -24,8 +24,39 @@ fn open_window<R: Runtime>(app: &AppHandle<R>, label: &str, title: &str, size: (
         .build();
 }
 
+/// The Effect menu for the Ops document: `Add ▸` grouped by each op's category, then Remove
+/// and the reorder pair. Disabled until the webview enables them for the Ops document.
+fn effect_commands() -> Vec<Command> {
+    let add = crate::doc::EFFECTS.iter().map(|(kind, label, category)| {
+        Command::item(&format!("effect.add.{kind}"), label)
+            .domain("Effect")
+            .section(0)
+            .submenu("Add")
+            .category(category)
+            .tags([*category])
+            .disabled()
+    });
+    add.chain([
+        Command::item("effect.remove", "Remove Effect")
+            .domain("Effect")
+            .section(1)
+            .disabled(),
+        Command::item("effect.earlier", "Move Earlier")
+            .accelerator(shortcut::MOVE_EARLIER)
+            .domain("Effect")
+            .section(2)
+            .disabled(),
+        Command::item("effect.later", "Move Later")
+            .accelerator(shortcut::MOVE_LATER)
+            .domain("Effect")
+            .section(2)
+            .disabled(),
+    ])
+    .collect()
+}
+
 pub fn commands() -> Vec<Command> {
-    vec![
+    let mut commands = vec![
         Command::toggle("panel.left", "Show Outline")
             .toolbar_label("Outline")
             .accelerator("CmdOrCtrl+Alt+S")
@@ -46,7 +77,9 @@ pub fn commands() -> Vec<Command> {
         Command::item("window.gallery", "Gallery")
             .accelerator("CmdOrCtrl+Shift+G")
             .menu(MenuName::Window),
-    ]
+    ];
+    commands.extend(effect_commands());
+    commands
 }
 
 pub fn install<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
