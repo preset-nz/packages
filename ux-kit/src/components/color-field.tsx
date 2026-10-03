@@ -61,7 +61,7 @@ interface ColorFieldProps
 }
 
 function ColorField({
-  value,
+  value: valueProp,
   onChange,
   label,
   alpha = false,
@@ -80,6 +80,11 @@ function ColorField({
   const generatedId = React.useId()
   const inputId = id ?? generatedId
   const locked = !!readOnly || !onChange
+  // During a picker session the field shows only the colour picked so far and ignores incoming
+  // `value` props (an app that round-trips each change would fight the picker); on the picker
+  // closing it re-syncs to the prop.
+  const [live, setLive] = React.useState<string | null>(null)
+  const value = live ?? valueProp
   const rgba = value ? parseHex(value) : null
   const shown = value ? (rgba ? toHex(rgba, alpha) : value) : ""
 
@@ -107,9 +112,10 @@ function ColorField({
     emit({ ...(rgba ?? parseHex(fallback)!), a: Math.min(100, Math.max(0, pct)) / 100 })
   }
 
-  const pick = (hex: string) => {
+  const pick = (hex: string, session = false) => {
     const parsed = parseHex(hex)
     if (!parsed) return
+    if (session) setLive(toHex(parsed, false))
     // Presets and the native picker carry no alpha of their own unless 8-digit.
     emit(hex.replace(/^#/, "").length === 8 || !rgba ? parsed : { ...parsed, a: rgba.a })
   }
@@ -127,6 +133,26 @@ function ColorField({
       <div className={cn("flex items-center gap-2", disabled && "opacity-50")}>
         {locked || disabled ? (
           chip
+        ) : !presets?.length && !clearable ? (
+          // Nothing to offer but the picker: the swatch opens it directly.
+          <label
+            className="relative shrink-0 cursor-pointer rounded-sm focus-within:ring-1 focus-within:ring-ring"
+            title={swatchLabel}
+          >
+            {chip}
+            <input
+              type="color"
+              aria-label={`${swatchLabel} picker`}
+              value={rgba ? toHex(rgba, false) : toHex(parseHex(fallback) ?? { r: 0, g: 0, b: 0, a: 1 }, false)}
+              onChange={(e) => pick(e.target.value, true)}
+              onFocus={onPickStart}
+              onBlur={() => {
+                setLive(null)
+                onPickEnd?.()
+              }}
+              className="absolute inset-0 size-full cursor-pointer opacity-0"
+            />
+          </label>
         ) : (
           <Popover>
             <PopoverTrigger
@@ -166,9 +192,12 @@ function ColorField({
                 type="color"
                 aria-label={`${swatchLabel} picker`}
                 value={rgba ? toHex(rgba, false) : toHex(parseHex(fallback) ?? { r: 0, g: 0, b: 0, a: 1 }, false)}
-                onChange={(e) => pick(e.target.value)}
+                onChange={(e) => pick(e.target.value, true)}
                 onFocus={onPickStart}
-                onBlur={onPickEnd}
+                onBlur={() => {
+                  setLive(null)
+                  onPickEnd?.()
+                }}
                 className="h-8 w-full cursor-pointer rounded-xs border border-border bg-transparent"
               />
             </PopoverContent>

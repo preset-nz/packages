@@ -14,6 +14,12 @@ import { ArrowsHorizontalIcon } from "../icons"
 // between them, every `onValueChange` has `reason: "scrub"` and the app applies it inside one
 // gesture. Escape during a scrub reverts the field and calls `onScrubCancel` instead of
 // `onScrubEnd`. Typed values arrive once, as `reason: "typed"`, never per keystroke.
+//
+// While scrubbing the field shows only its own value and ignores incoming `value` props: an app
+// that round-trips every change (rhizome gesture, then a refreshed prop) would otherwise fight
+// the pointer with stale values. On release it re-syncs to the prop (a late echo of the scrub's
+// own frames is skipped until the prop reaches the released value, or half a second passes).
+// Outgoing scrub changes are sent at most once per animation frame, the last one flushed on release.
 
 type ChangeReason = "scrub" | "step" | "typed"
 
@@ -52,6 +58,11 @@ interface NumberFieldProps
    * stacks over a full-width box.
    */
   labelPlacement?: "inside" | "column" | "above"
+  /**
+   * Classes for the input box when the label sits outside it (`column`, `above`); with `inside` the
+   * box is the root, so `className` does it. Panels use it to give every number one width.
+   */
+  boxClassName?: string
   /** A muted unit after the number, inside the box (`px`, `°`). */
   suffix?: React.ReactNode
   disabled?: boolean
@@ -86,6 +97,7 @@ function NumberField({
   format,
   label,
   labelPlacement = "inside",
+  boxClassName,
   suffix,
   disabled,
   readOnly,
@@ -104,9 +116,14 @@ function NumberField({
   )
 
   // The field's own value, so a scrub follows the pointer without waiting for the app's round
-  // trip. It follows the prop except while a scrub is in flight.
+  // trip. It follows the prop except while a scrub is in flight (and for a moment after it).
   const [local, setLocal] = React.useState<number | null>(value)
+  const localRef = React.useRef<number | null>(value)
   const valueRef = React.useRef(value)
+  const show = (v: number | null) => {
+    localRef.current = v
+    setLocal(v)
+  }
   // Between the pointer going down on the label and coming up. `started`: it moved far enough
   // to change the value (a plain click is not a scrub).
   const scrub = React.useRef({ down: false, started: false, cancelled: false, from: value })
@@ -114,11 +131,56 @@ function NumberField({
   const inputRef = React.useRef<HTMLInputElement>(null)
   // Set when the next blur must not report a typed value: Escape reverted it, or a scrub ended.
   const skipCommit = React.useRef(false)
+  // After a release: the value the app is expected to echo back, and when to stop waiting for it.
+  const settle = React.useRef<{ v: number; until: number; timer: number } | null>(null)
+  // One outgoing scrub change per animation frame.
+  const pending = React.useRef<{ v: number | null; raf: number }>({ v: null, raf: 0 })
+
+  const clearSettle = () => {
+    if (settle.current) window.clearTimeout(settle.current.timer)
+    settle.current = null
+  }
+  const dropPending = () => {
+    cancelAnimationFrame(pending.current.raf)
+    pending.current = { v: null, raf: 0 }
+  }
+  const flushPending = () => {
+    cancelAnimationFrame(pending.current.raf)
+    const v = pending.current.v
+    pending.current = { v: null, raf: 0 }
+    if (v !== null) onValueChange?.(v, { reason: "scrub" })
+  }
+  const onValueChangeRef = React.useRef(onValueChange)
+  React.useEffect(() => {
+    onValueChangeRef.current = onValueChange
+  })
+  const queue = (v: number) => {
+    pending.current.v = v
+    if (pending.current.raf) return
+    pending.current.raf = requestAnimationFrame(() => {
+      pending.current.raf = 0
+      const p = pending.current.v
+      pending.current.v = null
+      if (p !== null) onValueChangeRef.current?.(p, { reason: "scrub" })
+    })
+  }
 
   React.useEffect(() => {
     valueRef.current = value
-    if (!scrub.current.started) setLocal(value)
+    if (scrub.current.started) return
+    const s = settle.current
+    if (s && value !== s.v && Date.now() < s.until) return
+    clearSettle()
+    show(value)
   }, [value])
+
+  React.useEffect(
+    () => () => {
+      clearSettle()
+      cancelAnimationFrame(pending.current.raf)
+    },
+    []
+  )
 
   // Escape while scrubbing. Captured so the app's own Escape (clear selection) doesn't also run.
   React.useEffect(() => {
@@ -129,7 +191,8 @@ function NumberField({
       e.preventDefault()
       e.stopPropagation()
       s.cancelled = true
-      setLocal(s.from)
+      dropPending()
+      show(s.from)
       onScrubCancel()
     }
     window.addEventListener("keydown", onKey, true)
@@ -140,6 +203,7 @@ function NumberField({
     if (d.reason === "scrub") {
       const s = scrub.current
       if (!s.down) {
+        clearSettle()
         s.down = true
         s.started = false
         s.cancelled = false
@@ -151,15 +215,15 @@ function NumberField({
         setScrubbing(true)
         onScrubStart?.()
       }
-      setLocal(v)
-      onValueChange?.(v, { reason: "scrub" })
+      show(v)
+      queue(v)
     } else if (d.reason === "keyboard" || d.reason === "wheel" || d.reason.endsWith("-press")) {
       if (v === null) return
-      setLocal(v)
+      show(v)
       onValueChange?.(v, { reason: "step" })
     } else {
       // Typing, paste, blur formatting: keep the text, tell the app on commit.
-      setLocal(v)
+      show(v)
     }
   }
 
@@ -175,17 +239,36 @@ function NumberField({
         // A dragged label must not leave the input focused: Cmd+Z would then undo its text.
         skipCommit.current = true
         inputRef.current?.blur()
-        if (!cancelled) onScrubEnd?.()
+        if (cancelled) {
+          dropPending()
+          show(valueRef.current)
+        } else {
+          flushPending()
+          // Re-sync to the prop, once it has caught up with what was scrubbed.
+          const v = localRef.current
+          if (v !== null && v !== valueRef.current) {
+            clearSettle()
+            settle.current = {
+              v,
+              until: Date.now() + 500,
+              timer: window.setTimeout(() => {
+                settle.current = null
+                show(valueRef.current)
+              }, 500),
+            }
+          }
+          onScrubEnd?.()
+        }
       }
       return
     }
     if (d.reason === "input-blur" || d.reason === "input-clear") {
       if (skipCommit.current) {
         skipCommit.current = false
-        setLocal(valueRef.current)
+        show(valueRef.current)
         return
       }
-      if (v === null) setLocal(valueRef.current)
+      if (v === null) show(valueRef.current)
       else if (v !== valueRef.current) onValueChange?.(v, { reason: "typed" })
     }
   }
@@ -207,7 +290,7 @@ function NumberField({
           e.currentTarget.blur()
         } else if (e.key === "Escape") {
           skipCommit.current = true
-          setLocal(valueRef.current)
+          show(valueRef.current)
           e.currentTarget.blur()
         }
       }}
@@ -267,7 +350,7 @@ function NumberField({
         </NumberFieldPrimitive.ScrubAreaCursor>
       </NumberFieldPrimitive.ScrubArea>
       {outside ? (
-        <div className={boxClass}>
+        <div className={cn(boxClass, boxClassName)}>
           {input}
           {unit}
         </div>
