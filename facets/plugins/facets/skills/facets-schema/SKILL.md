@@ -105,6 +105,7 @@ registerFieldRenderer("swatches", Swatches as FieldRenderer) // the cast is need
 
 - **Document the extra props next to the renderer.** The type system doesn't check them.
 - **Handle both modes.** With `onChange`, draw a control and honour `disabled`. Without it, draw the value as text.
+- **Wrap it in `FieldShell`** (`<FieldShell label={field.label ?? field.id} view={view}>`) so it follows the panel's label layout like the built-ins; `top` for a tall control, `above` to keep the label above. Put a read-only value in `ReadOnlyText` so its row is as tall as an editable one. A renderer that draws its own label won't line up in `"column"`.
 - **`view` arrives as a prop.** In `"collapsed"` the renderer sits in a compact label-and-control row, so drop its own label line. Ignoring `view` is allowed. Don't spread the props onto a DOM element; React warns about `view`, `field` and `ctx`.
 - **Override a built-in** by registering the same kind after `registerBuiltinRenderers()`; the last registration wins. This is how a host gets a colour picker instead of the built-in swatch and hex box.
 - **An unregistered kind renders nothing** and logs `[properties] no renderer for kind`. It doesn't throw.

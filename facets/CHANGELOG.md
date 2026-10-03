@@ -27,6 +27,7 @@ imports.
 
 ### Added
 
+- **`FieldShell` and `ReadOnlyText` are exported**, so a custom renderer follows the label layout the way the built-ins do.
 - **`labelLayout` defaults to `"column"`**: one label column per panel, so labels and fields line up. Pass `labelLayout="auto"` for the 0.1 layout.
 - `Scope.gesture` (`begin`, `end`, optional `cancel`) and the matching
   `onGestureBegin` / `onGestureEnd` / `onGestureCancel` renderer props, so a

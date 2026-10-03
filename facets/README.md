@@ -174,9 +174,12 @@ In `"column"` the label column's width is one CSS variable on the panel root
 (`--facets-label-w`), set from the longest label (8ch to 16ch) or from the
 `labelWidth` prop. A vector keeps its axis labels inside its slots, so its
 fields share the column the scalars start on. A paired row (`[a, b]`) draws one
-field per row, and a slider shows its value to the right. Custom renderers can
-follow the layout with `useLabelLayout()` and `COLUMN_ROW`, or
-ignore it.
+field per row, and a slider shows its value to the right. A custom renderer
+follows the layout by wrapping its control in `FieldShell` (the built-ins'
+shell; `top` aligns the label with the top of a tall control, `above` keeps it
+above in every layout) and a read-only value in `ReadOnlyText`. For anything
+else, `useLabelLayout()` and `COLUMN_ROW` give the parts. A renderer that draws
+its own label ignores the layout.
 
 ---
 

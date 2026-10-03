@@ -37,7 +37,8 @@ import type {
   VectorFieldDef,
 } from "./types"
 
-function ReadOnlyText({ children }: { children: React.ReactNode }) {
+/** A read-only value at the height of an editable row, so read-only and editable panels line up. */
+export function ReadOnlyText({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-8 px-0 py-1 text-xs text-foreground tabular-nums break-all">
       {children}
@@ -49,7 +50,11 @@ function Empty() {
   return <span className="text-muted-foreground">—</span>
 }
 
-function FieldShell({
+/**
+ * A field's label and control, placed as the panel's label layout and view say. Exported so a
+ * custom renderer sits on the same label column as the built-ins.
+ */
+export function FieldShell({
   label,
   view,
   top,
