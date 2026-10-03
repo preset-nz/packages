@@ -10,6 +10,7 @@ export const DOCS = [
   { type: "card", label: "Card", Icon: Icons.IdentificationCardIcon },
   { type: "ops", label: "Ops", Icon: Icons.FadersHorizontalIcon },
   { type: "messages", label: "Messages", Icon: Icons.ChatTextIcon },
+  { type: "inspectors", label: "Inspectors", Icon: Icons.InfoIcon },
 ] as const
 
 export const docInfo = (type: string) => DOCS.find((d) => d.type === type)

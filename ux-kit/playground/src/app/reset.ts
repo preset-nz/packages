@@ -40,6 +40,8 @@ export function resetTarget(
       return { target: null, reason: "Tokens and fonts are read-only" }
     case "system":
       return { target: null, reason: "Nothing to reset on a toast system" }
+    case "strata":
+      return { target: null, reason: "Strata's inspectors are read-only" }
     default:
       if (doc.type === "primitives")
         return doc.set?.length

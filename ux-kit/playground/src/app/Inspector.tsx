@@ -4,6 +4,8 @@ import { Button, ColorSwatch, Input, Label, SidePanelContent } from "@preset.nz/
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
 import { OpPanel } from "../documents/OpPanel"
+import { StrataPanelView } from "../documents/InspectorsDoc"
+import { strataScope, useStrataView } from "../documents/strata"
 import { opKind } from "../documents/ops"
 import { ValueField } from "../documents/fields"
 import { system } from "../documents/messages"
@@ -215,6 +217,19 @@ function SystemInspector({ id }: { id: string }) {
   )
 }
 
+/** One of Strata's panels at the inspector's width, with the page's sample and layout. */
+function StrataInspector({ panel }: { panel: "image" | "batch" }) {
+  const view = useStrataView()
+  return (
+    <Section title={strataScope(panel)?.label ?? panel}>
+      {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
+      <div className="-mx-3">
+        <StrataPanelView panel={panel} view={view} />
+      </div>
+    </Section>
+  )
+}
+
 /** One value of the Primitives node: key, kind, default, current, an editor, and reset. */
 function ValueInspector({
   doc,
@@ -298,6 +313,8 @@ export function Inspector({
           <FontInspector role={selection.role} />
         ) : selection.kind === "system" ? (
           <SystemInspector id={selection.id} />
+        ) : selection.kind === "strata" ? (
+          <StrataInspector panel={selection.panel} />
         ) : selection.kind === "value" && doc ? (
           <ValueInspector doc={doc} valueKey={selection.key} schema={schema} set={set} gesture={gesture} reset={reset} />
         ) : layer ? (

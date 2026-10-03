@@ -16,6 +16,7 @@ export type Selection =
   | { kind: "layer"; id: string } // Card: a layer node
   | { kind: "op"; id: string } // Ops: an op node
   | { kind: "system"; id: string } // Messages: the toast system, `snackbar`
+  | { kind: "strata"; panel: "image" | "batch" } // Inspectors: one of Strata's panels
 
 const NONE: Selection = { kind: "none" }
 
@@ -39,6 +40,7 @@ export const selectValue = (key: string) => item.select({ kind: "value", key })
 export const selectSystem = (id: string) => item.select({ kind: "system", id })
 export const selectLayer = (id: string) => item.select({ kind: "layer", id })
 export const selectOp = (id: string) => item.select({ kind: "op", id })
+export const selectStrataPanel = (panel: "image" | "batch") => item.select({ kind: "strata", panel })
 
 /** The selection, if it makes sense for the open document and its target exists. */
 export function resolveSelection(sel: Selection, doc: Row | null, layers: Row[], ops: Row[]): Selection {
@@ -55,6 +57,8 @@ export function resolveSelection(sel: Selection, doc: Row | null, layers: Row[],
       return doc?.type === "ops" && ops.some((o) => o.id === sel.id) ? sel : NONE
     case "system":
       return doc?.type === "messages" ? sel : NONE
+    case "strata":
+      return doc?.type === "inspectors" ? sel : NONE
     default:
       return NONE
   }
@@ -76,6 +80,8 @@ export function selectionPath(sel: Selection, doc: Row | null, layers: Row[], op
       return ops.find((o) => o.id === sel.id)?.path ?? doc.path
     case "system":
       return `${doc.path}/${sel.id}`
+    case "strata":
+      return `${doc.path}/${sel.panel}`
     default:
       return doc.path
   }
