@@ -13,7 +13,15 @@ export const useLabelLayout = () => useContext(LabelLayoutContext)
 export const LABEL_WIDTH_VAR = "--facets-label-w"
 
 /** The grid every `"column"` row sits on: the label, then the control. */
-export const COLUMN_ROW = `grid grid-cols-[var(${LABEL_WIDTH_VAR})_minmax(0,1fr)] items-center gap-x-2`
+export const COLUMN_ROW = `grid min-h-8 grid-cols-[var(${LABEL_WIDTH_VAR})_minmax(0,1fr)] items-center gap-x-3`
+
+/**
+ * One width for every number field in a panel, whatever its label: the box is this wide in a label
+ * column or under a label, and `NUMBER_WIDTH_INSIDE` when the label sits inside it (the default
+ * layout, where it lines the boxes up on the right edge).
+ */
+export const NUMBER_WIDTH = "w-28"
+export const NUMBER_WIDTH_INSIDE = "w-44 ml-auto"
 
 /**
  * One width for the whole panel: the longest label among the fields the view draws, in `ch`,

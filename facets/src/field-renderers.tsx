@@ -19,7 +19,7 @@ import { NumberField } from "@/components/ui/number-field"
 import { Slider } from "@/components/ui/slider"
 import { ColorField } from "@/components/ui/color-field"
 import { registerFieldRenderer } from "./registry"
-import { COLUMN_ROW, useLabelLayout } from "./layout"
+import { COLUMN_ROW, NUMBER_WIDTH, NUMBER_WIDTH_INSIDE, useLabelLayout } from "./layout"
 import type {
   CheckboxFieldDef,
   ColorFieldDef,
@@ -53,12 +53,15 @@ function FieldShell({
   label,
   view,
   top,
+  above,
   children,
 }: {
   label?: string
   view?: PanelView
   /** In a label column: align the label to the top of a tall control. */
   top?: boolean
+  /** The label sits above the control even in a label column (a wide control, like a vector of four). */
+  above?: boolean
   children: React.ReactNode
 }) {
   const layout = useLabelLayout()
@@ -74,7 +77,7 @@ function FieldShell({
     )
   }
   // Column: one label column shared by the panel, the control on a common edge.
-  if (layout === "column") {
+  if (layout === "column" && !above) {
     return (
       <div className={top ? COLUMN_ROW.replace("items-center", "items-start") : COLUMN_ROW}>
         <Label
@@ -210,7 +213,11 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
   const placed =
     layout === "auto"
       ? {}
-      : { labelPlacement: layout === "column" ? ("column" as const) : ("above" as const), suffix: field.suffix }
+      : {
+          labelPlacement: layout === "column" ? ("column" as const) : ("above" as const),
+          boxClassName: NUMBER_WIDTH,
+          suffix: field.suffix,
+        }
   const input = (
     <NumberField
       label={label}
@@ -219,6 +226,7 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
       max={field.max}
       step={field.step ?? 1}
       integer={field.integer}
+      className={layout === "auto" ? NUMBER_WIDTH_INSIDE : undefined}
       {...placed}
       disabled={disabled}
       onValueChange={(next) => onChange(next)}
@@ -251,13 +259,13 @@ const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
     <FieldShell label={field.label ?? field.id} view={view}>
       {onChange ? (
         <div
-          className={readout ? "flex items-center gap-2 py-1" : "py-1"}
+          className={readout ? "flex min-h-8 items-center gap-2" : "flex min-h-8 items-center"}
           onPointerDownCapture={() => {
             pressed.current = true
           }}
         >
           <Slider
-            className={readout ? "min-w-0 flex-1" : undefined}
+            className="min-w-0 flex-1"
             aria-label={field.label ?? field.id}
             value={Number.isFinite(num) ? num : (field.min ?? 0)}
             min={field.min}
@@ -324,7 +332,7 @@ const SelectRenderer: FieldRenderer<SelectFieldDef> = ({
         onValueChange={(v) => onChange(v)}
         disabled={disabled}
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full">
           {/* Children, not the primitive's own lookup: Base UI's Value shows
               the raw value unless it's told the label. */}
           <SelectValue>{matched ? matched.label : current}</SelectValue>
@@ -404,16 +412,15 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
     )
   }
   return (
-    <div className="flex items-center gap-2">
+    // One line: the box, then its label, which toggles it.
+    <Label className="min-h-8 gap-2 text-xs text-foreground">
       <Checkbox
         checked={checked}
         disabled={disabled}
         onCheckedChange={(next) => onChange(Boolean(next))}
       />
-      {field.label && (
-        <Label className="text-xs text-foreground">{field.label}</Label>
-      )}
-    </div>
+      {field.label}
+    </Label>
   )
 }
 
@@ -469,10 +476,13 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   const arity = field.components.length
   const values = toNumberArray(value, arity)
   const isInt = Boolean(field.integer)
+  // Three or more components take too much room beside a label column: the label goes above and
+  // the components spread across the full width.
+  const wide = arity >= 3
 
   if (!onChange) {
     return (
-      <FieldShell label={field.label ?? field.id} view={view}>
+      <FieldShell label={field.label ?? field.id} view={view} above={wide}>
         <div
           className="grid gap-x-3 gap-y-1"
           style={{ gridTemplateColumns: `repeat(${arity}, minmax(0, 1fr))` }}
@@ -504,7 +514,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
   }
 
   return (
-    <FieldShell label={field.label ?? field.id} view={view}>
+    <FieldShell label={field.label ?? field.id} view={view} above={wide}>
       <div
         className="grid gap-x-1"
         style={{ gridTemplateColumns: `repeat(${arity}, minmax(0, 1fr))` }}

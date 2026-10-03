@@ -17,6 +17,8 @@ export interface NumberFieldProps
    * the panel's label column; `above` stacks it over the box. A host that ignores it keeps the label inside.
    */
   labelPlacement?: "inside" | "column" | "above"
+  /** Optional: classes for the box when the label sits outside it. A host that ignores it keeps the box's own width. */
+  boxClassName?: string
   /** Optional: a muted unit after the number, inside the box. */
   suffix?: React.ReactNode
   /** The scrub handle and the input's accessible name. */
