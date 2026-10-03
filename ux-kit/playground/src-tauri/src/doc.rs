@@ -18,7 +18,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use preset_app_kit::{refresh_history, Document, History};
-use rhizome_core::{Commit, Error, GestureId, NodeType, Op, Origin, Registry, Row, Tree};
+use rhizome_core::{Commit, Error, GestureId, NodeId, NodeType, Op, Origin, Registry, Row, Tree};
 use serde_json::{json, Value as Json};
 use tauri::{AppHandle, Emitter, Runtime, State};
 
@@ -150,10 +150,13 @@ fn sample_tree() -> Tree {
             tx.add("/documents", "card", "card")?;
             tx.add("/documents", "messages", "messages")?;
             tx.add("/documents", "ops", "ops")?;
-            // Path order is stack order (rows come back sorted by path), so these read top to bottom.
-            tx.add("/stack", "cmyk_halftone", "cmyk_halftone")?;
-            tx.add("/stack", "film_stock", "film_stock")?;
-            tx.add("/stack", "levels", "levels")?;
+            // The `stack` order on /stack is the stack's order, top to bottom.
+            let ops = [
+                tx.add("/stack", "cmyk_halftone", "cmyk_halftone")?,
+                tx.add("/stack", "film_stock", "film_stock")?,
+                tx.add("/stack", "levels", "levels")?,
+            ];
+            tx.set_order("/stack", STACK_ORDER, ops)?;
             tx.add("/layers", "layer", "background")?;
             tx.add("/layers", "layer", "figure")?;
             tx.add("/layers", "layer", "shadow")?;
@@ -190,6 +193,95 @@ pub const EFFECTS: &[(&str, &str, &str)] = &[
     ("film_stock", "Film Stock", "Print"),
     ("levels", "Levels", "Tone"),
 ];
+
+/// The named order on `/stack` that holds the Ops document's stack, top to bottom.
+pub const STACK_ORDER: &str = "stack";
+
+/// The stack as node ids, top to bottom: the `stack` order, then any op it misses in path order
+/// (a file saved before the order existed).
+fn stack(t: &Tree) -> Vec<NodeId> {
+    let Some(owner) = t.at("/stack") else {
+        return Vec::new();
+    };
+    let mut ids: Vec<NodeId> = owner.order(STACK_ORDER).iter().map(|n| n.id()).collect();
+    for c in owner.children() {
+        if !ids.contains(&c.id()) {
+            ids.push(c.id());
+        }
+    }
+    ids
+}
+
+fn effect_label(kind: &str) -> &str {
+    EFFECTS
+        .iter()
+        .find(|(k, ..)| *k == kind)
+        .map_or(kind, |(_, label, _)| label)
+}
+
+/// Effect > Add ▸: a new op of `kind` straight after `after`, or at the end of the stack
+/// (menu-standard decision 6). Returns the new node's id, for the webview to select.
+#[tauri::command]
+pub fn effect_add(
+    app: AppHandle,
+    doc: State<'_, Doc>,
+    kind: String,
+    after: Option<NodeId>,
+) -> Result<NodeId, String> {
+    if !EFFECTS.iter().any(|(k, ..)| *k == kind) {
+        return Err(format!("no effect kind {kind}"));
+    }
+    run(&app, &doc, |t| {
+        let mut order = stack(t);
+        let at = after
+            .and_then(|a| order.iter().position(|id| *id == a))
+            .map_or(order.len(), |i| i + 1);
+        t.edit(&format!("Add {}", effect_label(&kind)), |tx| {
+            let id = tx.add_unique("/stack", &kind, &kind)?;
+            order.insert(at, id);
+            tx.set_order("/stack", STACK_ORDER, order)?;
+            Ok(id)
+        })
+    })
+}
+
+/// Effect > Remove Effect. Removing drops the op from the order too.
+#[tauri::command]
+pub fn effect_remove(app: AppHandle, doc: State<'_, Doc>, id: NodeId) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        let kind = t
+            .at(id)
+            .map(|n| n.type_name().to_string())
+            .unwrap_or_default();
+        t.edit(&format!("Remove {}", effect_label(&kind)), |tx| {
+            tx.remove(id)
+        })
+    })
+}
+
+/// Effect > Move Earlier (`by` -1) or Move Later (`by` 1). Does nothing at either end.
+#[tauri::command]
+pub fn effect_move(app: AppHandle, doc: State<'_, Doc>, id: NodeId, by: i32) -> Result<(), String> {
+    run(&app, &doc, |t| {
+        let mut order = stack(t);
+        let Some(i) = order.iter().position(|o| *o == id) else {
+            return Ok(((), None));
+        };
+        let j = i as i64 + i64::from(by);
+        if j < 0 || j >= order.len() as i64 {
+            return Ok(((), None));
+        }
+        order.swap(i, j as usize);
+        let kind = t
+            .at(id)
+            .map(|n| n.type_name().to_string())
+            .unwrap_or_default();
+        let way = if by < 0 { "Earlier" } else { "Later" };
+        t.edit(&format!("Move {} {way}", effect_label(&kind)), |tx| {
+            tx.set_order("/stack", STACK_ORDER, order)
+        })
+    })
+}
 
 /// The open tree is the playground's `History`: app-kit reads the labels from it for the Edit
 /// menu and the toolbar, and calls `undo` and `redo` from either. Each read takes the tree lock,
@@ -489,6 +581,25 @@ fn leaf(path: &str) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_stack_follows_its_order_and_the_order_survives_a_move() {
+        let mut tree = sample_tree();
+        let names = |t: &Tree| -> Vec<String> {
+            stack(t)
+                .into_iter()
+                .map(|id| t.at(id).unwrap().name().to_string())
+                .collect()
+        };
+        assert_eq!(names(&tree), ["cmyk_halftone", "film_stock", "levels"]);
+        let mut order = stack(&tree);
+        order.swap(0, 2);
+        tree.edit("Move", |tx| tx.set_order("/stack", STACK_ORDER, order))
+            .unwrap();
+        assert_eq!(names(&tree), ["levels", "film_stock", "cmyk_halftone"]);
+        tree.undo().unwrap();
+        assert_eq!(names(&tree), ["cmyk_halftone", "film_stock", "levels"]);
+    }
     use serde_json::json;
 
     #[test]

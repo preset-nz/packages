@@ -14,6 +14,8 @@ export type Row = {
   values?: Record<string, unknown>
   /** The value keys actually stored; the rest read as their defaults. */
   set?: string[]
+  /** Named orders of the node's children, by node id. */
+  orders?: Record<string, string[]>
 }
 /** One value in a node type's schema (rhizome-core's `ValueSchema`), as `rhizome_schema` returns it. */
 export type ValueSchema = {
@@ -37,8 +39,22 @@ export const DOC_PREFIX = "/documents/"
 
 export const LAYER_PREFIX = "/layers/"
 
-/** Where the Ops document's op nodes live; path order is stack order. */
+/** Where the Ops document's op nodes live. */
 export const STACK_PREFIX = "/stack/"
+
+/**
+ * The Ops document's ops, top to bottom: the `stack` order on /stack (doc.rs `STACK_ORDER`),
+ * then any op it misses in path order.
+ */
+export function stackRows(rows: Row[]): Row[] {
+  const order = rows.find((r) => r.path === "/stack")?.orders?.stack ?? []
+  const ops = rows.filter((r) => r.path.startsWith(STACK_PREFIX) && r.path.indexOf("/", STACK_PREFIX.length) < 0)
+  const rank = (r: Row) => {
+    const i = order.indexOf(r.id)
+    return i < 0 ? order.length : i
+  }
+  return ops.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map(({ r }) => r)
+}
 
 export const fetchRows = () => invoke<Row[]>("rhizome_rows")
 

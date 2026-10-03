@@ -15,7 +15,7 @@ import { CommandToolbar, useCommands, useDocument, undo } from "@preset.nz/app-k
 
 import { buildBindings, TOOLBAR } from "../commands"
 import { docInfo, sortDocs } from "../documents"
-import { DOC_PREFIX, LAYER_PREFIX, STACK_PREFIX, useRhizome } from "../rhizome"
+import { DOC_PREFIX, LAYER_PREFIX, stackRows, useRhizome } from "../rhizome"
 import {
   clearSelection,
   openDocument,
@@ -46,7 +46,7 @@ export function MainApp() {
 
   const docs = useMemo(() => sortDocs(rows.filter((r) => r.path.startsWith(DOC_PREFIX))), [rows])
   const layers = useMemo(() => rows.filter((r) => r.path.startsWith(LAYER_PREFIX)), [rows])
-  const ops = useMemo(() => rows.filter((r) => r.path.startsWith(STACK_PREFIX)), [rows])
+  const ops = useMemo(() => stackRows(rows), [rows])
   // The open document is by node id; with none (or one that is gone) the first shows.
   const selected = docs.find((d) => d.id === openId) ?? docs[0] ?? null
   const selection = resolveSelection(itemSelection, selected, layers, ops)
@@ -64,6 +64,31 @@ export function MainApp() {
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [])
+  const opIndex = selection.kind === "op" ? ops.findIndex((o) => o.id === selection.id) : -1
+  const selectedOpId = opIndex >= 0 ? ops[opIndex].id : null
+  const effects = useMemo(
+    () => ({
+      open: selected?.type === "ops",
+      kinds: schema?.types.map((t) => t.name) ?? [],
+      index: opIndex >= 0 ? opIndex : null,
+      count: ops.length,
+      // A new effect goes after the selected one, or at the end (menu-standard decision 6).
+      add: (kind: string) =>
+        void call<string>("effect_add", { kind, after: selectedOpId }).then((id) => id && selectOp(id)),
+      remove: () => {
+        if (!selectedOpId) return
+        // The next op takes the selection, or the one before when it was last.
+        const next = ops[opIndex + 1] ?? ops[opIndex - 1]
+        void call("effect_remove", { id: selectedOpId }).then((r) => {
+          if (r === undefined) return
+          if (next) selectOp(next.id)
+          else clearSelection()
+        })
+      },
+      move: (by: -1 | 1) => selectedOpId && void call("effect_move", { id: selectedOpId, by }),
+    }),
+    [selected?.type, schema, opIndex, selectedOpId, ops, call],
+  )
   const resetKeys = (path: string, keys: string[]) => call("rhizome_reset", { path, keys })
 
   const bindings = useMemo(
@@ -88,8 +113,9 @@ export function MainApp() {
         toggleLeft: () => setLeftOpen((v) => !v),
         toggleRight: () => setRightOpen((v) => !v),
         toggleTheme,
+        effects,
       }),
-    [reset.target, reset.reason, selected, canReset, leftOpen, rightOpen, dark, call, setLeftOpen, setRightOpen, toggleTheme],
+    [effects, reset.target, reset.reason, selected, canReset, leftOpen, rightOpen, dark, call, setLeftOpen, setRightOpen, toggleTheme],
   )
   const { commands, run, shortcut, history } = useCommands(bindings)
   const document = useDocument()
