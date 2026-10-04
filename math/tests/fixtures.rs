@@ -58,7 +58,7 @@ fn call<T: Float + From<f32>>(name: &str, a: &[T]) -> T {
         ("invlerp", &[x, y, z]) => invlerp(x, y, z),
         ("clamp", &[x, y, z]) => clamp(x, y, z),
         ("fit", &[v, a, b, c, d]) => fit(v, a, b, c, d),
-        ("efit", &[v, a, b, c, d]) => efit(v, a, b, c, d),
+        ("fitUnclamped", &[v, a, b, c, d]) => fit_unclamped(v, a, b, c, d),
         ("fit01", &[v, a, b]) => fit01(v, a, b),
         ("fit10", &[v, a, b]) => fit10(v, a, b),
         ("fit11", &[v, a, b]) => fit11(v, a, b),

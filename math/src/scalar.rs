@@ -1,5 +1,4 @@
-//! Scalar shaping: interpolate, remap, ease, bias and gain. Names and argument
-//! order follow Houdini's VEX where it has the function.
+//! Scalar shaping: interpolate, remap, ease, bias and gain.
 //!
 //! Mirrors `src-ts/scalar.ts`; both are pinned by `fixtures/scalars.json`.
 
@@ -12,7 +11,7 @@ pub fn lerp<T: Float>(a: T, b: T, t: T) -> T {
 }
 
 /// Where `v` sits between `min` and `max`: the inverse of [`lerp`].
-/// Unclamped. When `min == max` it returns 0.5, as VEX does.
+/// Unclamped. When `min == max` it returns 0.5.
 #[inline]
 pub fn invlerp<T: Float>(v: T, min: T, max: T) -> T {
     if min == max {
@@ -36,7 +35,7 @@ pub fn fit<T: Float>(v: T, omin: T, omax: T, nmin: T, nmax: T) -> T {
 
 /// [`fit`] without the clamp: values outside the old range extrapolate.
 #[inline]
-pub fn efit<T: Float>(v: T, omin: T, omax: T, nmin: T, nmax: T) -> T {
+pub fn fit_unclamped<T: Float>(v: T, omin: T, omax: T, nmin: T, nmax: T) -> T {
     lerp(nmin, nmax, invlerp(v, omin, omax))
 }
 

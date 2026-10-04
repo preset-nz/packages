@@ -7,12 +7,12 @@ const sweep = (a: number, b: number, n = 200) =>
   Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
 
 describe("scalars", () => {
-  it("fit matches the example in Houdini's docs", () => {
+  it("fit(0.3, 0, 1, 10, 20) is 13", () => {
     expect(m.fit(0.3, 0, 1, 10, 20)).toBeCloseTo(13);
   });
-  it("fit clamps, efit extrapolates", () => {
+  it("fit clamps, fitUnclamped extrapolates", () => {
     expect(m.fit(2, 0, 1, 10, 20)).toBe(20);
-    expect(m.efit(2, 0, 1, 10, 20)).toBe(30);
+    expect(m.fitUnclamped(2, 0, 1, 10, 20)).toBe(30);
   });
   it("fit10 reverses", () => {
     expect(m.fit10(0, 10, 20)).toBe(20);

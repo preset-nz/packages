@@ -1,5 +1,4 @@
-//! The curve: points with a basis per point, as in Houdini's ramp parameter,
-//! plus segment tension and a sustain point for envelopes.
+//! The curve: points with a basis per point, plus segment tension and a sustain point for envelopes.
 //!
 //! Mirrors `src-ts/curve.ts` in `f32`; both are pinned by
 //! `fixtures/curves.json`. Evaluation never allocates, so it is safe on the

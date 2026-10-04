@@ -1,6 +1,5 @@
 /**
- * The curve: points with a basis per point, as in Houdini's ramp parameter,
- * plus segment tension and a sustain point for envelopes. One shape for
+ * The curve: points with a basis per point, plus segment tension and a sustain point for envelopes. One shape for
  * ux-kit's CurveEditor in transfer mode (0..1 to 0..1) and envelope mode
  * (x is time).
  *

@@ -1,6 +1,5 @@
 /**
- * Scalar shaping: interpolate, remap, ease, bias and gain. Names and argument
- * order follow Houdini's VEX where it has the function.
+ * Scalar shaping: interpolate, remap, ease, bias and gain.
  *
  * Mirrored by `src/scalar.rs`; both are pinned by `fixtures/scalars.json`.
  */
@@ -12,7 +11,7 @@ export function lerp(a: number, b: number, t: number): number {
 
 /**
  * Where `v` sits between `min` and `max`: the inverse of `lerp`. Unclamped.
- * When `min == max` it returns 0.5, as VEX does.
+ * When `min == max` it returns 0.5.
  */
 export function invlerp(v: number, min: number, max: number): number {
   if (min === max) return 0.5;
@@ -34,7 +33,7 @@ export function fit(v: number, omin: number, omax: number, nmin: number, nmax: n
 }
 
 /** `fit` without the clamp: values outside the old range extrapolate. */
-export function efit(v: number, omin: number, omax: number, nmin: number, nmax: number): number {
+export function fitUnclamped(v: number, omin: number, omax: number, nmin: number, nmax: number): number {
   return lerp(nmin, nmax, invlerp(v, omin, omax));
 }
 
@@ -55,7 +54,7 @@ export function fit11(v: number, nmin: number, nmax: number): number {
 
 /**
  * 0 at or below `min`, 1 at or above `max`, and an ease in and out between
- * (`3t² − 2t³`). VEX's `smooth(value1, value2, amount)`, without rolloff.
+ * (`3t² − 2t³`).
  */
 export function smooth(min: number, max: number, v: number): number {
   if (v <= min) return 0;
