@@ -1,0 +1,25 @@
+[package]
+name = "preset-math"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Value shaping for the preset.nz desktop apps: fit, lerp, smooth, bias and gain named after Houdini's VEX functions, and one curve that evaluates identically in Rust and TypeScript."
+repository = "https://github.com/preset-nz/math"
+readme = "README.md"
+keywords = ["curve", "lerp", "envelope", "spline", "remap"]
+categories = ["mathematics", "multimedia::audio", "graphics"]
+include = ["/src/**/*.rs", "/README.md", "/LICENSE"]
+
+[lib]
+name = "preset_math"
+
+[features]
+default = []
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"], optional = true }
+
+[dev-dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

@@ -1,0 +1,28 @@
+export {
+  bias,
+  biasPerlin,
+  clamp,
+  efit,
+  fit,
+  fit01,
+  fit10,
+  fit11,
+  gain,
+  gainPerlin,
+  invlerp,
+  lerp,
+  smooth,
+} from "./scalar.ts";
+export {
+  bake,
+  bakeRange,
+  evaluate,
+  evaluateBaked,
+  evaluateEnvelope,
+  sortPoints,
+  TENSION_STRENGTH,
+  tensionWarp,
+  type Basis,
+  type Curve,
+  type CurvePoint,
+} from "./curve.ts";

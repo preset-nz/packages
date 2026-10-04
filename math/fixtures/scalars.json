@@ -1,0 +1,501 @@
+{
+  "tolerance": 0.00001,
+  "cases": [
+    {
+      "fn": "lerp",
+      "args": [
+        0,
+        10,
+        0.3
+      ],
+      "expected": 3
+    },
+    {
+      "fn": "lerp",
+      "args": [
+        5,
+        -5,
+        0.5
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "lerp",
+      "args": [
+        0,
+        1,
+        1.5
+      ],
+      "expected": 1.5
+    },
+    {
+      "fn": "lerp",
+      "args": [
+        0,
+        1,
+        -0.5
+      ],
+      "expected": -0.5
+    },
+    {
+      "fn": "invlerp",
+      "args": [
+        3,
+        0,
+        10
+      ],
+      "expected": 0.3
+    },
+    {
+      "fn": "invlerp",
+      "args": [
+        0.5,
+        1,
+        0
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "invlerp",
+      "args": [
+        15,
+        0,
+        10
+      ],
+      "expected": 1.5
+    },
+    {
+      "fn": "invlerp",
+      "args": [
+        2,
+        2,
+        2
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "clamp",
+      "args": [
+        -1,
+        0,
+        1
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "clamp",
+      "args": [
+        0.4,
+        0,
+        1
+      ],
+      "expected": 0.4
+    },
+    {
+      "fn": "clamp",
+      "args": [
+        7,
+        0,
+        1
+      ],
+      "expected": 1
+    },
+    {
+      "fn": "fit",
+      "args": [
+        0.3,
+        0,
+        1,
+        10,
+        20
+      ],
+      "expected": 13
+    },
+    {
+      "fn": "fit",
+      "args": [
+        2,
+        0,
+        1,
+        10,
+        20
+      ],
+      "expected": 20
+    },
+    {
+      "fn": "fit",
+      "args": [
+        -1,
+        0,
+        1,
+        10,
+        20
+      ],
+      "expected": 10
+    },
+    {
+      "fn": "fit",
+      "args": [
+        5,
+        10,
+        0,
+        0,
+        1
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "fit",
+      "args": [
+        3,
+        3,
+        3,
+        0,
+        10
+      ],
+      "expected": 5
+    },
+    {
+      "fn": "efit",
+      "args": [
+        2,
+        0,
+        1,
+        10,
+        20
+      ],
+      "expected": 30
+    },
+    {
+      "fn": "efit",
+      "args": [
+        -1,
+        0,
+        1,
+        10,
+        20
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "efit",
+      "args": [
+        0.25,
+        0,
+        1,
+        1,
+        0
+      ],
+      "expected": 0.75
+    },
+    {
+      "fn": "fit01",
+      "args": [
+        0.25,
+        10,
+        20
+      ],
+      "expected": 12.5
+    },
+    {
+      "fn": "fit01",
+      "args": [
+        1.5,
+        10,
+        20
+      ],
+      "expected": 20
+    },
+    {
+      "fn": "fit10",
+      "args": [
+        0.25,
+        10,
+        20
+      ],
+      "expected": 17.5
+    },
+    {
+      "fn": "fit10",
+      "args": [
+        -1,
+        10,
+        20
+      ],
+      "expected": 20
+    },
+    {
+      "fn": "fit11",
+      "args": [
+        0,
+        0,
+        1
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "fit11",
+      "args": [
+        -0.5,
+        0,
+        1
+      ],
+      "expected": 0.25
+    },
+    {
+      "fn": "fit11",
+      "args": [
+        2,
+        0,
+        1
+      ],
+      "expected": 1
+    },
+    {
+      "fn": "smooth",
+      "args": [
+        0,
+        1,
+        -0.1
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "smooth",
+      "args": [
+        0,
+        1,
+        0.25
+      ],
+      "expected": 0.15625
+    },
+    {
+      "fn": "smooth",
+      "args": [
+        0,
+        1,
+        0.5
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "smooth",
+      "args": [
+        0,
+        1,
+        0.75
+      ],
+      "expected": 0.84375
+    },
+    {
+      "fn": "smooth",
+      "args": [
+        2,
+        4,
+        5
+      ],
+      "expected": 1
+    },
+    {
+      "fn": "smooth",
+      "args": [
+        1,
+        1,
+        1
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "bias",
+      "args": [
+        0.5,
+        0.5
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "bias",
+      "args": [
+        0.25,
+        0.8
+      ],
+      "expected": 0.5714285714285714
+    },
+    {
+      "fn": "bias",
+      "args": [
+        0.25,
+        0.2
+      ],
+      "expected": 0.07692307692307693
+    },
+    {
+      "fn": "bias",
+      "args": [
+        0,
+        0.3
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "bias",
+      "args": [
+        1,
+        0.3
+      ],
+      "expected": 1
+    },
+    {
+      "fn": "bias",
+      "args": [
+        0.6,
+        0
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "bias",
+      "args": [
+        0.6,
+        1
+      ],
+      "expected": 1
+    },
+    {
+      "fn": "gain",
+      "args": [
+        0.25,
+        0.5
+      ],
+      "expected": 0.25
+    },
+    {
+      "fn": "gain",
+      "args": [
+        0.25,
+        0.8
+      ],
+      "expected": 0.09999999999999998
+    },
+    {
+      "fn": "gain",
+      "args": [
+        0.1,
+        0.8
+      ],
+      "expected": 0.02941176470588235
+    },
+    {
+      "fn": "gain",
+      "args": [
+        0.75,
+        0.8
+      ],
+      "expected": 0.9
+    },
+    {
+      "fn": "gain",
+      "args": [
+        0.9,
+        0.2
+      ],
+      "expected": 0.75
+    },
+    {
+      "fn": "gain",
+      "args": [
+        0.5,
+        0.9
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "biasPerlin",
+      "args": [
+        0.5,
+        0.5
+      ],
+      "expected": 0.5
+    },
+    {
+      "fn": "biasPerlin",
+      "args": [
+        0.25,
+        0.8
+      ],
+      "expected": 0.64
+    },
+    {
+      "fn": "biasPerlin",
+      "args": [
+        0.25,
+        0.2
+      ],
+      "expected": 0.04000000000000001
+    },
+    {
+      "fn": "biasPerlin",
+      "args": [
+        0,
+        0.3
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "biasPerlin",
+      "args": [
+        0.6,
+        0
+      ],
+      "expected": 0
+    },
+    {
+      "fn": "biasPerlin",
+      "args": [
+        0.6,
+        1
+      ],
+      "expected": 1
+    },
+    {
+      "fn": "gainPerlin",
+      "args": [
+        0.25,
+        0.5
+      ],
+      "expected": 0.25
+    },
+    {
+      "fn": "gainPerlin",
+      "args": [
+        0.25,
+        0.8
+      ],
+      "expected": 0.09999999999999998
+    },
+    {
+      "fn": "gainPerlin",
+      "args": [
+        0.1,
+        0.8
+      ],
+      "expected": 0.011912746872255608
+    },
+    {
+      "fn": "gainPerlin",
+      "args": [
+        0.75,
+        0.8
+      ],
+      "expected": 0.9
+    },
+    {
+      "fn": "gainPerlin",
+      "args": [
+        0.9,
+        0.2
+      ],
+      "expected": 0.7021813281936098
+    }
+  ]
+}

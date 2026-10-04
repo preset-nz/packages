@@ -1,0 +1,3 @@
+# pnpm 10+ reads settings from here, not .npmrc.
+allowBuilds:
+  esbuild: true

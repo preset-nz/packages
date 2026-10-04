@@ -1,0 +1,26 @@
+{
+  "name": "@preset.nz/math",
+  "version": "0.1.0",
+  "description": "Value shaping for the preset.nz desktop apps: fit, lerp, smooth, bias and gain named after Houdini's VEX functions, and one curve that evaluates identically in TypeScript and Rust.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/preset-nz/math.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src-ts/index.ts"
+  },
+  "files": [
+    "src-ts"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4",
+    "@types/node": "^24"
+  }
+}
