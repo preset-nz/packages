@@ -2,7 +2,7 @@
 
 Value shaping for the preset.nz desktop apps, in TypeScript and Rust with the same results in both.
 
-- **Scalars:** `lerp`, `invlerp`, `clamp`, `fit`, `fitUnclamped`, `fit01`, `fit10`, `fit11`, `smooth`, `bias`, `gain`, `biasPerlin`, `gainPerlin`.
+- **Scalars:** `lerp`, `invlerp`, `clamp`, `fit`, `fitUnclamped`, `smooth`, `bias`, `gain`, `biasPerlin`, `gainPerlin`.
 - **Curve:** points with a basis each (constant, linear, monotone, Catmull-Rom), tension on linear segments, and a sustain point for envelopes. `evaluate`, `evaluateEnvelope`, `bake` and `evaluateBaked`.
 
 npm `@preset.nz/math` ships unbuilt TypeScript (`src-ts/`). The crate `preset-math` (`src/`) has no dependencies; enable `serde` for the curve's derives. One version covers both.

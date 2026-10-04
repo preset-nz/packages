@@ -14,9 +14,10 @@ describe("scalars", () => {
     expect(m.fit(2, 0, 1, 10, 20)).toBe(20);
     expect(m.fitUnclamped(2, 0, 1, 10, 20)).toBe(30);
   });
-  it("fit10 reverses", () => {
-    expect(m.fit10(0, 10, 20)).toBe(20);
-    expect(m.fit10(1, 10, 20)).toBe(10);
+  it("fit reverses with a reversed range", () => {
+    expect(m.fit(0, 1, 0, 10, 20)).toBe(20);
+    expect(m.fit(1, 1, 0, 10, 20)).toBe(10);
+    expect(m.fit(0, -1, 1, 0, 1)).toBe(0.5);
   });
   it("invlerp undoes lerp, and a degenerate range is 0.5", () => {
     expect(m.invlerp(m.lerp(3, 7, 0.3), 3, 7)).toBeCloseTo(0.3);

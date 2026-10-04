@@ -37,21 +37,6 @@ export function fitUnclamped(v: number, omin: number, omax: number, nmin: number
   return lerp(nmin, nmax, invlerp(v, omin, omax));
 }
 
-/** `[0, 1]` to `[nmin, nmax]`, clamped. */
-export function fit01(v: number, nmin: number, nmax: number): number {
-  return fit(v, 0, 1, nmin, nmax);
-}
-
-/** `[1, 0]` to `[nmin, nmax]`, clamped: 1 maps to `nmin`, 0 to `nmax`. */
-export function fit10(v: number, nmin: number, nmax: number): number {
-  return fit(v, 1, 0, nmin, nmax);
-}
-
-/** `[-1, 1]` to `[nmin, nmax]`, clamped. */
-export function fit11(v: number, nmin: number, nmax: number): number {
-  return fit(v, -1, 1, nmin, nmax);
-}
-
 /**
  * 0 at or below `min`, 1 at or above `max`, and an ease in and out between
  * (`3t² − 2t³`).

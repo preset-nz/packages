@@ -39,24 +39,6 @@ pub fn fit_unclamped<T: Float>(v: T, omin: T, omax: T, nmin: T, nmax: T) -> T {
     lerp(nmin, nmax, invlerp(v, omin, omax))
 }
 
-/// `[0, 1]` to `[nmin, nmax]`, clamped.
-#[inline]
-pub fn fit01<T: Float>(v: T, nmin: T, nmax: T) -> T {
-    fit(v, T::ZERO, T::ONE, nmin, nmax)
-}
-
-/// `[1, 0]` to `[nmin, nmax]`, clamped: 1 maps to `nmin`, 0 to `nmax`.
-#[inline]
-pub fn fit10<T: Float>(v: T, nmin: T, nmax: T) -> T {
-    fit(v, T::ONE, T::ZERO, nmin, nmax)
-}
-
-/// `[-1, 1]` to `[nmin, nmax]`, clamped.
-#[inline]
-pub fn fit11<T: Float>(v: T, nmin: T, nmax: T) -> T {
-    fit(v, -T::ONE, T::ONE, nmin, nmax)
-}
-
 /// 0 at or below `min`, 1 at or above `max`, and an ease in and out between
 /// (`3t² − 2t³`).
 #[inline]

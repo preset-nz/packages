@@ -16,6 +16,5 @@ mod scalar;
 pub use curve::{evaluate_baked, tension_warp, Basis, Curve, CurvePoint, TENSION_STRENGTH};
 pub use float::Float;
 pub use scalar::{
-    bias, bias_perlin, clamp, fit, fit01, fit10, fit11, fit_unclamped, gain, gain_perlin, invlerp,
-    lerp, smooth,
+    bias, bias_perlin, clamp, fit, fit_unclamped, gain, gain_perlin, invlerp, lerp, smooth,
 };

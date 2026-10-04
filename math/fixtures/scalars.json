@@ -189,69 +189,6 @@
       "expected": 0.75
     },
     {
-      "fn": "fit01",
-      "args": [
-        0.25,
-        10,
-        20
-      ],
-      "expected": 12.5
-    },
-    {
-      "fn": "fit01",
-      "args": [
-        1.5,
-        10,
-        20
-      ],
-      "expected": 20
-    },
-    {
-      "fn": "fit10",
-      "args": [
-        0.25,
-        10,
-        20
-      ],
-      "expected": 17.5
-    },
-    {
-      "fn": "fit10",
-      "args": [
-        -1,
-        10,
-        20
-      ],
-      "expected": 20
-    },
-    {
-      "fn": "fit11",
-      "args": [
-        0,
-        0,
-        1
-      ],
-      "expected": 0.5
-    },
-    {
-      "fn": "fit11",
-      "args": [
-        -0.5,
-        0,
-        1
-      ],
-      "expected": 0.25
-    },
-    {
-      "fn": "fit11",
-      "args": [
-        2,
-        0,
-        1
-      ],
-      "expected": 1
-    },
-    {
       "fn": "smooth",
       "args": [
         0,
