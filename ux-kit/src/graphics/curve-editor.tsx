@@ -70,6 +70,7 @@ const PAD = 10
 const POINT_R = 4.5
 const HIT_R = 10
 const NUDGE = 0.01
+const DRAG_THRESHOLD = 3
 const BASES: { value: Basis; label: string }[] = [
   { value: "constant", label: "Constant" },
   { value: "linear", label: "Linear" },
@@ -78,9 +79,15 @@ const BASES: { value: Basis; label: string }[] = [
 ]
 const TOKENS = ["foreground", "muted-foreground", "border", "primary", "warning"] as const
 
-type Drag =
-  | { kind: "point"; index: number; start: Curve; pointer: number }
-  | { kind: "tension"; index: number; start: Curve; pointer: number }
+/** A press on a handle. It becomes a gesture only once it has moved `DRAG_THRESHOLD` pixels. */
+type Drag = {
+  kind: "point" | "tension"
+  index: number
+  start: Curve
+  pointer: number
+  from: { x: number; y: number }
+  started: boolean
+}
 
 type MenuTarget =
   | { kind: "point"; index: number }
@@ -88,6 +95,15 @@ type MenuTarget =
   | { kind: "empty"; x: number; y: number }
 
 const defaultFormat = (v: number) => v.toFixed(3)
+
+/** Whether two curves draw the same, whatever order the host's copy keeps its keys in. */
+function sameCurve(a: Curve, b: Curve): boolean {
+  if (a.points.length !== b.points.length || (a.sustain ?? -1) !== (b.sustain ?? -1)) return false
+  return a.points.every((p, i) => {
+    const q = b.points[i]!
+    return p.x === q.x && p.y === q.y && p.basis === q.basis && (p.tension ?? 0) === (q.tension ?? 0)
+  })
+}
 
 /**
  * Edits a `@preset.nz/math` curve. The line is drawn on a canvas by sampling math's own
@@ -116,10 +132,19 @@ export function CurveEditor({
   const size = useSize(box)
   const colours = useTokenColours(TOKENS)
 
-  // The scrub rule: during a drag the view shows its own value, not the host's echo.
-  const [live, setLive] = React.useState<Curve | null>(null)
+  // The scrub rule: during a drag the view shows its own value, not the host's echo. After
+  // release it keeps showing it until the host's value catches up, so the line can't flick back
+  // to an echo from mid-drag.
+  const [live, setLive] = React.useState<{ curve: Curve; held: boolean } | null>(null)
   const drag = React.useRef<Drag | null>(null)
-  const curve = live ?? value
+  if (live?.held && sameCurve(live.curve, value)) setLive(null)
+  const curve = live?.curve ?? value
+  React.useEffect(() => {
+    if (!live?.held) return
+    // A host that normalises the curve never echoes it exactly; let go regardless.
+    const timer = setTimeout(() => setLive(null), 1000)
+    return () => clearTimeout(timer)
+  }, [live])
   const [selected, setSelected] = React.useState<number | null>(null)
   const [menu, setMenu] = React.useState<MenuTarget | null>(null)
 
@@ -205,13 +230,18 @@ export function CurveEditor({
     e.stopPropagation()
     svg.current?.setPointerCapture(e.pointerId)
     drag.current = d
-    setLive(d.start)
-    onGestureStart?.()
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current
     if (!d || e.pointerId !== d.pointer) return
+    // A click is not a drag: nothing reaches the host, or its undo, until the pointer moves.
+    if (!d.started) {
+      if (Math.hypot(e.clientX - d.from.x, e.clientY - d.from.y) < DRAG_THRESHOLD) return
+      d.started = true
+      setLive({ curve: d.start, held: false })
+      onGestureStart?.()
+    }
     const { x, y } = toData(e)
     let next: Curve | null = null
     if (d.kind === "point") {
@@ -223,7 +253,7 @@ export function CurveEditor({
       if (t !== null) next = setTension(d.start, d.index, t, constrain)
     }
     if (next) {
-      setLive(next)
+      setLive({ curve: next, held: false })
       onChange(next, "gesture")
     }
   }
@@ -232,14 +262,15 @@ export function CurveEditor({
     const d = drag.current
     if (!d) return
     drag.current = null
+    if (!d.started) return
     if (!committed) onChange(d.start, "gesture")
-    setLive(null)
+    setLive((l) => ({ curve: committed && l ? l.curve : d.start, held: true }))
     onGestureEnd?.(committed)
   }
 
   // Escape cancels a drag wherever focus is.
   React.useEffect(() => {
-    if (!live) return
+    if (!drag.current?.started) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && drag.current) {
         e.preventDefault()
@@ -329,7 +360,7 @@ export function CurveEditor({
               <g
                 key={`t${i}`}
                 className="cursor-ns-resize"
-                onPointerDown={(e) => beginDrag(e, { kind: "tension", index: i, start: curve, pointer: e.pointerId })}
+                onPointerDown={(e) => beginDrag(e, { kind: "tension", index: i, start: curve, pointer: e.pointerId, from: { x: e.clientX, y: e.clientY }, started: false })}
                 onDoubleClick={(e) => {
                   e.stopPropagation()
                   commit(setTension(curve, i, 0, constrain), "edit")
@@ -366,7 +397,7 @@ export function CurveEditor({
                 onPointerDown={(e) => {
                   setSelected(i)
                   ;(e.currentTarget as SVGGElement).focus()
-                  beginDrag(e, { kind: "point", index: i, start: curve, pointer: e.pointerId })
+                  beginDrag(e, { kind: "point", index: i, start: curve, pointer: e.pointerId, from: { x: e.clientX, y: e.clientY }, started: false })
                 }}
                 onContextMenu={() => {
                   setSelected(i)

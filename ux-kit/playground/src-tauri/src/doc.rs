@@ -779,6 +779,11 @@ mod tests {
         }
         gesture_end(&mut tree, &mut slot).unwrap();
         assert_eq!(tree.history_len(), 1, "the whole drag is one step");
+        // A press that never moves: the editor sends no gesture, and one that changed nothing
+        // leaves no step either.
+        gesture_begin(&mut tree, &mut slot, at, "transfer").unwrap();
+        gesture_end(&mut tree, &mut slot).unwrap();
+        assert_eq!(tree.history_len(), 1, "an empty gesture is not an undo step");
         let bad = json!({"points": [{"x": 0.0, "y": 0.0, "basis": "cubic"}]});
         let set = Op::Set {
             at: at.into(),
