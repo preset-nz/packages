@@ -20,6 +20,9 @@ importers:
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@preset.nz/math':
+        specifier: link:../math
+        version: link:../math
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -78,6 +81,9 @@ importers:
       '@preset.nz/facets':
         specifier: link:../../facets
         version: link:../../facets
+      '@preset.nz/math':
+        specifier: link:../../math
+        version: link:../../math
       '@preset.nz/preferences':
         specifier: link:../../preferences
         version: link:../../preferences

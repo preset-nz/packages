@@ -1,4 +1,4 @@
-//! An in-memory rhizome tree of seven documents (and the layers the Card document holds, and the
+//! An in-memory rhizome tree of eight documents (and the layers the Card document holds, and the
 //! op stack the Ops document holds), and the commands that read and edit it.
 //!
 //! Uses rhizome-core as it is: `Registry`, `Tree`, `Tree::rows`, `Op::Set` / `Op::Reset`
@@ -6,7 +6,7 @@
 //! made up for the playground, not an app's object model, except the three op types: their keys,
 //! ranges, defaults and choices are Oblique's (`sidecar/ops/{cmyk_halftone,film_stock,levels}.py`). `tokens`, `fonts`, `messages` and `inspectors` hold no
 //! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
-//! of every kind the documents edit. Edits are labelled; undo and redo are
+//! of every kind the documents edit, and `graphics` holds three curves as shaped values. Edits are labelled; undo and redo are
 //! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
 //! live edits, one undo step. Every change emits `rhizome://commit` (the `Commit`) and
 //! refreshes the Edit menu (app-kit's `refresh_history`). Undo and redo run through app-kit,
@@ -18,7 +18,9 @@ use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use preset_app_kit::{refresh_history, Document, History};
-use rhizome_core::{Commit, Error, GestureId, NodeId, NodeType, Op, Origin, Registry, Row, Tree};
+use rhizome_core::{
+    Commit, Error, GestureId, NodeId, NodeType, Op, Origin, Registry, Row, Shape, Tree,
+};
 use serde_json::{json, Value as Json};
 use tauri::{AppHandle, Emitter, Runtime, State};
 
@@ -66,6 +68,13 @@ fn sample_tree() -> Tree {
             .node(NodeType::new("messages").in_categories(docs))
             .node(NodeType::new("ops").in_categories(docs))
             .node(NodeType::new("inspectors").in_categories(docs))
+            .node(
+                NodeType::new("graphics")
+                    .in_categories(docs)
+                    .shaped("transfer", curve_shape())
+                    .shaped("envelope", curve_shape())
+                    .shaped("adsr", curve_shape()),
+            )
             .node(
                 NodeType::new("primitives")
                     .in_categories(docs)
@@ -152,6 +161,44 @@ fn sample_tree() -> Tree {
             tx.add("/documents", "messages", "messages")?;
             tx.add("/documents", "ops", "ops")?;
             tx.add("/documents", "inspectors", "inspectors")?;
+            tx.add("/documents", "graphics", "graphics")?;
+            // The Graphics document's curves: a gentle S, a pluck with a sustain, and an ADSR.
+            for (key, value) in [
+                (
+                    "transfer",
+                    json!({"points": [
+                        {"x": 0.0, "y": 0.0, "basis": "monotone"},
+                        {"x": 0.3, "y": 0.18, "basis": "monotone"},
+                        {"x": 0.7, "y": 0.82, "basis": "monotone"},
+                        {"x": 1.0, "y": 1.0, "basis": "monotone"},
+                    ]}),
+                ),
+                (
+                    "envelope",
+                    json!({"points": [
+                        {"x": 0.0, "y": 0.0, "basis": "linear", "tension": -0.4},
+                        {"x": 0.05, "y": 1.0, "basis": "linear", "tension": -0.6},
+                        {"x": 0.4, "y": 0.45, "basis": "catmull-rom"},
+                        {"x": 0.8, "y": 0.6, "basis": "linear", "tension": -0.5},
+                        {"x": 1.6, "y": 0.0, "basis": "linear"},
+                    ], "sustain": 3}),
+                ),
+                (
+                    "adsr",
+                    json!({"points": [
+                        {"x": 0.0, "y": 0.0, "basis": "linear"},
+                        {"x": 0.1, "y": 1.0, "basis": "linear"},
+                        {"x": 0.4, "y": 0.6, "basis": "linear"},
+                        {"x": 1.0, "y": 0.0, "basis": "linear"},
+                    ], "sustain": 2}),
+                ),
+            ] {
+                tx.apply(&Op::Set {
+                    at: "/documents/graphics".into(),
+                    key: key.into(),
+                    value,
+                })?;
+            }
             // The `stack` order on /stack is the stack's order, top to bottom.
             let ops = [
                 tx.add("/stack", "cmyk_halftone", "cmyk_halftone")?,
@@ -180,6 +227,26 @@ fn sample_tree() -> Tree {
         let (tree, _report) = Tree::load(&seed.serialise(), registry).expect("seed loads");
         tree
     }
+}
+
+/// A `@preset.nz/math` curve as rhizome checks it: points with a basis and an optional tension,
+/// and an optional sustain index.
+fn curve_shape() -> Shape {
+    Shape::record([
+        (
+            "points",
+            Shape::list(Shape::record([
+                ("x", Shape::Float),
+                ("y", Shape::Float),
+                (
+                    "basis",
+                    Shape::choice(&["constant", "linear", "monotone", "catmull-rom"]),
+                ),
+                ("tension", Shape::optional(Shape::Float)),
+            ])),
+        ),
+        ("sustain", Shape::optional(Shape::Int)),
+    ])
 }
 
 /// Every node as a rhizome `Row`, in path order.
@@ -605,7 +672,7 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn sample_has_seven_documents_three_layers_three_ops_and_no_history() {
+    fn sample_has_eight_documents_three_layers_three_ops_and_no_history() {
         let doc = Doc::sample();
         let tree = doc.0.lock().unwrap();
         let types: Vec<String> = tree
@@ -614,7 +681,7 @@ mod tests {
             .filter(|r| r.path.as_str().starts_with("/documents/"))
             .map(|r| r.type_name)
             .collect();
-        assert_eq!(types.len(), 7);
+        assert_eq!(types.len(), 8);
         let layers = tree
             .rows()
             .into_iter()
@@ -697,6 +764,29 @@ mod tests {
 
     fn set_at(key: &str, value: Json) -> (String, String, Json) {
         ("/documents/primitives".into(), key.into(), value)
+    }
+
+    #[test]
+    fn a_curve_drag_is_one_undo_step_and_a_malformed_curve_is_refused() {
+        let doc = Doc::sample();
+        let mut tree = doc.0.lock().unwrap();
+        let mut slot = None;
+        let at = "/documents/graphics";
+        let curve = |y: f64| json!({"points": [{"x": 0.0, "y": y, "basis": "linear"}]});
+        gesture_begin(&mut tree, &mut slot, at, "transfer").unwrap();
+        for y in [0.1, 0.2, 0.3] {
+            gesture_apply(&mut tree, &slot, at.into(), "transfer".into(), curve(y)).unwrap();
+        }
+        gesture_end(&mut tree, &mut slot).unwrap();
+        assert_eq!(tree.history_len(), 1, "the whole drag is one step");
+        let bad = json!({"points": [{"x": 0.0, "y": 0.0, "basis": "cubic"}]});
+        let set = Op::Set {
+            at: at.into(),
+            key: "transfer".into(),
+            value: bad,
+        };
+        assert!(tree.edit_ops("bad", &[set]).is_err());
+        assert_eq!(tree.history_len(), 1);
     }
 
     #[test]
