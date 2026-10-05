@@ -5,6 +5,7 @@ import {
   ContextMenu,
   ContextMenuCheckboxItem,
   ContextMenuContent,
+  ContextMenuGroup,
   ContextMenuItem,
   ContextMenuLabel,
   ContextMenuRadioGroup,
@@ -447,24 +448,27 @@ export function CurveEditor({
       <ContextMenuContent>
         {target?.kind === "point" && menuPoint && (
           <>
-            <ContextMenuLabel>Interpolation to the next point</ContextMenuLabel>
-            <ContextMenuRadioGroup
-              value={menuPoint.basis}
-              onValueChange={(b) => commit(setBasis(curve, target.index, b as Basis, constrain), "edit")}
-            >
-              {BASES.map((b) => (
-                <ContextMenuRadioItem
-                  key={b.value}
-                  value={b.value}
-                  disabled={
-                    target.index === curve.points.length - 1 ||
-                    (b.value !== menuPoint.basis && !setBasis(curve, target.index, b.value, constrain))
-                  }
-                >
-                  {b.label}
-                </ContextMenuRadioItem>
-              ))}
-            </ContextMenuRadioGroup>
+            {/* Base UI's group label throws outside a group. */}
+            <ContextMenuGroup>
+              <ContextMenuLabel>Interpolation to the next point</ContextMenuLabel>
+              <ContextMenuRadioGroup
+                value={menuPoint.basis}
+                onValueChange={(b) => commit(setBasis(curve, target.index, b as Basis, constrain), "edit")}
+              >
+                {BASES.map((b) => (
+                  <ContextMenuRadioItem
+                    key={b.value}
+                    value={b.value}
+                    disabled={
+                      target.index === curve.points.length - 1 ||
+                      (b.value !== menuPoint.basis && !setBasis(curve, target.index, b.value, constrain))
+                    }
+                  >
+                    {b.label}
+                  </ContextMenuRadioItem>
+                ))}
+              </ContextMenuRadioGroup>
+            </ContextMenuGroup>
             {mode === "envelope" && (
               <>
                 <ContextMenuSeparator />
