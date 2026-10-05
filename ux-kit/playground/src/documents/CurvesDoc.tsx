@@ -26,10 +26,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /**
- * The `graphics` document: `CurveEditor` on three curves held as shaped rhizome values. A drag
+ * The `curves` document: `CurveEditor` on three curves held as shaped rhizome values. A drag
  * is one gesture, so one undo step; a nudge coalesces; anything else is one labelled edit.
  */
-export function GraphicsDoc({ row, set, gesture }: { row: Row; set: SetValue; gesture: Gesture }) {
+export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gesture: Gesture }) {
   const bind = (key: string): Pick<CurveEditorProps, "value" | "onChange" | "onGestureStart" | "onGestureEnd"> => ({
     value: toCurve(row.values?.[key]),
     onGestureStart: () => gesture.begin(row.path, key),
@@ -43,9 +43,10 @@ export function GraphicsDoc({ row, set, gesture }: { row: Row; set: SetValue; ge
 
   return (
     <div className={DOC_PAGE}>
-      <DocHeader title="Graphics">
+      <DocHeader title="Curves">
         CurveEditor on synthetic curves. Drag points and the diamond tension handles, double-click to
-        add a point, Delete to remove one, arrows to nudge. Basis and sustain are in the context menu.
+        add a point, Delete to remove one, arrows to nudge. Basis and sustain are in the context menu;
+        the diamonds bend linear segments only, so set a point to Linear to get one.
         Escape cancels a drag; Cmd+Z undoes a whole drag.
       </DocHeader>
       <div className="flex flex-col gap-8">

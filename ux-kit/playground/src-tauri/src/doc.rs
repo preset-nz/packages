@@ -6,7 +6,7 @@
 //! made up for the playground, not an app's object model, except the three op types: their keys,
 //! ranges, defaults and choices are Oblique's (`sidecar/ops/{cmyk_halftone,film_stock,levels}.py`). `tokens`, `fonts`, `messages` and `inspectors` hold no
 //! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
-//! of every kind the documents edit, and `graphics` holds three curves as shaped values. Edits are labelled; undo and redo are
+//! of every kind the documents edit, and `curves` holds three curves as shaped values. Edits are labelled; undo and redo are
 //! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
 //! live edits, one undo step. Every change emits `rhizome://commit` (the `Commit`) and
 //! refreshes the Edit menu (app-kit's `refresh_history`). Undo and redo run through app-kit,
@@ -69,7 +69,7 @@ fn sample_tree() -> Tree {
             .node(NodeType::new("ops").in_categories(docs))
             .node(NodeType::new("inspectors").in_categories(docs))
             .node(
-                NodeType::new("graphics")
+                NodeType::new("curves")
                     .in_categories(docs)
                     .shaped("transfer", curve_shape())
                     .shaped("envelope", curve_shape())
@@ -161,8 +161,8 @@ fn sample_tree() -> Tree {
             tx.add("/documents", "messages", "messages")?;
             tx.add("/documents", "ops", "ops")?;
             tx.add("/documents", "inspectors", "inspectors")?;
-            tx.add("/documents", "graphics", "graphics")?;
-            // The Graphics document's curves: a gentle S, a pluck with a sustain, and an ADSR.
+            tx.add("/documents", "curves", "curves")?;
+            // The Curves document's curves: a gentle S, a pluck with a sustain, and an ADSR.
             for (key, value) in [
                 (
                     "transfer",
@@ -194,7 +194,7 @@ fn sample_tree() -> Tree {
                 ),
             ] {
                 tx.apply(&Op::Set {
-                    at: "/documents/graphics".into(),
+                    at: "/documents/curves".into(),
                     key: key.into(),
                     value,
                 })?;
@@ -771,7 +771,7 @@ mod tests {
         let doc = Doc::sample();
         let mut tree = doc.0.lock().unwrap();
         let mut slot = None;
-        let at = "/documents/graphics";
+        let at = "/documents/curves";
         let curve = |y: f64| json!({"points": [{"x": 0.0, "y": y, "basis": "linear"}]});
         gesture_begin(&mut tree, &mut slot, at, "transfer").unwrap();
         for y in [0.1, 0.2, 0.3] {
@@ -783,7 +783,11 @@ mod tests {
         // leaves no step either.
         gesture_begin(&mut tree, &mut slot, at, "transfer").unwrap();
         gesture_end(&mut tree, &mut slot).unwrap();
-        assert_eq!(tree.history_len(), 1, "an empty gesture is not an undo step");
+        assert_eq!(
+            tree.history_len(),
+            1,
+            "an empty gesture is not an undo step"
+        );
         let bad = json!({"points": [{"x": 0.0, "y": 0.0, "basis": "cubic"}]});
         let set = Op::Set {
             at: at.into(),
