@@ -13,7 +13,13 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "paths": { "@/*": ["./src/*"] },
+    // The kit's own source, wherever it is imported from: app-kit, linked, has an npm copy
+    // of ux-kit for its own checks. Vite's dedupe does the same at build time.
+    "paths": {
+      "@/*": ["./src/*"],
+      "@preset.nz/ux-kit": ["../src/index.ts"],
+      "@preset.nz/ux-kit/*": ["../src/*"]
+    },
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

@@ -8,6 +8,9 @@ mod prefs;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // Window size and position survive a relaunch; the last document reopens through
+        // on_run_event below.
+        .plugin(preset_app_kit::window_state())
         .manage(doc::Doc::sample())
         // app-kit's close guard sees the main window's CloseRequested through this.
         .on_window_event(preset_app_kit::on_window_event)
@@ -39,9 +42,11 @@ pub fn run() {
             preset_app_kit::app_kit_undo,
             preset_app_kit::app_kit_redo,
             preset_app_kit::app_kit_text_menu,
+            preset_app_kit::app_kit_document_note,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the ux-kit playground")
-        // Quits that skip the menu (the Dock's Quit, logging out) reach the guard here.
+        // Relaunch restore, files from the Finder, and quits that skip the menu (the Dock's
+        // Quit, logging out) reach app-kit here.
         .run(|app, event| preset_app_kit::on_run_event(app, &event));
 }

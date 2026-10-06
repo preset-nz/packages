@@ -11,7 +11,7 @@ import {
   TooltipProvider,
 } from "@preset.nz/ux-kit"
 
-import { CommandToolbar, useCommands, useDocument, undo } from "@preset.nz/app-kit"
+import { CommandToolbar, useCommands, useDocument, useDocumentNotes, undo } from "@preset.nz/app-kit"
 
 import { buildBindings, TOOLBAR } from "../commands"
 import { docInfo, sortDocs } from "../documents"
@@ -34,6 +34,9 @@ import { Outline } from "./Outline"
 import { resetTarget } from "./reset"
 
 /** The main window: toolbar, outline of documents, the selected document, inspector, status bar. */
+// A last document that wouldn't reopen at launch, said in passing rather than in a dialog.
+const showDocumentNote = (message: string) => notify({ message, kind: "warning", timeout: 8000 })
+
 export function MainApp() {
   const { rows, schema, error, call, set, gesture } = useRhizome()
   const { dark, toggle: toggleTheme } = useTheme()
@@ -119,6 +122,7 @@ export function MainApp() {
   )
   const { commands, run, shortcut, history } = useCommands(bindings)
   const document = useDocument()
+  useDocumentNotes(showDocumentNote)
 
   const done = history?.historyLen ?? 0
   const total = done + (history?.redoLabels.length ?? 0)
