@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased, on `main`)
+## 0.2.0 (2026-10-06)
 
 Breaking: the `number`, `vector`, `slider` and `color` renderers now draw with
 your components, as `input`, `label`, `checkbox`, `select` and `separator`
