@@ -31,6 +31,11 @@ check-rust:
     mkdir -p playground/dist
     cd playground/src-tauri && cargo check
 
-# Kit and playground typecheck and lint, plus cargo check.
+# The kit alone: passes from a clean clone.
 [group('quality')]
-check: check-kit check-playground check-rust
+check: check-kit
+
+# Kit and playground typecheck and lint, plus cargo check. The playground
+# links the sibling packages, so this needs ~/rhizomatic-preset/packages/*.
+[group('quality')]
+check-all: check-kit check-playground check-rust

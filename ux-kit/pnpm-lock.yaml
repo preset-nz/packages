@@ -21,8 +21,8 @@ importers:
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@preset.nz/math':
-        specifier: link:../math
-        version: link:../math
+        specifier: ^0.1.0
+        version: 0.1.0
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -601,6 +601,9 @@ packages:
     peerDependencies:
       react: '>= 16.8'
       react-dom: '>= 16.8'
+
+  '@preset.nz/math@0.1.0':
+    resolution: {integrity: sha512-eGOJZVvox4NPtoWrolIk06GjsfDNy8OCwes3pYw6o3CDRKolGWrrwf78U733OkKexUjHVeQfi39xrbEIhsQodQ==}
 
   '@rolldown/pluginutils@1.0.0-rc.3':
     resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
@@ -3014,6 +3017,8 @@ snapshots:
     dependencies:
       react: 19.3.0
       react-dom: 19.3.0(react@19.3.0)
+
+  '@preset.nz/math@0.1.0': {}
 
   '@rolldown/pluginutils@1.0.0-rc.3': {}
 
