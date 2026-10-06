@@ -2,7 +2,7 @@
 
 One look and one way of working for the preset.nz desktop apps: tokens, palettes, fonts and Base UI primitives, in the studio's colours.
 
-**Status:** skeleton. Private, version 0.0.1, not published. The plan lives in the guidance repo under `projects/ux-kit/`.
+Pre-1.0: a minor version can break things, a patch never does.
 
 ## What is in it
 
@@ -11,7 +11,7 @@ One look and one way of working for the preset.nz desktop apps: tokens, palettes
 - `src/icons.ts`: Phosphor, the kit's icon set.
 - `playground/`: a Tauri and React app that shows the kit. It is the only place that touches rhizome; the kit does not depend on it.
 
-Like [facets](../facets), the kit ships unbuilt TypeScript. The consumer's Vite compiles it.
+Like [facets](https://github.com/preset-nz/facets), the kit ships unbuilt TypeScript. The consumer's Vite compiles it.
 
 ## Components
 
@@ -56,6 +56,12 @@ M&T's `src/palettes/` (presets and derivation) was considered for the colour fie
 
 ## Using it
 
+```sh
+pnpm add @preset.nz/ux-kit
+```
+
+Then, in the app's CSS:
+
 ```css
 @import "tailwindcss";
 @source "../node_modules/@preset.nz/ux-kit/src";
@@ -68,6 +74,8 @@ resolve: { dedupe: ["react", "react-dom", "@tauri-apps/api", "@preset.nz/ux-kit"
 ```
 
 Without the `@source` line the build passes and the components render unstyled, because Tailwind does not scan `node_modules`. React 19 is a peer.
+
+[facets](https://github.com/preset-nz/facets) 0.2 draws its number, slider and colour fields with the host app's components. An app on the kit re-exports them, for example `export { NumberField } from "@preset.nz/ux-kit"` in `src/components/ui/number-field.tsx`.
 
 ## Working on it
 

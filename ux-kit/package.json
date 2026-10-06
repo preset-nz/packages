@@ -1,7 +1,6 @@
 {
   "name": "@preset.nz/ux-kit",
-  "version": "0.0.1",
-  "private": true,
+  "version": "0.1.0",
   "description": "One look and one way of working for the preset.nz desktop apps: tokens, palettes, fonts and Base UI primitives.",
   "license": "MIT",
   "repository": {
@@ -48,5 +47,8 @@
     "react-dom": "^19.2.7",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.61.1"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
