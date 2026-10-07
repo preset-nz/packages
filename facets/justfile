@@ -17,8 +17,14 @@ install:
 [group('quality')]
 check:
     ./node_modules/.bin/tsc --noEmit
+    ./node_modules/.bin/biome check .
     node scripts/check-schema.ts
     node scripts/check-licenses.mjs
+
+# Writes the formatter's fixes (Biome).
+[group('quality')]
+fmt:
+    ./node_modules/.bin/biome check --write .
 
 # Licence gate only (also part of `check`): permissive allowlist, see script header
 [group('quality')]
