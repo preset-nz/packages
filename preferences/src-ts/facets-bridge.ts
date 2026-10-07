@@ -3,7 +3,7 @@
 // default state stays the visually quiet baseline.
 
 import type { FieldDef, PropertySchema } from "@preset.nz/facets"
-import { sectionOf, type PrefDef, type Snapshot } from "./api"
+import { type PrefDef, type Snapshot, sectionOf } from "./api"
 
 export const CHANGED_MARK = " •"
 
@@ -14,9 +14,7 @@ export function isDefault(snap: Snapshot, id: string): boolean {
 }
 
 export function sectionHasChanges(snap: Snapshot, section: string): boolean {
-  return snap.schema.prefs.some(
-    (p) => sectionOf(p.id) === section && !isDefault(snap, p.id),
-  )
+  return snap.schema.prefs.some((p) => sectionOf(p.id) === section && !isDefault(snap, p.id))
 }
 
 export function hasAnyChanges(snap: Snapshot): boolean {

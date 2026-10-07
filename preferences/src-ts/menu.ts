@@ -12,10 +12,12 @@ export function onSettingsMenu(open: () => void): () => void {
   const win = getCurrentWindow()
   let disposed = false
   let unlisten: (() => void) | null = null
-  void win.listen(SETTINGS_MENU_EVENT, () => open()).then((fn) => {
-    if (disposed) fn()
-    else unlisten = fn
-  })
+  void win
+    .listen(SETTINGS_MENU_EVENT, () => open())
+    .then((fn) => {
+      if (disposed) fn()
+      else unlisten = fn
+    })
   return () => {
     disposed = true
     unlisten?.()

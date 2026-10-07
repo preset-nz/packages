@@ -16,7 +16,15 @@ export interface ColorFieldProps
   onPickEnd?: () => void
 }
 
-export function ColorField({ value, onChange, label, readOnly, disabled, onPickStart, onPickEnd }: ColorFieldProps) {
+export function ColorField({
+  value,
+  onChange,
+  label,
+  readOnly,
+  disabled,
+  onPickStart,
+  onPickEnd,
+}: ColorFieldProps) {
   return (
     <input
       type="text"

@@ -7,10 +7,10 @@ import { useCallback, useEffect, useSyncExternalStore } from "react"
 import {
   getPreferences,
   onPreferencesChanged,
-  resetPreferences,
-  setPreference,
   type PrefValue,
+  resetPreferences,
   type Snapshot,
+  setPreference,
 } from "./api"
 
 let snapshot: Snapshot | null = null

@@ -1,10 +1,11 @@
 /* eslint-disable react-refresh/only-export-components --
  * Two small renderers for the kinds facets has no built-in for, plus their
  * registration. Same shape as facets' own field-renderers module. */
+
+import { type FieldRenderer, registerFieldRenderer } from "@preset.nz/facets"
 import { useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { registerFieldRenderer, type FieldRenderer } from "@preset.nz/facets"
 
 function Shell({ label, children }: { label?: string; children: React.ReactNode }) {
   return (

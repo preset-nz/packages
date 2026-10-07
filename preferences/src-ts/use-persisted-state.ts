@@ -9,7 +9,7 @@
 //
 // Keys are `<app>.<surface>.<thing>`; the app prefix is mandatory.
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 export function usePersistedState<T>(
   key: string,
@@ -25,21 +25,16 @@ export function usePersistedState<T>(
     }
   })
 
-  const latest = useRef(value)
-  latest.current = value
-
   const setValue = useCallback((next: T | ((prev: T) => T)) => {
     setValueRaw((prev) => {
-      const resolved =
-        typeof next === "function" ? (next as (prev: T) => T)(prev) : next
-      latest.current = resolved
+      const resolved = typeof next === "function" ? (next as (prev: T) => T)(prev) : next
       return resolved
     })
   }, [])
 
   useEffect(() => {
     try {
-      localStorage.setItem(key, JSON.stringify(latest.current))
+      localStorage.setItem(key, JSON.stringify(value))
     } catch {
       // Quota or serialisation failure. UI state is lossy by nature.
     }

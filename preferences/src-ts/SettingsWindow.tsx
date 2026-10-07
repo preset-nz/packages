@@ -6,19 +6,10 @@
 // because the apps do not all ship one and the shell is a few lines of
 // Tailwind on the same tokens facets already assumes.
 
+import { PropertyPanel, registerBuiltinRenderers, registerScope } from "@preset.nz/facets"
 import { useEffect, useMemo, useRef } from "react"
-import {
-  PropertyPanel,
-  registerBuiltinRenderers,
-  registerScope,
-} from "@preset.nz/facets"
 import type { PrefValue, Snapshot } from "./api"
-import {
-  hasAnyChanges,
-  helpFor,
-  sectionHasChanges,
-  toPropertySchema,
-} from "./facets-bridge"
+import { hasAnyChanges, helpFor, sectionHasChanges, toPropertySchema } from "./facets-bridge"
 import { registerPreferenceRenderers } from "./renderers"
 import { usePreferenceActions, usePreferences } from "./store"
 
@@ -76,6 +67,7 @@ export function SettingsWindow({ open, onOpenChange, title = "Settings", onOverl
   if (!open) return null
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click is a pointer shortcut; Escape closes from the keyboard
     <div
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[10vh]"
       onMouseDown={(e) => {

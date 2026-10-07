@@ -1,13 +1,13 @@
 export * from "./api"
+export { hasAnyChanges, isDefault, sectionHasChanges } from "./facets-bridge"
+export { onSettingsMenu, SETTINGS_MENU_EVENT } from "./menu"
+export { registerPreferenceRenderers } from "./renderers"
+export { SettingsWindow } from "./SettingsWindow"
 export {
-  usePreferences,
+  currentPreferences,
   usePreference,
   usePreferenceActions,
+  usePreferences,
   usePreferencesBootstrap,
-  currentPreferences,
 } from "./store"
 export { usePersistedState } from "./use-persisted-state"
-export { SettingsWindow } from "./SettingsWindow"
-export { registerPreferenceRenderers } from "./renderers"
-export { isDefault, hasAnyChanges, sectionHasChanges } from "./facets-bridge"
-export { SETTINGS_MENU_EVENT, onSettingsMenu } from "./menu"

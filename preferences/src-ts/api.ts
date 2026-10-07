@@ -51,9 +51,7 @@ export function resetPreferences(section?: string): Promise<Snapshot> {
   return invoke<Snapshot>("preferences_reset", { section: section ?? null })
 }
 
-export function onPreferencesChanged(
-  cb: (snapshot: Snapshot) => void,
-): Promise<UnlistenFn> {
+export function onPreferencesChanged(cb: (snapshot: Snapshot) => void): Promise<UnlistenFn> {
   return listen<Snapshot>(CHANGED_EVENT, (e) => cb(e.payload))
 }
 
