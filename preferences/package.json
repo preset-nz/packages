@@ -24,9 +24,11 @@
     "react": "^19"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
     "@preset.nz/facets": "^0.2.0",
     "@tauri-apps/api": "^2.11.1",
     "@types/react": "^19",
+    "lefthook": "^2.1.17",
     "typescript": "^5.8.3"
   }
 }
