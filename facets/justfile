@@ -19,17 +19,18 @@ check:
     ./node_modules/.bin/tsc --noEmit
     ./node_modules/.bin/biome check .
     node scripts/check-schema.ts
-    node scripts/check-licenses.mjs
+    just licences
 
 # Writes the formatter's fixes (Biome).
 [group('quality')]
 fmt:
     ./node_modules/.bin/biome check --write .
 
-# Licence gate only (also part of `check`): permissive allowlist, see script header
+# Licence check against the committed lock. Reads files only, no network.
+# Re-resolve with `preset-compliance licences scan` after changing dependencies.
 [group('quality')]
-licenses:
-    node scripts/check-licenses.mjs
+licences:
+    preset-compliance licences check
 
 # Playground dev server (facets.preset.nz), importing ../src directly
 [group('dev')]
