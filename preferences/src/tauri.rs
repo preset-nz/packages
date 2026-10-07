@@ -53,9 +53,7 @@ pub fn preferences_reset<R: Runtime>(
     prefs: State<'_, Preferences>,
     section: Option<String>,
 ) -> Result<Snapshot, String> {
-    prefs
-        .reset(section.as_deref())
-        .map_err(|e| e.to_string())?;
+    prefs.reset(section.as_deref()).map_err(|e| e.to_string())?;
     let snap = prefs.snapshot();
     let _ = app.emit(CHANGED_EVENT, &snap);
     Ok(snap)

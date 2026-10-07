@@ -74,7 +74,9 @@ pub enum Kind {
     },
     Text,
     /// One of a fixed set. `options` are `(value, label)`.
-    Select { options: Vec<Option_> },
+    Select {
+        options: Vec<Option_>,
+    },
     /// A list of short strings, edited as chips or a comma list.
     List,
     /// A filesystem path shown but not edited. Apps use it for "where things
@@ -128,13 +130,21 @@ impl Schema {
         for p in &self.prefs {
             let (section, key) = split_id(&p.id)
                 .unwrap_or_else(|| panic!("preference id `{}` is not `section.key`", p.id));
-            assert!(!key.contains('.'), "preference id `{}` has more than one dot", p.id);
+            assert!(
+                !key.contains('.'),
+                "preference id `{}` has more than one dot",
+                p.id
+            );
             assert!(
                 self.sections.iter().any(|s| s.id == section),
                 "preference `{}` names undeclared section `{section}`",
                 p.id
             );
-            assert!(seen.insert(&p.id), "preference id `{}` declared twice", p.id);
+            assert!(
+                seen.insert(&p.id),
+                "preference id `{}` declared twice",
+                p.id
+            );
             assert!(
                 p.kind.validate(&p.default).is_ok(),
                 "preference `{}` has a default that fails its own kind",
@@ -286,7 +296,15 @@ mod tests {
         Schema {
             version: 1,
             sections: vec![section("library", "Library")],
-            prefs: vec![pref("ingest.concurrency", "Concurrency", Kind::Int { min: None, max: None }, 4)],
+            prefs: vec![pref(
+                "ingest.concurrency",
+                "Concurrency",
+                Kind::Int {
+                    min: None,
+                    max: None,
+                },
+                4,
+            )],
         }
         .assert_valid();
     }

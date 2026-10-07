@@ -47,7 +47,11 @@ impl Store {
         schema.assert_valid();
         let path = path.into();
         let mut store = Store {
-            values: schema.prefs.iter().map(|p| (p.id.clone(), p.default.clone())).collect(),
+            values: schema
+                .prefs
+                .iter()
+                .map(|p| (p.id.clone(), p.default.clone()))
+                .collect(),
             schema,
             path,
             unknown: BTreeMap::new(),
@@ -212,9 +216,14 @@ impl Store {
     /// Write every value, grouped by section, plus preserved unknown keys.
     pub fn save(&self) -> Result<(), Error> {
         let mut doc = toml::Table::new();
-        doc.insert("version".into(), toml::Value::Integer(self.schema.version as i64));
+        doc.insert(
+            "version".into(),
+            toml::Value::Integer(self.schema.version as i64),
+        );
         for (id, v) in &self.values {
-            let Some((section, key)) = split_id(id) else { continue };
+            let Some((section, key)) = split_id(id) else {
+                continue;
+            };
             doc.entry(section)
                 .or_insert_with(|| toml::Value::Table(toml::Table::new()))
                 .as_table_mut()
@@ -248,7 +257,9 @@ fn to_toml(v: &Value) -> toml::Value {
         Value::Int(i) => toml::Value::Integer(*i),
         Value::Float(f) => toml::Value::Float(*f),
         Value::Text(s) => toml::Value::String(s.clone()),
-        Value::List(l) => toml::Value::Array(l.iter().map(|s| toml::Value::String(s.clone())).collect()),
+        Value::List(l) => {
+            toml::Value::Array(l.iter().map(|s| toml::Value::String(s.clone())).collect())
+        }
     }
 }
 
@@ -278,21 +289,34 @@ mod tests {
     fn schema() -> Schema {
         Schema {
             version: 1,
-            sections: vec![section("library", "Library"), section("appearance", "Appearance")],
+            sections: vec![
+                section("library", "Library"),
+                section("appearance", "Appearance"),
+            ],
             prefs: vec![
                 pref(
                     "library.retention_days",
                     "Retention",
-                    Kind::Int { min: Some(1), max: Some(365) },
+                    Kind::Int {
+                        min: Some(1),
+                        max: Some(365),
+                    },
                     30,
                 ),
                 pref(
                     "appearance.theme",
                     "Theme",
-                    Kind::Select { options: options(&[("system", "System"), ("dark", "Dark")]) },
+                    Kind::Select {
+                        options: options(&[("system", "System"), ("dark", "Dark")]),
+                    },
                     "system",
                 ),
-                pref("library.extensions", "Extensions", Kind::List, &["jpg", "png"][..]),
+                pref(
+                    "library.extensions",
+                    "Extensions",
+                    Kind::List,
+                    &["jpg", "png"][..],
+                ),
             ],
         }
     }
@@ -325,7 +349,10 @@ mod tests {
         let again = Store::load(schema(), &path);
         assert_eq!(again.get_int("library.retention_days"), Some(7));
         assert_eq!(again.get_text("appearance.theme"), Some("dark"));
-        assert_eq!(again.get_list("library.extensions").unwrap(), &["jpg", "png"]);
+        assert_eq!(
+            again.get_list("library.extensions").unwrap(),
+            &["jpg", "png"]
+        );
         assert!(!again.is_default("library.retention_days"));
     }
 
@@ -337,7 +364,10 @@ mod tests {
             s.set("library.retention_days", Value::Int(-5)),
             Err(Error::Invalid { .. })
         ));
-        assert!(matches!(s.set("nope.x", Value::Int(1)), Err(Error::UnknownId(_))));
+        assert!(matches!(
+            s.set("nope.x", Value::Int(1)),
+            Err(Error::UnknownId(_))
+        ));
         assert_eq!(s.get_int("library.retention_days"), Some(30));
     }
 
@@ -368,7 +398,11 @@ mod tests {
     #[test]
     fn unknown_keys_survive_a_save() {
         let (_d, path) = tmp();
-        std::fs::write(&path, "version = 1\n[library]\nfuture_knob = true\n[other]\nx = 1\n").unwrap();
+        std::fs::write(
+            &path,
+            "version = 1\n[library]\nfuture_knob = true\n[other]\nx = 1\n",
+        )
+        .unwrap();
         let mut s = Store::load(schema(), &path);
         s.set("library.retention_days", Value::Int(9)).unwrap();
         let text = std::fs::read_to_string(&path).unwrap();
