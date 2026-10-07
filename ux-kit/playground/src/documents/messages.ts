@@ -17,8 +17,14 @@ export const SYSTEMS: ToastSystem[] = [
     facts: [
       { k: "library", v: "Base UI Toast" },
       { k: "dependency", v: "@base-ui/react (already the kit's base)" },
-      { k: "api", v: "useSnackbar().show({ message, kind, description, action, persistent, timeout }), dismiss(id?)" },
-      { k: "outside React", v: "notify(opts) and dismissNotification(id?), through a module-level toast manager" },
+      {
+        k: "api",
+        v: "useSnackbar().show({ message, kind, description, action, persistent, timeout }), dismiss(id?)",
+      },
+      {
+        k: "outside React",
+        v: "notify(opts) and dismissNotification(id?), through a module-level toast manager",
+      },
       { k: "styling", v: "Tailwind classes on our own markup, from the kit's tokens" },
       { k: "mount", v: "SnackbarProvider once, SnackbarViewport inside it" },
       { k: "used by", v: "Strata (useMoveToTrash), this playground (Reset, with Undo)" },

@@ -40,10 +40,16 @@ export const selectValue = (key: string) => item.select({ kind: "value", key })
 export const selectSystem = (id: string) => item.select({ kind: "system", id })
 export const selectLayer = (id: string) => item.select({ kind: "layer", id })
 export const selectOp = (id: string) => item.select({ kind: "op", id })
-export const selectStrataPanel = (panel: "image" | "batch") => item.select({ kind: "strata", panel })
+export const selectStrataPanel = (panel: "image" | "batch") =>
+  item.select({ kind: "strata", panel })
 
 /** The selection, if it makes sense for the open document and its target exists. */
-export function resolveSelection(sel: Selection, doc: Row | null, layers: Row[], ops: Row[]): Selection {
+export function resolveSelection(
+  sel: Selection,
+  doc: Row | null,
+  layers: Row[],
+  ops: Row[],
+): Selection {
   switch (sel.kind) {
     case "token":
       return doc?.type === "tokens" ? sel : NONE
@@ -90,4 +96,5 @@ export function selectionPath(sel: Selection, doc: Row | null, layers: Row[], op
 // Sample text typed in the inspector for a font role; the specimens in the centre show it.
 const samples = createStore<Record<string, string>>({})
 export const useFontSamples = () => useStore(samples)
-export const setFontSample = (role: string, text: string) => samples.set({ ...samples.get(), [role]: text })
+export const setFontSample = (role: string, text: string) =>
+  samples.set({ ...samples.get(), [role]: text })

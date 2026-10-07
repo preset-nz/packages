@@ -1,5 +1,10 @@
 import type { Curve, CurvePoint } from "@preset.nz/math"
-import { adsrOf, constrainAdsr, CurveEditor, type CurveEditorProps } from "@preset.nz/ux-kit/graphics"
+import {
+  adsrOf,
+  CurveEditor,
+  type CurveEditorProps,
+  constrainAdsr,
+} from "@preset.nz/ux-kit/graphics"
 
 import type { Gesture, Row } from "../rhizome"
 import { DOC_PAGE, DocHeader } from "./Header"
@@ -11,8 +16,13 @@ const seconds = (x: number) => `${x.toFixed(3)} s`
 
 /** A curve as rhizome hands it back: optional fields may arrive as `null`. */
 function toCurve(v: unknown): Curve {
-  const raw = (v ?? {}) as { points?: (CurvePoint & { tension?: number | null })[]; sustain?: number | null }
-  const points = (raw.points ?? []).map(({ tension, ...p }) => (tension == null ? p : { ...p, tension }))
+  const raw = (v ?? {}) as {
+    points?: (CurvePoint & { tension?: number | null })[]
+    sustain?: number | null
+  }
+  const points = (raw.points ?? []).map(({ tension, ...p }) =>
+    tension == null ? p : { ...p, tension },
+  )
   return raw.sustain == null ? { points } : { points, sustain: raw.sustain }
 }
 
@@ -30,7 +40,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  * is one gesture, so one undo step; a nudge coalesces; anything else is one labelled edit.
  */
 export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gesture: Gesture }) {
-  const bind = (key: string): Pick<CurveEditorProps, "value" | "onChange" | "onGestureStart" | "onGestureEnd"> => ({
+  const bind = (
+    key: string,
+  ): Pick<CurveEditorProps, "value" | "onChange" | "onGestureStart" | "onGestureEnd"> => ({
     value: toCurve(row.values?.[key]),
     onGestureStart: () => gesture.begin(row.path, key),
     onChange: (next, kind) => {
@@ -44,14 +56,18 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
   return (
     <div className={DOC_PAGE}>
       <DocHeader title="Curves">
-        CurveEditor on synthetic curves. Drag points and the diamond tension handles, double-click to
-        add a point, Delete to remove one, arrows to nudge. Basis and sustain are in the context menu;
-        the diamonds bend linear segments only, so set a point to Linear to get one.
-        Escape cancels a drag; Cmd+Z undoes a whole drag.
+        CurveEditor on synthetic curves. Drag points and the diamond tension handles, double-click
+        to add a point, Delete to remove one, arrows to nudge. Basis and sustain are in the context
+        menu; the diamonds bend linear segments only, so set a point to Linear to get one. Escape
+        cancels a drag; Cmd+Z undoes a whole drag.
       </DocHeader>
       <div className="flex flex-col gap-8">
         <Section title="Transfer">
-          <CurveEditor {...bind("transfer")} aria-label="Transfer curve" className="aspect-square h-auto max-w-80" />
+          <CurveEditor
+            {...bind("transfer")}
+            aria-label="Transfer curve"
+            className="aspect-square h-auto max-w-80"
+          />
         </Section>
         <Section title="Envelope, free">
           <CurveEditor

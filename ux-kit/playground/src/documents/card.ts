@@ -1,11 +1,11 @@
 import {
+  type PropertySchema,
   registerBuiltinRenderers,
   registerScope,
-  type PropertySchema,
   type Scope,
 } from "@preset.nz/facets"
 
-import { nodeScope, type NodeAdapter } from "./bound"
+import { type NodeAdapter, nodeScope } from "./bound"
 
 /**
  * The property card for a `card` node, written as facets data. Each `path` is a rhizome
@@ -23,17 +23,36 @@ export const CARD_SCHEMA: PropertySchema = {
       rows: [
         { kind: "text", id: "name", label: "Name", path: "name", promote: ["card", "collapsed"] },
         [
-          { kind: "checkbox", id: "visible", label: "Visible", path: "visible", promote: ["card", "collapsed"] },
-          { kind: "select", id: "blend", label: "Blend", path: "blend", options: [
-            { value: "normal", label: "Normal" },
-            { value: "multiply", label: "Multiply" },
-            { value: "screen", label: "Screen" },
-            { value: "overlay", label: "Overlay" },
-          ] },
+          {
+            kind: "checkbox",
+            id: "visible",
+            label: "Visible",
+            path: "visible",
+            promote: ["card", "collapsed"],
+          },
+          {
+            kind: "select",
+            id: "blend",
+            label: "Blend",
+            path: "blend",
+            options: [
+              { value: "normal", label: "Normal" },
+              { value: "multiply", label: "Multiply" },
+              { value: "screen", label: "Screen" },
+              { value: "overlay", label: "Overlay" },
+            ],
+          },
         ],
         {
-          kind: "slider", id: "opacity", label: "Opacity", path: "opacity", min: 0, max: 1, step: 0.01,
-          disabledWhen: { path: "visible", equals: false }, promote: ["card", "collapsed"],
+          kind: "slider",
+          id: "opacity",
+          label: "Opacity",
+          path: "opacity",
+          min: 0,
+          max: 1,
+          step: 0.01,
+          disabledWhen: { path: "visible", equals: false },
+          promote: ["card", "collapsed"],
         },
         { kind: "color", id: "tint", label: "Tint", path: "tint", promote: ["card"] },
       ],
@@ -44,10 +63,25 @@ export const CARD_SCHEMA: PropertySchema = {
       collapsible: true,
       rows: [
         {
-          kind: "vector", id: "offset", label: "Offset", path: "offset", promote: ["card"],
-          components: [{ label: "X", suffix: "px", step: 1 }, { label: "Y", suffix: "px", step: 1 }],
+          kind: "vector",
+          id: "offset",
+          label: "Offset",
+          path: "offset",
+          promote: ["card"],
+          components: [
+            { label: "X", suffix: "px", step: 1 },
+            { label: "Y", suffix: "px", step: 1 },
+          ],
         },
-        { kind: "number", id: "rotation", label: "Rotation", path: "rotation", min: -180, max: 180, step: 1 },
+        {
+          kind: "number",
+          id: "rotation",
+          label: "Rotation",
+          path: "rotation",
+          min: -180,
+          max: 180,
+          step: 1,
+        },
         { kind: "separator", id: "sep" },
         { kind: "label", id: "hint", label: "Offset is in pixels; rotation in degrees." },
       ],

@@ -1,9 +1,9 @@
 import type { PanelView } from "@preset.nz/facets"
 
 import type { Gesture, Row } from "../rhizome"
+import type { SetValue } from "./index"
 import { NodePanel } from "./NodePanel"
 import { opKind, opScopeKey, registerOpScopes, useOpsLayout } from "./ops"
-import type { SetValue } from "./index"
 
 registerOpScopes()
 

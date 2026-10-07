@@ -1,4 +1,4 @@
-import { clamp, type Curve } from "@preset.nz/math"
+import { type Curve, clamp } from "@preset.nz/math"
 
 import type { CurveConstraint } from "./curve-edits"
 
@@ -47,24 +47,32 @@ export function adsrOf(curve: Curve): Adsr | null {
 export function constrainAdsr(maxX = Infinity): CurveConstraint {
   return (next, prev) => {
     if (next.points.length !== 4 || prev.points.length !== 4 || next.sustain !== 2) return null
-    const was = durations(prev)
-    const now = durations(next)
+    const [n0, n1, n2, n3] = next.points
+    const [p0, p1, p2, p3] = prev.points
+    if (!(n0 && n1 && n2 && n3 && p0 && p1 && p2 && p3)) return null
+    const [wa, wd, wr] = durations(p0, p1, p2, p3)
+    const [na, nd, nr] = durations(n0, n1, n2, n3)
     // The stage whose end moved takes the new length; the others keep theirs.
-    const moved = [1, 2, 3].find((i) => next.points[i]!.x !== prev.points[i]!.x)
-    const len = was.map((d, k) => (moved === k + 1 ? Math.max(0, now[k]!) : d))
-    const over = len[0]! + len[1]! + len[2]! - maxX
-    if (over > 0 && moved !== undefined) len[moved - 1] = Math.max(0, len[moved - 1]! - over)
-    const ys = [0, 1, clamp(next.points[2]!.y, 0, 1), 0]
+    const moved = [n1.x !== p1.x, n2.x !== p2.x, n3.x !== p3.x].indexOf(true) + 1
+    const len = [
+      moved === 1 ? Math.max(0, na) : wa,
+      moved === 2 ? Math.max(0, nd) : wd,
+      moved === 3 ? Math.max(0, nr) : wr,
+    ] as [number, number, number]
+    const over = len[0] + len[1] + len[2] - maxX
+    if (over > 0 && moved > 0) len[moved - 1] = Math.max(0, (len[moved - 1] ?? 0) - over)
+    const ys = [0, 1, clamp(n2.y, 0, 1), 0]
     let x = 0
     const points = next.points.map((p, i) => {
-      if (i > 0) x += len[i - 1]!
-      return { ...p, x, y: ys[i]! }
+      if (i > 0) x += len[i - 1] ?? 0
+      return { ...p, x, y: ys[i] ?? p.y }
     })
     return { points, sustain: 2 }
   }
 }
 
-function durations(curve: Curve): number[] {
-  const p = curve.points
-  return [p[1]!.x - p[0]!.x, p[2]!.x - p[1]!.x, p[3]!.x - p[2]!.x]
+type Point = Curve["points"][number]
+
+function durations(p0: Point, p1: Point, p2: Point, p3: Point): [number, number, number] {
+  return [p1.x - p0.x, p2.x - p1.x, p3.x - p2.x]
 }

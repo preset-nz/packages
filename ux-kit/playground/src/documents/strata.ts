@@ -1,6 +1,11 @@
-import { registerBuiltinRenderers, registerScope, type PropertySchema, type Scope, type ScopeContext } from "@preset.nz/facets"
-
 import { createStore, useStore } from "@preset.nz/app-kit"
+import {
+  type PropertySchema,
+  registerBuiltinRenderers,
+  registerScope,
+  type Scope,
+  type ScopeContext,
+} from "@preset.nz/facets"
 
 import { registerStrataRenderers, type Vga16Bucket } from "./strataRenderers"
 
@@ -232,11 +237,7 @@ const IMAGE_SCHEMA: PropertySchema = {
           label: "CIELCh",
           path: "dominantLCh",
           precision: 2,
-          components: [
-            { label: "L*" },
-            { label: "C*" },
-            { label: "h°", suffix: "°" },
-          ],
+          components: [{ label: "L*" }, { label: "C*" }, { label: "h°", suffix: "°" }],
         },
       ],
     },
@@ -617,11 +618,26 @@ const LONG: ImageDetails = {
   iptc_title: "Waterfront at dusk, looking north-east across the harbour towards the ranges",
   iptc_caption:
     "Long exposure from the end of the wharf as the last light leaves the ranges. The ferry wake is the streak at lower left; the haze is sea spray, not smoke.\nSecond paragraph, to see a line break in a read-only caption.",
-  iptc_copyright: "© 2026 A. Photographer. All rights reserved. Licensed to the Harbour Board for the 2026–2027 season only.",
+  iptc_copyright:
+    "© 2026 A. Photographer. All rights reserved. Licensed to the Harbour Board for the 2026–2027 season only.",
   keywords: [
-    "harbour", "dusk", "waterfront", "long exposure", "ferry", "wake", "ranges", "sea spray",
-    "blue hour", "commission", "selects", "round 3", "landscape", "seascape", "Wellington",
-    "New Zealand", "travel",
+    "harbour",
+    "dusk",
+    "waterfront",
+    "long exposure",
+    "ferry",
+    "wake",
+    "ranges",
+    "sea spray",
+    "blue hour",
+    "commission",
+    "selects",
+    "round 3",
+    "landscape",
+    "seascape",
+    "Wellington",
+    "New Zealand",
+    "travel",
   ],
 }
 
@@ -650,7 +666,8 @@ const BATCH_RUNNING: BatchSummary = {
 const BATCH_LONG: BatchSummary = {
   ...BATCH_FULL,
   id: "batch_01J9QZ7K3M8N2P4R6T8V0X2Z4B",
-  source_folder: "/Volumes/Archive 2026/Clients/Harbour Board/Commission – Waterfront series/Selects/Round 3",
+  source_folder:
+    "/Volumes/Archive 2026/Clients/Harbour Board/Commission – Waterfront series/Selects/Round 3",
   image_count: 128_404,
   imported_count: 127_993,
   skipped_count: 389,
@@ -660,7 +677,11 @@ const BATCH_LONG: BatchSummary = {
 export type StrataSample = "full" | "sparse" | "long" | "empty"
 export const STRATA_SAMPLES: { value: StrataSample; label: string; hint: string }[] = [
   { value: "full", label: "Full", hint: "A camera file with EXIF, IPTC and GPS" },
-  { value: "sparse", label: "Sparse", hint: "A phone shot: no lens, no IPTC; a batch still running" },
+  {
+    value: "sparse",
+    label: "Sparse",
+    hint: "A phone shot: no lens, no IPTC; a batch still running",
+  },
   { value: "long", label: "Long", hint: "Long paths, captions and keyword lists" },
   { value: "empty", label: "Loading", hint: "No details yet: ctx is {} while the query runs" },
 ]

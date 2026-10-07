@@ -21,7 +21,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  * field per component). Each control commits one labelled rhizome edit; a drag is one gesture.
  * Each value is one selectable row; the inspector follows it.
  */
-export function PrimitivesDoc({ row, set, gesture }: { row: Row; set: SetValue; gesture: Gesture }) {
+export function PrimitivesDoc({
+  row,
+  set,
+  gesture,
+}: {
+  row: Row
+  set: SetValue
+  gesture: Gesture
+}) {
   const selection = useSelection()
 
   /** The row for one value key: the shared field, selectable. */
@@ -42,30 +50,29 @@ export function PrimitivesDoc({ row, set, gesture }: { row: Row; set: SetValue; 
         follow. Select a row to inspect that value.
       </DocHeader>
       <div className="flex max-w-xl flex-col gap-6">
+        <Section title="Text">
+          {item("title", "text")}
+          {item("notes", "text")}
+        </Section>
 
-      <Section title="Text">
-        {item("title", "text")}
-        {item("notes", "text")}
-      </Section>
+        <Separator />
 
-      <Separator />
+        <Section title="Boolean">
+          {item("visible", "bool")}
+          {item("locked", "bool")}
+        </Section>
 
-      <Section title="Boolean">
-        {item("visible", "bool")}
-        {item("locked", "bool")}
-      </Section>
+        <Separator />
 
-      <Separator />
+        <Section title="Vector (3 floats)">{item("position", "vec3")}</Section>
 
-      <Section title="Vector (3 floats)">{item("position", "vec3")}</Section>
+        <Separator />
 
-      <Separator />
+        <Section title="Vector (2 floats)">{item("size", "vec2")}</Section>
 
-      <Section title="Vector (2 floats)">{item("size", "vec2")}</Section>
+        <Separator />
 
-      <Separator />
-
-      <Section title="Number list (4 floats)">{item("weights", "floats")}</Section>
+        <Section title="Number list (4 floats)">{item("weights", "floats")}</Section>
       </div>
     </div>
   )

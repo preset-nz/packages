@@ -1,14 +1,13 @@
+import { createStore, useStore } from "@preset.nz/app-kit"
 import {
-  registerBuiltinRenderers,
-  registerScope,
   type FieldDef,
   type PropertySchema,
+  registerBuiltinRenderers,
+  registerScope,
   type Scope,
 } from "@preset.nz/facets"
 
-import { createStore, useStore } from "@preset.nz/app-kit"
-
-import { nodeScope, type NodeAdapter } from "./bound"
+import { type NodeAdapter, nodeScope } from "./bound"
 
 /**
  * Three of Oblique's ops, as facets panels. The parameters are Oblique's own: names, labels,
@@ -26,8 +25,7 @@ const num = (
   max: number,
   step: number,
   extra: Partial<FieldDef> & { integer?: boolean; suffix?: string } = {},
-): FieldDef =>
-  ({ kind: "number", id, label, path: id, min, max, step, ...extra }) as FieldDef
+): FieldDef => ({ kind: "number", id, label, path: id, min, max, step, ...extra }) as FieldDef
 
 const slider = (id: string, label: string, step: number, extra: Partial<FieldDef> = {}): FieldDef =>
   ({ kind: "slider", id, label, path: id, min: 0, max: 1, step, ...extra }) as FieldDef
@@ -47,7 +45,13 @@ const CMYK_HALFTONE: PropertySchema = {
           label: "Screen angles",
           path: "angles",
           promote: ["card"],
-          components: ["C", "M", "Y", "K"].map((label) => ({ label, suffix: "°", min: 0, max: 90, step: 1 })),
+          components: ["C", "M", "Y", "K"].map((label) => ({
+            label,
+            suffix: "°",
+            min: 0,
+            max: 90,
+            step: 1,
+          })),
         },
         ink("ink_c", "Cyan ink"),
         ink("ink_m", "Magenta ink"),
@@ -63,7 +67,12 @@ const CMYK_HALFTONE: PropertySchema = {
           options: ["paper", "over"].map((c) => ({ value: c, label: choiceLabel(c) })),
           promote: ["card"],
         },
-        { kind: "checkbox", id: "white_is_alpha", label: "Paper is transparent", path: "white_is_alpha" },
+        {
+          kind: "checkbox",
+          id: "white_is_alpha",
+          label: "Paper is transparent",
+          path: "white_is_alpha",
+        },
         {
           kind: "checkbox",
           id: "spill",
@@ -87,7 +96,9 @@ const FILM_STOCK: PropertySchema = {
           id: "stock",
           label: "Stock",
           path: "stock",
-          options: ["polaroid_600", "sx70", "cross_process", "bleach_bypass", "expired"].map((c) => ({ value: c, label: choiceLabel(c) })),
+          options: ["polaroid_600", "sx70", "cross_process", "bleach_bypass", "expired"].map(
+            (c) => ({ value: c, label: choiceLabel(c) }),
+          ),
           promote: ["card"],
         },
         slider("amount", "Amount", 0.05, { promote: ["card"] }),
@@ -131,7 +142,16 @@ export const OPS: OpKind[] = [
       colours: ["ink_c", "ink_m", "ink_y", "ink_k"],
       ints: ["seed"],
       groups: { angles: ["angle_c", "angle_m", "angle_y", "angle_k"] },
-      streamed: new Set(["dot_size", "angles", "ink_c", "ink_m", "ink_y", "ink_k", "misregistration", "seed"]),
+      streamed: new Set([
+        "dot_size",
+        "angles",
+        "ink_c",
+        "ink_m",
+        "ink_y",
+        "ink_k",
+        "misregistration",
+        "seed",
+      ]),
     },
   },
   {
@@ -159,7 +179,8 @@ export function registerOpScopes() {
   if (registered) return
   registered = true
   registerBuiltinRenderers()
-  for (const o of OPS) registerScope(opScopeKey(o.type), nodeScope(o.schema, o.adapter) as unknown as Scope)
+  for (const o of OPS)
+    registerScope(opScopeKey(o.type), nodeScope(o.schema, o.adapter) as unknown as Scope)
 }
 
 // The alignment study's one setting. A view choice for the playground, not a document value:

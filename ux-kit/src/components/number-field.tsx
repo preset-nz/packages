@@ -1,8 +1,7 @@
-import * as React from "react"
 import { NumberField as NumberFieldPrimitive } from "@base-ui/react/number-field"
-
-import { cn } from "../lib/utils"
+import * as React from "react"
 import { ArrowsHorizontalIcon } from "../icons"
+import { cn } from "../lib/utils"
 
 // NumberField: a number you can drag. The label is the scrub handle (Base UI's ScrubArea);
 // click it, or tab in, to type. Behaviour is Oblique's InputNumber on Base UI's NumberField:
@@ -29,10 +28,7 @@ interface NumberChange {
 }
 
 interface NumberFieldProps
-  extends Omit<
-    React.ComponentProps<"div">,
-    "onChange" | "defaultValue" | "children" | "value"
-  > {
+  extends Omit<React.ComponentProps<"div">, "onChange" | "defaultValue" | "children" | "value"> {
   value: number
   onValueChange?: (value: number, details: NumberChange) => void
   min?: number
@@ -112,7 +108,7 @@ function NumberField({
   const digits = integer ? 0 : (precision ?? placesOf(small))
   const options = React.useMemo<Intl.NumberFormatOptions>(
     () => ({ maximumFractionDigits: digits, useGrouping: false, ...format }),
-    [digits, format]
+    [digits, format],
   )
 
   // The field's own value, so a scrub follows the pointer without waiting for the app's round
@@ -165,6 +161,7 @@ function NumberField({
     })
   }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the effect follows `value` alone; `show` and `clearSettle` are per-render closures over refs and state setters
   React.useEffect(() => {
     valueRef.current = value
     if (scrub.current.started) return
@@ -174,15 +171,17 @@ function NumberField({
     show(value)
   }, [value])
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: unmount cleanup only; `clearSettle` is a per-render closure over refs
   React.useEffect(
     () => () => {
       clearSettle()
       cancelAnimationFrame(pending.current.raf)
     },
-    []
+    [],
   )
 
   // Escape while scrubbing. Captured so the app's own Escape (clear selection) doesn't also run.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the listener lives while a scrub does; `show` and `dropPending` are per-render closures over refs
   React.useEffect(() => {
     if (!scrubbing || !onScrubCancel) return
     const onKey = (e: KeyboardEvent) => {
@@ -297,7 +296,10 @@ function NumberField({
     />
   )
   const unit = suffix != null && (
-    <span data-slot="number-field-suffix" className="flex shrink-0 items-center pr-2 text-muted-foreground select-none">
+    <span
+      data-slot="number-field-suffix"
+      className="flex shrink-0 items-center pr-2 text-muted-foreground select-none"
+    >
       {suffix}
     </span>
   )
@@ -322,9 +324,10 @@ function NumberField({
       className={cn(
         "min-w-0",
         !outside && `group/number-field relative ${boxClass}`,
-        labelPlacement === "column" && "col-span-2 grid grid-cols-subgrid items-center data-disabled:opacity-50",
+        labelPlacement === "column" &&
+          "col-span-2 grid grid-cols-subgrid items-center data-disabled:opacity-50",
         labelPlacement === "above" && "flex flex-col gap-1 data-disabled:opacity-50",
-        className
+        className,
       )}
       {...props}
     >
@@ -340,8 +343,8 @@ function NumberField({
             ? "cursor-default"
             : cn(
                 "cursor-ew-resize hover:text-foreground data-scrubbing:text-foreground",
-                !outside && "hover:bg-muted data-scrubbing:bg-selection/20"
-              )
+                !outside && "hover:bg-muted data-scrubbing:bg-selection/20",
+              ),
         )}
       >
         {label}
@@ -367,10 +370,7 @@ function NumberField({
 const AXES = ["X", "Y", "Z", "W"]
 
 interface VectorFieldProps
-  extends Omit<
-    NumberFieldProps,
-    "value" | "onValueChange" | "label" | "className"
-  > {
+  extends Omit<NumberFieldProps, "value" | "onValueChange" | "label" | "className"> {
   value: number[]
   /** The whole vector with the changed component replaced. */
   onValueChange?: (value: number[], details: NumberChange) => void
@@ -393,20 +393,20 @@ function VectorField({
   return (
     <div
       data-slot="vector-field"
-      className={cn(
-        "flex min-w-0 gap-1",
-        orientation === "column" && "flex-col",
-        className
-      )}
+      className={cn("flex min-w-0 gap-1", orientation === "column" && "flex-col", className)}
     >
       {value.map((x, i) => (
         <NumberField
+          // biome-ignore lint/suspicious/noArrayIndexKey: one field per axis; the index is the axis
           key={i}
           {...props}
           label={labels?.[i] ?? (value.length <= AXES.length ? AXES[i] : String(i + 1))}
           value={x}
           onValueChange={(n, d) =>
-            onValueChange?.(value.map((v, j) => (j === i ? n : v)), d)
+            onValueChange?.(
+              value.map((v, j) => (j === i ? n : v)),
+              d,
+            )
           }
         />
       ))}
@@ -414,15 +414,19 @@ function VectorField({
   )
 }
 
-export { NumberField, VectorField }
 export type { NumberChange, NumberFieldProps, VectorFieldProps }
+export { NumberField, VectorField }
 
 /**
  * Pixels of drag per step, so a full-range scrub is about 300px whatever the step: a 0–8 field
  * with 0.25 steps moves one step per ~9px instead of per pixel, which read as jumping.
  * Unbounded ranges keep one step per pixel.
  */
-function pixelsPerStep(min: number | undefined, max: number | undefined, step: number | undefined): number {
+function pixelsPerStep(
+  min: number | undefined,
+  max: number | undefined,
+  step: number | undefined,
+): number {
   if (min == null || max == null || !step || max <= min) return 1
   return Math.min(12, Math.max(1, Math.round((300 * step) / (max - min))))
 }

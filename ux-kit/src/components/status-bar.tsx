@@ -1,4 +1,4 @@
-import * as React from "react"
+import type * as React from "react"
 
 import { cn } from "../lib/utils"
 
@@ -11,7 +11,10 @@ function StatusBar({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="status-bar"
       role="status"
-      className={cn("flex h-6 shrink-0 items-center gap-3 border-t border-border bg-background px-3 text-xs text-muted-foreground", className)}
+      className={cn(
+        "flex h-6 shrink-0 items-center gap-3 border-t border-border bg-background px-3 text-xs text-muted-foreground",
+        className,
+      )}
       {...props}
     />
   )
@@ -24,7 +27,11 @@ interface StatusItemProps extends React.ComponentProps<"span"> {
 
 function StatusItem({ label, className, children, ...props }: StatusItemProps) {
   return (
-    <span data-slot="status-item" className={cn("flex items-center gap-1 tabular-nums", className)} {...props}>
+    <span
+      data-slot="status-item"
+      className={cn("flex items-center gap-1 tabular-nums", className)}
+      {...props}
+    >
       {label ? <span className="opacity-70">{label}</span> : null}
       <span className="text-foreground">{children}</span>
     </span>

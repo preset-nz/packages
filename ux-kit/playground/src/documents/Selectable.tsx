@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
 import { cn } from "@preset.nz/ux-kit"
+import type { ReactNode } from "react"
 
 /**
  * One selectable item in a document's centre view. A click or focus inside selects it;

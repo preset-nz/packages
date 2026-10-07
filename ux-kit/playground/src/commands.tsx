@@ -1,5 +1,5 @@
-import { Icons } from "@preset.nz/ux-kit"
 import type { Binding, ToolbarLayout } from "@preset.nz/app-kit"
+import { Icons } from "@preset.nz/ux-kit"
 
 // The playground's half of the command table. Ids, labels and accelerators are declared in
 // Rust (src-tauri/src/menu.rs) and reach the toolbar through app-kit's `useCommands`; this file

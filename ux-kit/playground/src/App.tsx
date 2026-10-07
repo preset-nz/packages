@@ -1,8 +1,7 @@
-import { getCurrentWindow } from "@tauri-apps/api/window"
 import { SettingsWindow, usePreferencesBootstrap } from "@preset.nz/preferences"
-
-import { Gallery } from "./Gallery"
+import { getCurrentWindow } from "@tauri-apps/api/window"
 import { MainApp } from "./app/MainApp"
+import { Gallery } from "./Gallery"
 import { useTheme } from "./theme"
 
 // One frontend, three windows. Rust opens Gallery and Settings with `?window=<label>`;

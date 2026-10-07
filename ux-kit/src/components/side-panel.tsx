@@ -1,4 +1,4 @@
-import * as React from "react"
+import type * as React from "react"
 
 import { cn } from "../lib/utils"
 import { buttonVariants } from "./button"
@@ -58,7 +58,12 @@ function SidePanel({
         data-slot="side-panel"
         data-state="closed"
         aria-label={title}
-        className={cn("flex w-10 shrink-0 flex-col items-center bg-sidebar py-2 text-sidebar-foreground", border, "border-sidebar-border", className)}
+        className={cn(
+          "flex w-10 shrink-0 flex-col items-center bg-sidebar py-2 text-sidebar-foreground",
+          border,
+          "border-sidebar-border",
+          className,
+        )}
         {...props}
       >
         <Tooltip>
@@ -77,7 +82,10 @@ function SidePanel({
           <TooltipContent side={side === "left" ? "right" : "left"}>
             <span>Show {title}</span>
             {shortcut ? (
-              <kbd data-slot="kbd" className="rounded-sm bg-background/20 px-1 font-sans text-[11px]">
+              <kbd
+                data-slot="kbd"
+                className="rounded-sm bg-background/20 px-1 font-sans text-[11px]"
+              >
                 {shortcut}
               </kbd>
             ) : null}
@@ -121,10 +129,16 @@ function SidePanel({
       data-state="open"
       aria-label={title}
       style={{ width: w }}
-      className={cn("relative flex shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground", border, "border-sidebar-border", className)}
+      className={cn(
+        "relative flex shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground",
+        border,
+        "border-sidebar-border",
+        className,
+      )}
       {...props}
     >
       {children}
+      {/* biome-ignore lint/a11y/useSemanticElements: a focusable, keyboard-operable splitter (WAI-ARIA window splitter); <hr> is not focusable */}
       <div
         role="separator"
         aria-orientation="vertical"
@@ -137,7 +151,7 @@ function SidePanel({
         onKeyDown={onKey}
         className={cn(
           "absolute inset-y-0 z-10 w-1 cursor-col-resize touch-none hover:bg-primary/30 focus-visible:bg-primary/40 focus-visible:outline-none",
-          side === "left" ? "right-0" : "left-0"
+          side === "left" ? "right-0" : "left-0",
         )}
       />
     </aside>
@@ -149,7 +163,10 @@ function SidePanelHeader({ className, children, ...props }: React.ComponentProps
   return (
     <div
       data-slot="side-panel-header"
-      className={cn("flex h-9 shrink-0 items-center gap-2 border-b border-sidebar-border px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground", className)}
+      className={cn(
+        "flex h-9 shrink-0 items-center gap-2 border-b border-sidebar-border px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground",
+        className,
+      )}
       {...props}
     >
       {children}
@@ -159,8 +176,14 @@ function SidePanelHeader({ className, children, ...props }: React.ComponentProps
 
 /** The scrolling body under the header. */
 function SidePanelContent({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="side-panel-content" className={cn("min-h-0 flex-1 overflow-auto", className)} {...props} />
+  return (
+    <div
+      data-slot="side-panel-content"
+      className={cn("min-h-0 flex-1 overflow-auto", className)}
+      {...props}
+    />
+  )
 }
 
-export { SidePanel, SidePanelContent, SidePanelHeader, clampWidth }
 export type { SidePanelProps }
+export { clampWidth, SidePanel, SidePanelContent, SidePanelHeader }

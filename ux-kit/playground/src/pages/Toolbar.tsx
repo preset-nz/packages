@@ -1,4 +1,3 @@
-import { useState } from "react"
 import {
   ColorField,
   ColorSwatch,
@@ -6,11 +5,12 @@ import {
   Toolbar,
   ToolbarButton,
   ToolbarGroup,
+  type ToolbarItemSpec,
   ToolbarItems,
   ToolbarSeparator,
   TooltipProvider,
-  type ToolbarItemSpec,
 } from "@preset.nz/ux-kit"
+import { useState } from "react"
 
 const PRESETS = ["#ffffff", "#f8f5e7", "#efe7d3", "#cccccc", "#e5484d", "#3e63dd", "#000000"]
 
@@ -31,9 +31,27 @@ export function ToolbarPage() {
 
   // The item table: ids are command ids, the menu would read the same table.
   const tools: ToolbarItemSpec[] = [
-    { id: "tool.move", label: "Move", icon: <Icons.CursorIcon />, shortcut: "V", pressed: tool === "move" },
-    { id: "tool.marquee", label: "Marquee", icon: <Icons.SelectionIcon />, shortcut: "M", pressed: tool === "marquee" },
-    { id: "tool.pen", label: "Pen", icon: <Icons.PenNibIcon />, shortcut: "P", pressed: tool === "pen" },
+    {
+      id: "tool.move",
+      label: "Move",
+      icon: <Icons.CursorIcon />,
+      shortcut: "V",
+      pressed: tool === "move",
+    },
+    {
+      id: "tool.marquee",
+      label: "Marquee",
+      icon: <Icons.SelectionIcon />,
+      shortcut: "M",
+      pressed: tool === "marquee",
+    },
+    {
+      id: "tool.pen",
+      label: "Pen",
+      icon: <Icons.PenNibIcon />,
+      shortcut: "P",
+      pressed: tool === "pen",
+    },
     {
       id: "tool.smart",
       label: "Smart select",
@@ -43,8 +61,22 @@ export function ToolbarPage() {
     },
   ]
   const edit: ToolbarItemSpec[] = [
-    { id: "edit.duplicate", label: "Duplicate", icon: <Icons.CopyIcon />, shortcut: "⌘D", enabled: hasSelection, disabledReason: "Nothing selected" },
-    { id: "edit.delete", label: "Delete", icon: <Icons.TrashIcon />, shortcut: "⌫", enabled: hasSelection, disabledReason: "Nothing selected" },
+    {
+      id: "edit.duplicate",
+      label: "Duplicate",
+      icon: <Icons.CopyIcon />,
+      shortcut: "⌘D",
+      enabled: hasSelection,
+      disabledReason: "Nothing selected",
+    },
+    {
+      id: "edit.delete",
+      label: "Delete",
+      icon: <Icons.TrashIcon />,
+      shortcut: "⌫",
+      enabled: hasSelection,
+      disabledReason: "Nothing selected",
+    },
     { id: "view.grid", label: "Grid", icon: <Icons.GridFourIcon />, shortcut: "⌘'", pressed: grid },
     {
       id: "export",
@@ -76,24 +108,49 @@ export function ToolbarPage() {
           <div className="overflow-hidden rounded-md border border-border">
             <ToolbarItems
               aria-label="Demo toolbar"
-              leading={[{ id: "panel.left", label: "Left panel", icon: <Icons.SidebarSimpleIcon />, shortcut: "⌥⌘S", pressed: left }]}
+              leading={[
+                {
+                  id: "panel.left",
+                  label: "Left panel",
+                  icon: <Icons.SidebarSimpleIcon />,
+                  shortcut: "⌥⌘S",
+                  pressed: left,
+                },
+              ]}
               groups={[tools, edit]}
-              trailing={[{ id: "panel.right", label: "Right panel", icon: <Icons.SidebarSimpleIcon className="-scale-x-100" />, shortcut: "⌥⌘I", pressed: right }]}
+              trailing={[
+                {
+                  id: "panel.right",
+                  label: "Right panel",
+                  icon: <Icons.SidebarSimpleIcon className="-scale-x-100" />,
+                  shortcut: "⌥⌘I",
+                  pressed: right,
+                },
+              ]}
               onCommand={run}
             />
           </div>
           <div className="flex gap-4 text-xs">
             <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={hasSelection} onChange={(e) => setHasSelection(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={hasSelection}
+                onChange={(e) => setHasSelection(e.target.checked)}
+              />
               Selection exists
             </label>
             <label className="flex items-center gap-1.5">
-              <input type="checkbox" checked={sidecarUp} onChange={(e) => setSidecarUp(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={sidecarUp}
+                onChange={(e) => setSidecarUp(e.target.checked)}
+              />
               Sidecar up
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
-            Last commands: {log.length ? log.join(", ") : "none"}. Hover a disabled item for its reason; arrow keys move between items.
+            Last commands: {log.length ? log.join(", ") : "none"}. Hover a disabled item for its
+            reason; arrow keys move between items.
           </p>
         </div>
 
@@ -102,7 +159,13 @@ export function ToolbarPage() {
           <div className="overflow-hidden rounded-md border border-border">
             <Toolbar aria-label="Composed toolbar">
               <ToolbarGroup>
-                <ToolbarButton label="Undo" icon={<Icons.ArrowCounterClockwiseIcon />} shortcut="⌘Z" enabled={false} disabledReason="Nothing to undo" />
+                <ToolbarButton
+                  label="Undo"
+                  icon={<Icons.ArrowCounterClockwiseIcon />}
+                  shortcut="⌘Z"
+                  enabled={false}
+                  disabledReason="Nothing to undo"
+                />
                 <ToolbarButton label="Redo" icon={<Icons.ArrowClockwiseIcon />} shortcut="⇧⌘Z" />
               </ToolbarGroup>
               <ToolbarSeparator />
@@ -114,9 +177,27 @@ export function ToolbarPage() {
         <div className="flex flex-col gap-3">
           <h2 className="text-sm font-medium">ColorField</h2>
           <div className="grid max-w-md gap-3">
-            <ColorField label="Fill (presets, native picker)" value={fill} onChange={setFill} presets={PRESETS} />
-            <ColorField label="Stroke (with alpha)" value={stroke} onChange={setStroke} alpha presets={PRESETS} />
-            <ColorField label="Optional (clearable, empty)" value={optional} onChange={setOptional} presets={PRESETS} clearable fallback="#888888" />
+            <ColorField
+              label="Fill (presets, native picker)"
+              value={fill}
+              onChange={setFill}
+              presets={PRESETS}
+            />
+            <ColorField
+              label="Stroke (with alpha)"
+              value={stroke}
+              onChange={setStroke}
+              alpha
+              presets={PRESETS}
+            />
+            <ColorField
+              label="Optional (clearable, empty)"
+              value={optional}
+              onChange={setOptional}
+              presets={PRESETS}
+              clearable
+              fallback="#888888"
+            />
             <ColorField label="Read-only" value="#3e63dd" />
             <ColorField label="Disabled" value="#3e63dd" onChange={() => {}} disabled />
           </div>

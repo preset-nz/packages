@@ -35,8 +35,7 @@ function toHex({ r, g, b, a }: Rgba, withAlpha: boolean): string {
   return `#${p(r)}${p(g)}${p(b)}${withAlpha ? p(a * 255) : ""}`
 }
 
-interface ColorFieldProps
-  extends Omit<React.ComponentProps<"div">, "onChange" | "defaultValue"> {
+interface ColorFieldProps extends Omit<React.ComponentProps<"div">, "onChange" | "defaultValue"> {
   /** #rrggbb or #rrggbbaa. `null` shows the empty chip and a dash. */
   value: string | null
   /** Called with a normalised lowercase hex, or null from the clear button. */
@@ -109,7 +108,9 @@ function ColorField({
     const pct = Number(alphaDraft)
     setAlphaDraft(null)
     if (!Number.isFinite(pct)) return
-    emit({ ...(rgba ?? parseHex(fallback)!), a: Math.min(100, Math.max(0, pct)) / 100 })
+    const base = rgba ?? parseHex(fallback)
+    if (!base) return
+    emit({ ...base, a: Math.min(100, Math.max(0, pct)) / 100 })
   }
 
   const pick = (hex: string, session = false) => {
@@ -126,7 +127,10 @@ function ColorField({
   return (
     <div data-slot="color-field" className={cn("flex flex-col gap-1", className)} {...props}>
       {label ? (
-        <label htmlFor={inputId} className="text-[11px] font-medium tracking-wide text-muted-foreground">
+        <label
+          htmlFor={inputId}
+          className="text-[11px] font-medium tracking-wide text-muted-foreground"
+        >
           {label}
         </label>
       ) : null}
@@ -143,7 +147,11 @@ function ColorField({
             <input
               type="color"
               aria-label={`${swatchLabel} picker`}
-              value={rgba ? toHex(rgba, false) : toHex(parseHex(fallback) ?? { r: 0, g: 0, b: 0, a: 1 }, false)}
+              value={
+                rgba
+                  ? toHex(rgba, false)
+                  : toHex(parseHex(fallback) ?? { r: 0, g: 0, b: 0, a: 1 }, false)
+              }
               onChange={(e) => pick(e.target.value, true)}
               onFocus={onPickStart}
               onBlur={() => {
@@ -163,6 +171,7 @@ function ColorField({
             </PopoverTrigger>
             <PopoverContent align="start" className="w-auto gap-2 p-2">
               {presets?.length || clearable ? (
+                // biome-ignore lint/a11y/useSemanticElements: a div keeps the swatch grid layout; role="group" labels it
                 <div className="grid grid-cols-7 gap-1" role="group" aria-label="Presets">
                   {presets?.map((c) => (
                     <button
@@ -191,7 +200,11 @@ function ColorField({
               <input
                 type="color"
                 aria-label={`${swatchLabel} picker`}
-                value={rgba ? toHex(rgba, false) : toHex(parseHex(fallback) ?? { r: 0, g: 0, b: 0, a: 1 }, false)}
+                value={
+                  rgba
+                    ? toHex(rgba, false)
+                    : toHex(parseHex(fallback) ?? { r: 0, g: 0, b: 0, a: 1 }, false)
+                }
                 onChange={(e) => pick(e.target.value, true)}
                 onFocus={onPickStart}
                 onBlur={() => {
@@ -244,5 +257,5 @@ function ColorField({
   )
 }
 
-export { ColorField, parseHex, toHex }
 export type { ColorFieldProps }
+export { ColorField, parseHex, toHex }

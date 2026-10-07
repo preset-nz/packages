@@ -1,4 +1,4 @@
-import * as React from "react"
+import type * as React from "react"
 
 import { cn } from "../lib/utils"
 
@@ -17,7 +17,10 @@ function EmptyState({ icon, title, description, action, className, ...props }: E
   return (
     <div
       data-slot="empty-state"
-      className={cn("flex h-full flex-col items-center justify-center gap-2 p-8 text-center", className)}
+      className={cn(
+        "flex h-full flex-col items-center justify-center gap-2 p-8 text-center",
+        className,
+      )}
       {...props}
     >
       {icon ? <div className="text-muted-foreground [&_svg]:size-8">{icon}</div> : null}
@@ -28,5 +31,5 @@ function EmptyState({ icon, title, description, action, className, ...props }: E
   )
 }
 
-export { EmptyState }
 export type { EmptyStateProps }
+export { EmptyState }

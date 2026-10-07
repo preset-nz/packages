@@ -1,20 +1,19 @@
-import { useEffect, useRef, useState } from "react"
+import type { HistoryState } from "@preset.nz/app-kit"
 import { Button, ColorSwatch, Input, Label, SidePanelContent } from "@preset.nz/ux-kit"
-
+import { useEffect, useRef, useState } from "react"
 import { docInfo, type SetValue } from "../documents"
 import { CardPanel } from "../documents/CardPanel"
-import { OpPanel } from "../documents/OpPanel"
-import { StrataPanelView } from "../documents/InspectorsDoc"
-import { strataScope, useStrataView } from "../documents/strata"
-import { opKind } from "../documents/ops"
 import { ValueField } from "../documents/fields"
-import { system } from "../documents/messages"
 import { ROLES, SIZES, WEIGHTS } from "../documents/fonts"
+import { StrataPanelView } from "../documents/InspectorsDoc"
+import { system } from "../documents/messages"
+import { OpPanel } from "../documents/OpPanel"
+import { opKind } from "../documents/ops"
+import { strataScope, useStrataView } from "../documents/strata"
 import { TOKENS } from "../documents/tokens"
-import type { HistoryState } from "@preset.nz/app-kit"
 
 import type { Gesture, Row, Schema } from "../rhizome"
-import { selectLayer, selectOp, setFontSample, useFontSamples, type Selection } from "../selection"
+import { type Selection, selectLayer, selectOp, setFontSample, useFontSamples } from "../selection"
 
 const show = (v: unknown) => (typeof v === "string" ? v || "—" : JSON.stringify(v))
 
@@ -22,7 +21,10 @@ function Prop({ k, children }: { k: string; children: React.ReactNode }) {
   return (
     <>
       <dt className="text-muted-foreground">{k}</dt>
-      <dd className="min-w-0 truncate font-mono" title={typeof children === "string" ? children : undefined}>
+      <dd
+        className="min-w-0 truncate font-mono"
+        title={typeof children === "string" ? children : undefined}
+      >
         {children}
       </dd>
     </>
@@ -93,7 +95,9 @@ function DocSummary({ doc, layers, ops }: { doc: Row | null; layers: Row[]; ops:
           </ol>
         </Section>
       )}
-      <p className="text-xs text-muted-foreground">Select an item in the document to inspect it. Esc clears.</p>
+      <p className="text-xs text-muted-foreground">
+        Select an item in the document to inspect it. Esc clears.
+      </p>
     </>
   )
 }
@@ -145,6 +149,7 @@ function FontInspector({ role }: { role: string }) {
   const probe = useRef<HTMLSpanElement>(null)
   const [stack, setStack] = useState("")
   const sample = useFontSamples()[role] ?? ""
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `role` selects the font class on the probe, so the stack is re-read when it changes
   useEffect(() => {
     if (probe.current) setStack(getComputedStyle(probe.current).fontFamily)
   }, [role])
@@ -246,7 +251,9 @@ function ValueInspector({
   gesture: Gesture
   reset: (path: string, keys: string[]) => void
 }) {
-  const spec = schema?.types.find((t) => t.name === doc.type)?.values?.find((v) => v.key === valueKey)
+  const spec = schema?.types
+    .find((t) => t.name === doc.type)
+    ?.values?.find((v) => v.key === valueKey)
   if (!spec) return <p className="text-xs text-muted-foreground">Loading…</p>
   const isSet = doc.set?.includes(valueKey) ?? false
   return (
@@ -261,7 +268,14 @@ function ValueInspector({
         </Props>
       </Section>
       <Section title="Edit">
-        <ValueField doc={doc} valueKey={spec.key} kind={spec.kind} set={set} gesture={gesture} orientation="column" />
+        <ValueField
+          doc={doc}
+          valueKey={spec.key}
+          kind={spec.kind}
+          set={set}
+          gesture={gesture}
+          orientation="column"
+        />
         <Button
           variant="outline"
           size="sm"
@@ -305,54 +319,61 @@ export function Inspector({
   const layer = selection.kind === "layer" ? layers.find((l) => l.id === selection.id) : undefined
   const op = selection.kind === "op" ? ops.find((o) => o.id === selection.id) : undefined
   return (
-    <>
-      <SidePanelContent className="flex flex-col gap-6 p-3">
-        {selection.kind === "token" ? (
-          <TokenInspector name={selection.name} />
-        ) : selection.kind === "font" ? (
-          <FontInspector role={selection.role} />
-        ) : selection.kind === "system" ? (
-          <SystemInspector id={selection.id} />
-        ) : selection.kind === "strata" ? (
-          <StrataInspector panel={selection.panel} />
-        ) : selection.kind === "value" && doc ? (
-          <ValueInspector doc={doc} valueKey={selection.key} schema={schema} set={set} gesture={gesture} reset={reset} />
-        ) : layer ? (
-          <Section title={String(layer.values?.name ?? layer.name)}>
-            {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
-            <div className="-mx-3">
-              <CardPanel key={layer.id} row={layer} set={set} gesture={gesture} view="inspector" />
-            </div>
-          </Section>
-        ) : op ? (
-          <Section title={opKind(op.type)?.label ?? op.name}>
-            {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
-            <div className="-mx-3">
-              <OpPanel key={op.id} row={op} set={set} gesture={gesture} view="inspector" />
-            </div>
-          </Section>
-        ) : (
-          <DocSummary doc={doc} layers={layers} ops={ops} />
-        )}
-
-        <Section title="History">
-          {history && (
-            <ol className="flex flex-col gap-0.5 font-mono text-xs">
-              {history.undoLabels.map((label, i) => (
-                <li key={`u${i}`}>
-                  <span className="text-muted-foreground">{i + 1}</span> {label}
-                </li>
-              ))}
-              <li className="text-primary">— now —</li>
-              {history.redoLabels.map((label, i) => (
-                <li key={`r${i}`} className="text-muted-foreground">
-                  {history.historyLen + i + 1} {label}
-                </li>
-              ))}
-            </ol>
-          )}
+    <SidePanelContent className="flex flex-col gap-6 p-3">
+      {selection.kind === "token" ? (
+        <TokenInspector name={selection.name} />
+      ) : selection.kind === "font" ? (
+        <FontInspector role={selection.role} />
+      ) : selection.kind === "system" ? (
+        <SystemInspector id={selection.id} />
+      ) : selection.kind === "strata" ? (
+        <StrataInspector panel={selection.panel} />
+      ) : selection.kind === "value" && doc ? (
+        <ValueInspector
+          doc={doc}
+          valueKey={selection.key}
+          schema={schema}
+          set={set}
+          gesture={gesture}
+          reset={reset}
+        />
+      ) : layer ? (
+        <Section title={String(layer.values?.name ?? layer.name)}>
+          {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
+          <div className="-mx-3">
+            <CardPanel key={layer.id} row={layer} set={set} gesture={gesture} view="inspector" />
+          </div>
         </Section>
-      </SidePanelContent>
-    </>
+      ) : op ? (
+        <Section title={opKind(op.type)?.label ?? op.name}>
+          {/* facets brings its own px-3 gutter; cancel the inspector's so they don't stack */}
+          <div className="-mx-3">
+            <OpPanel key={op.id} row={op} set={set} gesture={gesture} view="inspector" />
+          </div>
+        </Section>
+      ) : (
+        <DocSummary doc={doc} layers={layers} ops={ops} />
+      )}
+
+      <Section title="History">
+        {history && (
+          <ol className="flex flex-col gap-0.5 font-mono text-xs">
+            {history.undoLabels.map((label, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: a history list: labels repeat, position is the identity
+              <li key={`u${i}-${label}`}>
+                <span className="text-muted-foreground">{i + 1}</span> {label}
+              </li>
+            ))}
+            <li className="text-primary">— now —</li>
+            {history.redoLabels.map((label, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: a history list: labels repeat, position is the identity
+              <li key={`r${i}-${label}`} className="text-muted-foreground">
+                {history.historyLen + i + 1} {label}
+              </li>
+            ))}
+          </ol>
+        )}
+      </Section>
+    </SidePanelContent>
   )
 }

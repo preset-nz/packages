@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { selectFont, useFontSamples, useSelection } from "../selection"
-import { ROLES, SIZES, WEIGHTS, type FontRole } from "./fonts"
+import { type FontRole, ROLES, SIZES, WEIGHTS } from "./fonts"
 import { DOC_PAGE, DocHeader } from "./Header"
 import { Selectable } from "./Selectable"
 
@@ -69,8 +69,8 @@ export function FontsDoc() {
   return (
     <div className={DOC_PAGE}>
       <DocHeader title="Fonts">
-        Three roles: headings, body text and code. Sizes are the type scale; weights are the ones the
-        kit loads. Select a role to type your own sample.
+        Three roles: headings, body text and code. Sizes are the type scale; weights are the ones
+        the kit loads. Select a role to type your own sample.
       </DocHeader>
       <div className="flex flex-col gap-4 p-1">
         {ROLES.map((r) => (

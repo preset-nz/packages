@@ -1,5 +1,5 @@
-import * as React from "react"
 import { Toolbar as ToolbarPrimitive } from "@base-ui/react/toolbar"
+import * as React from "react"
 
 import { cn } from "../lib/utils"
 import { buttonVariants } from "./button"
@@ -52,16 +52,13 @@ interface ToolbarItemSpec {
   menu?: ToolbarMenuEntry[]
 }
 
-function Toolbar({
-  className,
-  ...props
-}: React.ComponentProps<typeof ToolbarPrimitive.Root>) {
+function Toolbar({ className, ...props }: React.ComponentProps<typeof ToolbarPrimitive.Root>) {
   return (
     <ToolbarPrimitive.Root
       data-slot="toolbar"
       className={cn(
         "flex items-center gap-1 border-b border-border bg-background px-2 py-1 data-[orientation=vertical]:w-fit data-[orientation=vertical]:flex-col data-[orientation=vertical]:border-r data-[orientation=vertical]:border-b-0",
-        className
+        className,
       )}
       {...props}
     />
@@ -90,7 +87,7 @@ function ToolbarSeparator({
       data-slot="toolbar-separator"
       className={cn(
         "mx-1 h-5 w-px shrink-0 bg-border data-[orientation=horizontal]:mx-0 data-[orientation=horizontal]:my-1 data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-5",
-        className
+        className,
       )}
       {...props}
     />
@@ -125,7 +122,7 @@ const buttonClass = (pressed?: boolean) =>
   cn(
     buttonVariants({ variant: "ghost", size: "icon" }),
     "data-disabled:cursor-default data-disabled:opacity-40 data-disabled:hover:bg-transparent",
-    pressed && "bg-muted text-foreground"
+    pressed && "bg-muted text-foreground",
   )
 
 interface ToolbarButtonProps
@@ -242,8 +239,7 @@ function ToolbarItem({
   return <ToolbarButton {...item} onClick={() => onCommand?.(item.id)} />
 }
 
-interface ToolbarItemsProps
-  extends Omit<React.ComponentProps<typeof Toolbar>, "children"> {
+interface ToolbarItemsProps extends Omit<React.ComponentProps<typeof Toolbar>, "children"> {
   /** Groups of items; a separator is drawn between groups. */
   groups: ToolbarItemSpec[][]
   /** Called with the item's (or menu entry's) id. The app runs the same command the menu does. */
@@ -270,6 +266,7 @@ function ToolbarItems({
   return (
     <Toolbar {...props}>
       {all.map((group, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: groups are anonymous lists rebuilt each render and never reordered
         <React.Fragment key={i}>
           {i > 0 && <ToolbarSeparator />}
           <ToolbarGroup>
@@ -294,6 +291,7 @@ function ToolbarItems({
   )
 }
 
+export type { ToolbarItemSpec, ToolbarMenuEntry }
 export {
   Toolbar,
   ToolbarButton,
@@ -304,4 +302,3 @@ export {
   ToolbarSeparator,
   ToolbarSpacer,
 }
-export type { ToolbarItemSpec, ToolbarMenuEntry }

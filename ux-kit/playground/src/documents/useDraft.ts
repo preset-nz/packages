@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 export function useDraft<T>(value: T) {
   const [draft, setDraft] = useState(value)
   const key = JSON.stringify(value)
-  useEffect(() => setDraft(value), [key]) // eslint-disable-line react-hooks/exhaustive-deps
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `key` is the serialised `value`, so the effect follows its content, not its identity
+  useEffect(() => setDraft(value), [key])
   return [draft, setDraft] as const
 }

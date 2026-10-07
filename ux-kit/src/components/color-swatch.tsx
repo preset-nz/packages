@@ -1,4 +1,4 @@
-import * as React from "react"
+import type * as React from "react"
 
 import { cn } from "../lib/utils"
 
@@ -38,7 +38,7 @@ function ColorSwatch({
         size === "lg" && "size-6",
         shape === "round" ? "rounded-full" : "rounded-xs",
         !color && "border-dashed border-muted-foreground/60",
-        className
+        className,
       )}
       style={color ? { background: CHECKER, ...style } : style}
       {...props}
@@ -48,5 +48,5 @@ function ColorSwatch({
   )
 }
 
-export { ColorSwatch }
 export type { ColorSwatchProps }
+export { ColorSwatch }

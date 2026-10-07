@@ -19,8 +19,18 @@ export const WEIGHTS = [
 
 export const ROLES = [
   { role: "Heading", token: "--font-heading", cls: "font-heading", sample: "Layers and masks" },
-  { role: "Body", token: "--font-sans", cls: "font-sans", sample: "The quick brown fox jumps over the lazy dog" },
-  { role: "Mono", token: "--font-mono", cls: "font-mono", sample: "const opacity = 0.75 // 0123456789" },
+  {
+    role: "Body",
+    token: "--font-sans",
+    cls: "font-sans",
+    sample: "The quick brown fox jumps over the lazy dog",
+  },
+  {
+    role: "Mono",
+    token: "--font-mono",
+    cls: "font-mono",
+    sample: "const opacity = 0.75 // 0123456789",
+  },
 ] as const
 
 export type FontRole = (typeof ROLES)[number]

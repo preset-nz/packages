@@ -1,5 +1,5 @@
+import { type Basis, type Curve, evaluate } from "@preset.nz/math"
 import * as React from "react"
-import { evaluate, type Basis, type Curve } from "@preset.nz/math"
 
 import {
   ContextMenu,
@@ -17,14 +17,14 @@ import {
 import { cn } from "../lib/utils"
 import {
   addPoint,
+  type CurveConstraint,
+  type Domain,
   movePoint,
   removePoint,
   setBasis,
   setTension,
   tensionForMidpoint,
   toggleSustain,
-  type CurveConstraint,
-  type Domain,
 } from "./curve-edits"
 import { linearScale } from "./scale"
 import { useCanvasDraw, useSize } from "./use-canvas"
@@ -101,8 +101,14 @@ const defaultFormat = (v: number) => v.toFixed(3)
 function sameCurve(a: Curve, b: Curve): boolean {
   if (a.points.length !== b.points.length || (a.sustain ?? -1) !== (b.sustain ?? -1)) return false
   return a.points.every((p, i) => {
-    const q = b.points[i]!
-    return p.x === q.x && p.y === q.y && p.basis === q.basis && (p.tension ?? 0) === (q.tension ?? 0)
+    const q = b.points[i]
+    return (
+      q !== undefined &&
+      p.x === q.x &&
+      p.y === q.y &&
+      p.basis === q.basis &&
+      (p.tension ?? 0) === (q.tension ?? 0)
+    )
   })
 }
 
@@ -152,8 +158,14 @@ export function CurveEditor({
   const [x0, x1] = xDomain
   const [y0, y1] = yDomain
   const domain: Domain = React.useMemo(() => ({ x: [x0, x1], y: [y0, y1] }), [x0, x1, y0, y1])
-  const sx = React.useMemo(() => linearScale([x0, x1], [PAD, Math.max(PAD, size.width - PAD)]), [x0, x1, size.width])
-  const sy = React.useMemo(() => linearScale([y0, y1], [Math.max(PAD, size.height - PAD), PAD]), [y0, y1, size.height])
+  const sx = React.useMemo(
+    () => linearScale([x0, x1], [PAD, Math.max(PAD, size.width - PAD)]),
+    [x0, x1, size.width],
+  )
+  const sy = React.useMemo(
+    () => linearScale([y0, y1], [Math.max(PAD, size.height - PAD), PAD]),
+    [y0, y1, size.height],
+  )
 
   const sel = selected !== null && selected < curve.points.length ? selected : null
 
@@ -217,7 +229,8 @@ export function CurveEditor({
   )
 
   const toData = (e: { clientX: number; clientY: number }) => {
-    const r = svg.current!.getBoundingClientRect()
+    const r = svg.current?.getBoundingClientRect()
+    if (!r) return { x: 0, y: 0 }
     return { x: sx.invert(e.clientX - r.left), y: sy.invert(e.clientY - r.top) }
   }
 
@@ -336,6 +349,7 @@ export function CurveEditor({
           </div>
         )}
         <canvas ref={canvas} className="absolute inset-0 size-full" />
+        {/* biome-ignore lint/a11y/useSemanticElements: an SVG canvas has no semantic element; role="group" with a label names it */}
         <svg
           ref={svg}
           role="group"
@@ -345,6 +359,7 @@ export function CurveEditor({
           onPointerUp={() => finishDrag(true)}
           onLostPointerCapture={() => finishDrag(true)}
         >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: the backing rect only takes pointer input to deselect and add points; the points are the keyboard targets */}
           <rect
             width="100%"
             height="100%"
@@ -358,10 +373,21 @@ export function CurveEditor({
             if (!next || p.basis !== "linear" || next.x === p.x) return null
             const mx = (p.x + next.x) / 2
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: pointer-only tension handle; the keyboard route is the point menu and arrow keys on the points
               <g
+                // biome-ignore lint/suspicious/noArrayIndexKey: curve points have no id; the index is their identity
                 key={`t${i}`}
                 className="cursor-ns-resize"
-                onPointerDown={(e) => beginDrag(e, { kind: "tension", index: i, start: curve, pointer: e.pointerId, from: { x: e.clientX, y: e.clientY }, started: false })}
+                onPointerDown={(e) =>
+                  beginDrag(e, {
+                    kind: "tension",
+                    index: i,
+                    start: curve,
+                    pointer: e.pointerId,
+                    from: { x: e.clientX, y: e.clientY },
+                    started: false,
+                  })
+                }
                 onDoubleClick={(e) => {
                   e.stopPropagation()
                   commit(setTension(curve, i, 0, constrain), "edit")
@@ -386,7 +412,9 @@ export function CurveEditor({
             const isSel = sel === i
             const isSustain = mode === "envelope" && curve.sustain === i
             return (
+              // biome-ignore lint/a11y/useSemanticElements: an SVG <g> cannot be a <button>; role="button" with tabIndex and key handling
               <g
+                // biome-ignore lint/suspicious/noArrayIndexKey: curve points have no id; the index is their identity
                 key={`p${i}`}
                 tabIndex={0}
                 role="button"
@@ -398,7 +426,14 @@ export function CurveEditor({
                 onPointerDown={(e) => {
                   setSelected(i)
                   ;(e.currentTarget as SVGGElement).focus()
-                  beginDrag(e, { kind: "point", index: i, start: curve, pointer: e.pointerId, from: { x: e.clientX, y: e.clientY }, started: false })
+                  beginDrag(e, {
+                    kind: "point",
+                    index: i,
+                    start: curve,
+                    pointer: e.pointerId,
+                    from: { x: e.clientX, y: e.clientY },
+                    started: false,
+                  })
                 }}
                 onContextMenu={() => {
                   setSelected(i)
@@ -419,7 +454,9 @@ export function CurveEditor({
                   cy={sy(p.y)}
                   r={POINT_R}
                   strokeWidth={1.5}
-                  className={cn(isSel ? "fill-primary stroke-primary" : "fill-background stroke-primary")}
+                  className={cn(
+                    isSel ? "fill-primary stroke-primary" : "fill-background stroke-primary",
+                  )}
                 />
                 {isSustain && (
                   <text
@@ -453,7 +490,9 @@ export function CurveEditor({
               <ContextMenuLabel>Interpolation to the next point</ContextMenuLabel>
               <ContextMenuRadioGroup
                 value={menuPoint.basis}
-                onValueChange={(b) => commit(setBasis(curve, target.index, b as Basis, constrain), "edit")}
+                onValueChange={(b) =>
+                  commit(setBasis(curve, target.index, b as Basis, constrain), "edit")
+                }
               >
                 {BASES.map((b) => (
                   <ContextMenuRadioItem
@@ -461,7 +500,8 @@ export function CurveEditor({
                     value={b.value}
                     disabled={
                       target.index === curve.points.length - 1 ||
-                      (b.value !== menuPoint.basis && !setBasis(curve, target.index, b.value, constrain))
+                      (b.value !== menuPoint.basis &&
+                        !setBasis(curve, target.index, b.value, constrain))
                     }
                   >
                     {b.label}
@@ -475,7 +515,9 @@ export function CurveEditor({
                 <ContextMenuCheckboxItem
                   checked={curve.sustain === target.index}
                   disabled={!toggleSustain(curve, target.index, constrain)}
-                  onCheckedChange={() => commit(toggleSustain(curve, target.index, constrain), "edit")}
+                  onCheckedChange={() =>
+                    commit(toggleSustain(curve, target.index, constrain), "edit")
+                  }
                 >
                   Sustain here
                 </ContextMenuCheckboxItem>

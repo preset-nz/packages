@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react"
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react"
 
 export interface Size {
   width: number

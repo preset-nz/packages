@@ -1,12 +1,27 @@
+import {
+  Checkbox,
+  Input,
+  Label,
+  Textarea,
+  VectorField,
+  type VectorFieldProps,
+} from "@preset.nz/ux-kit"
 import { useId } from "react"
-import { Checkbox, Input, Label, Textarea, VectorField, type VectorFieldProps } from "@preset.nz/ux-kit"
 
 import type { Gesture, Row, ValueSchema } from "../rhizome"
 import type { SetValue } from "./index"
 import { useDraft } from "./useDraft"
 
 /** A checkbox with its label. One click is one edit. */
-export function BoolField({ label, value, onCommit }: { label: string; value: boolean; onCommit: (v: boolean) => void }) {
+export function BoolField({
+  label,
+  value,
+  onCommit,
+}: {
+  label: string
+  value: boolean
+  onCommit: (v: boolean) => void
+}) {
   const id = useId()
   return (
     <div className="flex items-center gap-2">
@@ -77,14 +92,19 @@ export function NumbersField({
   values: number[]
   set: SetValue
   gesture: Gesture
-} & Omit<VectorFieldProps, "value" | "onValueChange" | "onScrubStart" | "onScrubEnd" | "onScrubCancel">) {
+} & Omit<
+  VectorFieldProps,
+  "value" | "onValueChange" | "onScrubStart" | "onScrubEnd" | "onScrubCancel"
+>) {
   return (
     <VectorField
       {...props}
       orientation={orientation}
       value={values}
       onValueChange={(next, { reason }) =>
-        reason === "scrub" ? gesture.apply(path, valueKey, next) : set(path, valueKey, next, reason === "step")
+        reason === "scrub"
+          ? gesture.apply(path, valueKey, next)
+          : set(path, valueKey, next, reason === "step")
       }
       onScrubStart={() => gesture.begin(path, valueKey)}
       onScrubEnd={gesture.end}
@@ -97,10 +117,21 @@ export function NumbersField({
 export const nums = (v: unknown, n: number): number[] =>
   Array.isArray(v) && v.length === n && v.every((x) => typeof x === "number") ? v : Array(n).fill(0)
 
-export const withAt = (list: number[], i: number, n: number) => list.map((x, j) => (j === i ? n : x))
+export const withAt = (list: number[], i: number, n: number) =>
+  list.map((x, j) => (j === i ? n : x))
 
 /** How a value key is presented, wherever it is edited: the label, its component names, step and range. */
-const VIEW: Record<string, { label: string; labels?: string[]; step?: number; min?: number; max?: number; multiline?: boolean }> = {
+const VIEW: Record<
+  string,
+  {
+    label: string
+    labels?: string[]
+    step?: number
+    min?: number
+    max?: number
+    multiline?: boolean
+  }
+> = {
   title: { label: "Title" },
   notes: { label: "Notes", multiline: true },
   visible: { label: "Visible" },
@@ -137,7 +168,14 @@ export function ValueField({
     case "bool":
       return <BoolField label={view.label} value={current === true} onCommit={put} />
     case "text":
-      return <TextField label={view.label} value={String(current ?? "")} multiline={view.multiline} onCommit={put} />
+      return (
+        <TextField
+          label={view.label}
+          value={String(current ?? "")}
+          multiline={view.multiline}
+          onCommit={put}
+        />
+      )
     case "vec2":
     case "vec3":
     case "floats": {

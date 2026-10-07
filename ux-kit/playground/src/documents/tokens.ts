@@ -35,7 +35,8 @@ function readTokens(): Token[] {
   const dark = declarations(/^\.dark\s*\{([^}]*)\}/m)
   // `--color-card: var(--card);` in the theme block is what makes `bg-card` exist.
   const utilities = new Map<string, string>()
-  for (const m of css.matchAll(/--color-([\w-]+)\s*:\s*var\((--[\w-]+)\)/g)) utilities.set(m[2], m[1])
+  for (const m of css.matchAll(/--color-([\w-]+)\s*:\s*var\((--[\w-]+)\)/g))
+    utilities.set(m[2], m[1])
   const out: Token[] = []
   for (const [name, value] of light) {
     if (!isColour(value)) continue

@@ -1,16 +1,16 @@
-export { CurveEditor, type CurveEditKind, type CurveEditorProps } from "./curve-editor"
+export { type Adsr, adsrCurve, adsrOf, constrainAdsr } from "./adsr"
+export { type CurveEditKind, CurveEditor, type CurveEditorProps } from "./curve-editor"
 export {
   addPoint,
+  type CurveConstraint,
+  type Domain,
   movePoint,
   removePoint,
   setBasis,
   setTension,
   tensionForMidpoint,
   toggleSustain,
-  type CurveConstraint,
-  type Domain,
 } from "./curve-edits"
-export { adsrCurve, adsrOf, constrainAdsr, type Adsr } from "./adsr"
-export { linearScale, type LinearScale } from "./scale"
-export { useCanvasDraw, useSize, type Size } from "./use-canvas"
+export { type LinearScale, linearScale } from "./scale"
+export { type Size, useCanvasDraw, useSize } from "./use-canvas"
 export { useTokenColours } from "./use-tokens"

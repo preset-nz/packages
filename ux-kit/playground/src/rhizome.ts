@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
 import { invoke } from "@tauri-apps/api/core"
 import { listen } from "@tauri-apps/api/event"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 // The shapes of rhizome-core's `Row` and `Commit` as they
 // serialise. Only what the app reads. The commands are in src-tauri/src/doc.rs.
@@ -20,7 +20,17 @@ export type Row = {
 /** One value in a node type's schema (rhizome-core's `ValueSchema`), as `rhizome_schema` returns it. */
 export type ValueSchema = {
   key: string
-  kind: "bool" | "int" | "float" | "text" | "choice" | "vec2" | "vec3" | "colour" | "floats" | "shaped"
+  kind:
+    | "bool"
+    | "int"
+    | "float"
+    | "text"
+    | "choice"
+    | "vec2"
+    | "vec3"
+    | "colour"
+    | "floats"
+    | "shaped"
   default: unknown
   range?: [number, number]
   choices?: string[]
@@ -48,12 +58,17 @@ export const STACK_PREFIX = "/stack/"
  */
 export function stackRows(rows: Row[]): Row[] {
   const order = rows.find((r) => r.path === "/stack")?.orders?.stack ?? []
-  const ops = rows.filter((r) => r.path.startsWith(STACK_PREFIX) && r.path.indexOf("/", STACK_PREFIX.length) < 0)
+  const ops = rows.filter(
+    (r) => r.path.startsWith(STACK_PREFIX) && r.path.indexOf("/", STACK_PREFIX.length) < 0,
+  )
   const rank = (r: Row) => {
     const i = order.indexOf(r.id)
     return i < 0 ? order.length : i
   }
-  return ops.map((r, i) => ({ r, i })).sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i).map(({ r }) => r)
+  return ops
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => rank(a.r) - rank(b.r) || a.i - b.i)
+    .map(({ r }) => r)
 }
 
 export const fetchRows = () => invoke<Row[]>("rhizome_rows")

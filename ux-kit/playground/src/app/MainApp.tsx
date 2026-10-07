@@ -1,4 +1,10 @@
-import { useEffect, useMemo } from "react"
+import {
+  CommandToolbar,
+  undo,
+  useCommands,
+  useDocument,
+  useDocumentNotes,
+} from "@preset.nz/app-kit"
 import {
   Icons,
   notify,
@@ -10,8 +16,7 @@ import {
   StatusSpacer,
   TooltipProvider,
 } from "@preset.nz/ux-kit"
-
-import { CommandToolbar, useCommands, useDocument, useDocumentNotes, undo } from "@preset.nz/app-kit"
+import { useEffect, useMemo } from "react"
 
 import { buildBindings, TOOLBAR } from "../commands"
 import { docInfo, sortDocs } from "../documents"
@@ -28,8 +33,8 @@ import {
 } from "../selection"
 import { useStored } from "../stored"
 import { useTheme } from "../theme"
-import { Inspector } from "./Inspector"
 import { DocumentView } from "./DocumentView"
+import { Inspector } from "./Inspector"
 import { Outline } from "./Outline"
 import { resetTarget } from "./reset"
 
@@ -61,7 +66,8 @@ export function MainApp() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || e.defaultPrevented) return
       const el = e.target as HTMLElement | null
-      if (el?.closest("input, textarea, select, [contenteditable], [role=dialog], [role=menu]")) return
+      if (el?.closest("input, textarea, select, [contenteditable], [role=dialog], [role=menu]"))
+        return
       clearSelection()
     }
     window.addEventListener("keydown", onKey)
@@ -77,7 +83,9 @@ export function MainApp() {
       count: ops.length,
       // A new effect goes after the selected one, or at the end (menu-standard decision 6).
       add: (kind: string) =>
-        void call<string>("effect_add", { kind, after: selectedOpId }).then((id) => id && selectOp(id)),
+        void call<string>("effect_add", { kind, after: selectedOpId }).then(
+          (id) => id && selectOp(id),
+        ),
       remove: () => {
         if (!selectedOpId) return
         // The next op takes the selection, or the one before when it was last.
@@ -105,20 +113,35 @@ export function MainApp() {
         reset: () => {
           if (!reset.target) return
           const label = (selected && docInfo(selected.type)?.label) ?? selected?.name ?? "document"
-          void call("rhizome_reset", { path: reset.target.path, keys: reset.target.keys }).then((r) => {
-            if (r === undefined) return // failed: the status bar shows the error
-            notify({
-              message: `Reset ${label}`,
-              action: { label: "Undo", onClick: () => void undo() },
-            })
-          })
+          void call("rhizome_reset", { path: reset.target.path, keys: reset.target.keys }).then(
+            (r) => {
+              if (r === undefined) return // failed: the status bar shows the error
+              notify({
+                message: `Reset ${label}`,
+                action: { label: "Undo", onClick: () => void undo() },
+              })
+            },
+          )
         },
         toggleLeft: () => setLeftOpen((v) => !v),
         toggleRight: () => setRightOpen((v) => !v),
         toggleTheme,
         effects,
       }),
-    [effects, reset.target, reset.reason, selected, canReset, leftOpen, rightOpen, dark, call, setLeftOpen, setRightOpen, toggleTheme],
+    [
+      effects,
+      reset.target,
+      reset.reason,
+      selected,
+      canReset,
+      leftOpen,
+      rightOpen,
+      dark,
+      call,
+      setLeftOpen,
+      setRightOpen,
+      toggleTheme,
+    ],
   )
   const { commands, run, shortcut, history } = useCommands(bindings)
   const document = useDocument()
@@ -150,14 +173,24 @@ export function MainApp() {
                 openId={selected?.id ?? null}
                 selection={selection}
                 onOpen={openDocument}
-                onSelectLayer={(docId, layerId) => (openDocument(docId), selectLayer(layerId))}
-                onSelectOp={(docId, opId) => (openDocument(docId), selectOp(opId))}
+                onSelectLayer={(docId, layerId) => {
+                  openDocument(docId)
+                  selectLayer(layerId)
+                }}
+                onSelectOp={(docId, opId) => {
+                  openDocument(docId)
+                  selectOp(opId)
+                }}
               />
             </SidePanel>
-            <main className="min-w-0 flex-1 overflow-auto" onClick={(e) => {
+            {/* biome-ignore lint/a11y/useKeyWithClickEvents: pointer-only deselect on empty canvas; Escape clears the selection from the keyboard */}
+            <main
+              className="min-w-0 flex-1 overflow-auto"
+              onClick={(e) => {
                 // Empty canvas: not on an item, and not a portal (popover) opened from one.
                 const el = e.target as HTMLElement
-                if (e.currentTarget.contains(el) && !el.closest("[data-selectable]")) clearSelection()
+                if (e.currentTarget.contains(el) && !el.closest("[data-selectable]"))
+                  clearSelection()
               }}
             >
               <DocumentView doc={selected} layers={layers} ops={ops} set={set} gesture={gesture} />
@@ -187,13 +220,17 @@ export function MainApp() {
           </div>
           <StatusBar>
             {document && (
-              <StatusItem label={document.name}>{document.unsaved ? "Unsaved" : "Saved"}</StatusItem>
+              <StatusItem label={document.name}>
+                {document.unsaved ? "Unsaved" : "Saved"}
+              </StatusItem>
             )}
             <StatusItem label="Documents">{docs.length}</StatusItem>
             <StatusItem label="History">
               {done} of {total}
             </StatusItem>
-            <StatusItem label="Selection">{selectionPath(selection, selected, layers, ops)}</StatusItem>
+            <StatusItem label="Selection">
+              {selectionPath(selection, selected, layers, ops)}
+            </StatusItem>
             <StatusSpacer />
             {error && <span className="truncate text-destructive">{error}</span>}
           </StatusBar>

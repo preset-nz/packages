@@ -1,9 +1,9 @@
-import { useState } from "react"
 import { cn, Icons } from "@preset.nz/ux-kit"
+import { useState } from "react"
 
 import { Primitives } from "./pages/Primitives"
-import { ToolbarPage } from "./pages/Toolbar"
 import { Tokens } from "./pages/Tokens"
+import { ToolbarPage } from "./pages/Toolbar"
 import { useTheme } from "./theme"
 
 const SECTIONS = [
@@ -25,6 +25,7 @@ export function Gallery() {
         {SECTIONS.map(({ id, label, Icon }) => (
           <button
             key={id}
+            type="button"
             onClick={() => setSection(id)}
             className={cn(
               "flex items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm",

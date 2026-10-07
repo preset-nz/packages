@@ -17,9 +17,9 @@ export function TokensDoc() {
   return (
     <div className={DOC_PAGE}>
       <DocHeader title="Tokens">
-        The kit&apos;s colour variables, read from <span className="font-mono">index.css</span>. Each
-        card shows the light value on the left and the dark value on the right. Select a card to
-        inspect it.
+        The kit&apos;s colour variables, read from <span className="font-mono">index.css</span>.
+        Each card shows the light value on the left and the dark value on the right. Select a card
+        to inspect it.
       </DocHeader>
       {groups.map(([title, tokens]) => (
         <section key={title} className="mb-8">
@@ -43,9 +43,13 @@ export function TokensDoc() {
                   <div className="font-mono font-medium">{t.name}</div>
                   <dl className="grid grid-cols-[auto_1fr] gap-x-2 text-muted-foreground">
                     <dt>light</dt>
-                    <dd className="truncate font-mono text-foreground" title={t.light}>{t.light}</dd>
+                    <dd className="truncate font-mono text-foreground" title={t.light}>
+                      {t.light}
+                    </dd>
                     <dt>dark</dt>
-                    <dd className="truncate font-mono text-foreground" title={t.dark}>{t.dark}</dd>
+                    <dd className="truncate font-mono text-foreground" title={t.dark}>
+                      {t.dark}
+                    </dd>
                   </dl>
                 </div>
               </Selectable>

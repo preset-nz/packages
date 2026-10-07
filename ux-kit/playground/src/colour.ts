@@ -1,7 +1,9 @@
 // rhizome stores a Colour as [r, g, b, a], each 0 to 1. ColorField speaks #rrggbbaa.
 
 const byte = (v: number) =>
-  Math.round(Math.min(1, Math.max(0, v)) * 255).toString(16).padStart(2, "0")
+  Math.round(Math.min(1, Math.max(0, v)) * 255)
+    .toString(16)
+    .padStart(2, "0")
 
 export function colourToHex(c: unknown): string | null {
   if (!Array.isArray(c) || c.length !== 4) return null

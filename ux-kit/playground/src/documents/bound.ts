@@ -59,7 +59,9 @@ function writes(
     // Only the component that moved: each keeps its own range check, and a drag edits one key.
     if (!Array.isArray(value) || !value.every(finite)) return []
     const before = current[path] as unknown[]
-    return keys.flatMap((k, i): Array<[string, unknown]> => (value[i] === before[i] ? [] : [[k, value[i]]]))
+    return keys.flatMap(
+      (k, i): Array<[string, unknown]> => (value[i] === before[i] ? [] : [[k, value[i]]]),
+    )
   }
   if (a.colours?.includes(path)) {
     const c = typeof value === "string" ? hexToColour(value) : null
@@ -93,18 +95,18 @@ export function nodeScope(
     // A scrub, slider drag or colour pick: live applies, one undo step.
     gesture: {
       begin: (path, sel, ctx: NodeContext) => {
-        if (!ctx.gesture) return
-        ctx.gesturing!.current = true
+        if (!ctx.gesture || !ctx.gesturing) return
+        ctx.gesturing.current = true
         ctx.gesture.begin(sel.row.path, path)
       },
       end: (_path, _sel, ctx: NodeContext) => {
-        if (!ctx.gesture) return
-        ctx.gesturing!.current = false
+        if (!ctx.gesture || !ctx.gesturing) return
+        ctx.gesturing.current = false
         ctx.gesture.end()
       },
       cancel: (_path, _sel, ctx: NodeContext) => {
-        if (!ctx.gesture) return
-        ctx.gesturing!.current = false
+        if (!ctx.gesture || !ctx.gesturing) return
+        ctx.gesturing.current = false
         ctx.gesture.cancel()
       },
     },

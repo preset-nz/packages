@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components --
  * Renderers + the registration entry point are colocated by design. */
-import { FieldShell, ReadOnlyText, registerFieldRenderer } from "@preset.nz/facets"
+
 import type { FieldRenderer } from "@preset.nz/facets"
+import { FieldShell, ReadOnlyText, registerFieldRenderer } from "@preset.nz/facets"
 
 // Strata's custom field renderers, copied verbatim from
 // `initiatives/strata/src/features/properties/renderers.tsx` (all but `colour-label`, which no
@@ -69,7 +70,6 @@ export const VGA16_LABEL: Record<Vga16Bucket, string> = {
   white: "White",
 }
 
-
 const Vga16BucketRenderer: FieldRenderer = ({ field, value, view }) => {
   const bucket = value as Vga16Bucket | null | undefined
   const hex = bucket ? VGA16_HEX[bucket] : null
@@ -77,25 +77,24 @@ const Vga16BucketRenderer: FieldRenderer = ({ field, value, view }) => {
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
       <ReadOnlyText>
-      <div className="flex items-center gap-2">
-        {hex ? (
-          <span
-            aria-hidden
-            className="inline-block size-4 shrink-0 border border-border"
-            style={{ backgroundColor: hex }}
-          />
-        ) : (
-          <span className="inline-block size-4 shrink-0 border border-dashed border-border" />
-        )}
-        <span className="text-xs text-foreground">
-          {label ?? <span className="text-muted-foreground">—</span>}
-        </span>
-      </div>
+        <div className="flex items-center gap-2">
+          {hex ? (
+            <span
+              aria-hidden
+              className="inline-block size-4 shrink-0 border border-border"
+              style={{ backgroundColor: hex }}
+            />
+          ) : (
+            <span className="inline-block size-4 shrink-0 border border-dashed border-border" />
+          )}
+          <span className="text-xs text-foreground">
+            {label ?? <span className="text-muted-foreground">—</span>}
+          </span>
+        </div>
       </ReadOnlyText>
     </FieldShell>
   )
 }
-
 
 const StatusRenderer: FieldRenderer = ({ field, value, view }) => {
   const status = String(value ?? "")
@@ -128,9 +127,7 @@ const DateRenderer: FieldRenderer = ({ field, value, view }) => {
   const formatted = iso ? DATE_FMT.format(new Date(iso)) : null
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
-      <ReadOnlyText>
-        {formatted ?? <span className="text-muted-foreground">—</span>}
-      </ReadOnlyText>
+      <ReadOnlyText>{formatted ?? <span className="text-muted-foreground">—</span>}</ReadOnlyText>
     </FieldShell>
   )
 }

@@ -1,4 +1,3 @@
-import { useState, type ReactNode } from "react"
 import {
   Avatar,
   AvatarFallback,
@@ -112,6 +111,7 @@ import {
   TooltipTrigger,
   useSnackbar,
 } from "@preset.nz/ux-kit"
+import { type ReactNode, useState } from "react"
 
 const VARIANTS = ["default", "outline", "secondary", "ghost", "destructive", "link"] as const
 
@@ -359,7 +359,9 @@ function Menus() {
             <ContextMenuSub>
               <ContextMenuSubTrigger>More</ContextMenuSubTrigger>
               <ContextMenuSubContent>
-                <ContextMenuItem onClick={() => setLast("context: sub item")}>Sub item</ContextMenuItem>
+                <ContextMenuItem onClick={() => setLast("context: sub item")}>
+                  Sub item
+                </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>
           </ContextMenuContent>
@@ -398,7 +400,9 @@ function SnackbarButton() {
   return (
     <Button
       variant="outline"
-      onClick={() => snackbar.show({ message: "Snackbar shown", action: { label: "Undo", onClick: () => {} } })}
+      onClick={() =>
+        snackbar.show({ message: "Snackbar shown", action: { label: "Undo", onClick: () => {} } })
+      }
     >
       Show snackbar
     </Button>
@@ -407,10 +411,7 @@ function SnackbarButton() {
 
 function Feedback() {
   return (
-    <Group
-      title="Feedback"
-      note="The snackbar is the kit's one toast."
-    >
+    <Group title="Feedback" note="The snackbar is the kit's one toast.">
       <Demo name="Snackbar (Base UI Toast)">
         <SnackbarProvider>
           <SnackbarButton />

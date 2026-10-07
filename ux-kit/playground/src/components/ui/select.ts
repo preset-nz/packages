@@ -1,1 +1,1 @@
-export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@preset.nz/ux-kit"
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@preset.nz/ux-kit"

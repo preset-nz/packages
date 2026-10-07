@@ -1,8 +1,8 @@
+import { type LabelLayout, type PanelView, PropertyPanel } from "@preset.nz/facets"
 import { useEffect, useMemo, useRef, useState } from "react"
-import { PropertyPanel, type LabelLayout, type PanelView } from "@preset.nz/facets"
 
 import type { Gesture, Row } from "../rhizome"
-import { panelValues, type NodeAdapter, type NodeContext } from "./bound"
+import { type NodeAdapter, type NodeContext, panelValues } from "./bound"
 import type { SetValue } from "./index"
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)

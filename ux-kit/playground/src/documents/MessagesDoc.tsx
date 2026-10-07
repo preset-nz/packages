@@ -1,10 +1,10 @@
-import { useRef } from "react"
 import { Button, dismissNotification, notify, useSnackbar } from "@preset.nz/ux-kit"
+import { useRef } from "react"
 
 import { selectSystem, useSelection } from "../selection"
 import { DOC_PAGE, DocHeader } from "./Header"
-import { Selectable } from "./Selectable"
 import { SYSTEMS, type ToastSystem } from "./messages"
+import { Selectable } from "./Selectable"
 
 /** What each button does. */
 interface Fire {
@@ -31,13 +31,17 @@ function useSnackbarFire(): Fire {
     plain: () => snackbar.show({ message: "Exported 3 layers" }),
     success: () => snackbar.show({ message: "Exported 3 layers", kind: "success" }),
     warning: () => snackbar.show({ message: "Layer names are long", kind: "warning" }),
-    error: () => snackbar.show({ message: LONG_ERROR.title, description: LONG_ERROR.detail, kind: "error" }),
+    error: () =>
+      snackbar.show({ message: LONG_ERROR.title, description: LONG_ERROR.detail, kind: "error" }),
     action: () =>
       snackbar.show({
         message: "Removed Shadow",
         action: { label: "Undo", onClick: () => snackbar.show({ message: "Restored Shadow" }) },
       }),
-    burst: () => [1, 2, 3, 4].forEach((n) => setTimeout(() => snackbar.show({ message: `Message ${n} of 4` }), n * 120)),
+    burst: () =>
+      [1, 2, 3, 4].forEach((n) => {
+        setTimeout(() => snackbar.show({ message: `Message ${n} of 4` }), n * 120)
+      }),
     persistent: () => {
       if (persistentId.current) snackbar.dismiss(persistentId.current)
       persistentId.current = snackbar.show({ message: "Stays until dismissed", persistent: true })
@@ -48,7 +52,11 @@ function useSnackbarFire(): Fire {
     },
     // No hook: the same snackbar, raised the way a command handler or a store would.
     notify: () => {
-      const id = notify({ message: "Raised with notify()", description: "From plain code, outside React.", kind: "success" })
+      const id = notify({
+        message: "Raised with notify()",
+        description: "From plain code, outside React.",
+        kind: "success",
+      })
       setTimeout(() => dismissNotification(id), 3000)
     },
   }

@@ -1,13 +1,37 @@
 import { Button, Icons } from "@preset.nz/ux-kit"
 
 const TOKENS = [
-  "background", "foreground", "card", "card-foreground", "popover", "popover-foreground",
-  "primary", "primary-foreground", "secondary", "secondary-foreground",
-  "muted", "muted-foreground", "accent", "accent-foreground", "destructive",
-  "border", "input", "ring",
-  "chart-1", "chart-2", "chart-3", "chart-4", "chart-5",
-  "sidebar", "sidebar-foreground", "sidebar-primary", "sidebar-primary-foreground",
-  "sidebar-accent", "sidebar-accent-foreground", "sidebar-border", "sidebar-ring",
+  "background",
+  "foreground",
+  "card",
+  "card-foreground",
+  "popover",
+  "popover-foreground",
+  "primary",
+  "primary-foreground",
+  "secondary",
+  "secondary-foreground",
+  "muted",
+  "muted-foreground",
+  "accent",
+  "accent-foreground",
+  "destructive",
+  "border",
+  "input",
+  "ring",
+  "chart-1",
+  "chart-2",
+  "chart-3",
+  "chart-4",
+  "chart-5",
+  "sidebar",
+  "sidebar-foreground",
+  "sidebar-primary",
+  "sidebar-primary-foreground",
+  "sidebar-accent",
+  "sidebar-accent-foreground",
+  "sidebar-border",
+  "sidebar-ring",
 ]
 
 export function Tokens({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: () => void }) {
@@ -29,7 +53,9 @@ export function Tokens({ dark, onToggleTheme }: { dark: boolean; onToggleTheme: 
         ))}
       </div>
       <h2 className="mt-8 font-heading text-lg font-semibold">Type</h2>
-      <p className="mt-2 font-heading text-xl">Heading: Geist (size and weight carry the hierarchy)</p>
+      <p className="mt-2 font-heading text-xl">
+        Heading: Geist (size and weight carry the hierarchy)
+      </p>
       <p className="mt-1 text-sm">Body: Geist Variable</p>
       <p className="mt-1 font-mono text-sm">Mono: JetBrains Mono Variable</p>
     </section>

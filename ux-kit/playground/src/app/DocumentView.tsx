@@ -1,18 +1,29 @@
 import { EmptyState, Icons } from "@preset.nz/ux-kit"
-
+import type { SetValue } from "../documents"
 import { CardDoc } from "../documents/CardDoc"
-import { FontsDoc } from "../documents/FontsDoc"
 import { CurvesDoc } from "../documents/CurvesDoc"
+import { FontsDoc } from "../documents/FontsDoc"
 import { InspectorsDoc } from "../documents/InspectorsDoc"
 import { MessagesDoc } from "../documents/MessagesDoc"
 import { OpsDoc } from "../documents/OpsDoc"
 import { PrimitivesDoc } from "../documents/PrimitivesDoc"
 import { TokensDoc } from "../documents/TokensDoc"
-import type { SetValue } from "../documents"
 import type { Gesture, Row } from "../rhizome"
 
 /** The centre: the open document, drawn by what kind of node it is. */
-export function DocumentView({ doc, layers, ops, set, gesture }: { doc: Row | null; layers: Row[]; ops: Row[]; set: SetValue; gesture: Gesture }) {
+export function DocumentView({
+  doc,
+  layers,
+  ops,
+  set,
+  gesture,
+}: {
+  doc: Row | null
+  layers: Row[]
+  ops: Row[]
+  set: SetValue
+  gesture: Gesture
+}) {
   switch (doc?.type) {
     case "tokens":
       return <TokensDoc />

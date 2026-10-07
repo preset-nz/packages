@@ -13,7 +13,10 @@ export function useTokenColours<K extends string>(names: readonly K[]): Record<K
     const update = () => setColours(read(list))
     update()
     const observer = new MutationObserver(update)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "style", "data-theme"] })
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "style", "data-theme"],
+    })
     const media = window.matchMedia("(prefers-color-scheme: dark)")
     media.addEventListener("change", update)
     return () => {

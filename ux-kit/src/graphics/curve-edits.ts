@@ -1,4 +1,11 @@
-import { clamp, invlerp, TENSION_STRENGTH, type Basis, type Curve, type CurvePoint } from "@preset.nz/math"
+import {
+  type Basis,
+  type Curve,
+  type CurvePoint,
+  clamp,
+  invlerp,
+  TENSION_STRENGTH,
+} from "@preset.nz/math"
 
 /**
  * Limits on a curve, applied to every proposed edit: a drag, a nudge, an added or removed
@@ -87,7 +94,12 @@ export function removePoint(curve: Curve, i: number, constrain?: CurveConstraint
 }
 
 /** Point `i`'s basis. Tension only means something on a linear segment, so others drop it. */
-export function setBasis(curve: Curve, i: number, basis: Basis, constrain?: CurveConstraint): Curve | null {
+export function setBasis(
+  curve: Curve,
+  i: number,
+  basis: Basis,
+  constrain?: CurveConstraint,
+): Curve | null {
   const points = curve.points.map((p, j) => {
     if (j !== i) return p
     const q: CurvePoint = { ...p, basis }
@@ -105,7 +117,12 @@ export function toggleSustain(curve: Curve, i: number, constrain?: CurveConstrai
 }
 
 /** The tension of the segment from point `i`, -1..1. Zero removes it. */
-export function setTension(curve: Curve, i: number, tension: number, constrain?: CurveConstraint): Curve | null {
+export function setTension(
+  curve: Curve,
+  i: number,
+  tension: number,
+  constrain?: CurveConstraint,
+): Curve | null {
   const t = clamp(tension, -1, 1)
   const points = curve.points.map((p, j) => {
     if (j !== i) return p

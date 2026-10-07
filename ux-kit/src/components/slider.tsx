@@ -1,5 +1,5 @@
-import * as React from "react"
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
+import * as React from "react"
 
 import { cn } from "../lib/utils"
 
@@ -21,13 +21,8 @@ function Slider({
   const [live, setLive] = React.useState<typeof valueProp | null>(null)
   const value = live ?? valueProp
   const _values = React.useMemo(
-    () =>
-      Array.isArray(value)
-        ? value
-        : Array.isArray(defaultValue)
-          ? defaultValue
-          : [min],
-    [value, defaultValue, min]
+    () => (Array.isArray(value) ? value : Array.isArray(defaultValue) ? defaultValue : [min]),
+    [value, defaultValue, min],
   )
 
   return (
@@ -62,6 +57,7 @@ function Slider({
         {Array.from({ length: _values.length }, (_, index) => (
           <SliderPrimitive.Thumb
             data-slot="slider-thumb"
+            // biome-ignore lint/suspicious/noArrayIndexKey: thumbs are positional; the count is fixed by the value array and they have no identity
             key={index}
             index={index}
             className="block h-4 w-2 shrink-0 rounded-[1px] border border-muted-foreground bg-background ring-ring/50 transition-[color,box-shadow] select-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden has-[:focus-visible]:ring-4 data-disabled:pointer-events-none data-disabled:opacity-50"
