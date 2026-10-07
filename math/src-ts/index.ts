@@ -1,4 +1,17 @@
 export {
+  type Basis,
+  bake,
+  bakeRange,
+  type Curve,
+  type CurvePoint,
+  evaluate,
+  evaluateBaked,
+  evaluateEnvelope,
+  sortPoints,
+  TENSION_STRENGTH,
+  tensionWarp,
+} from "./curve.ts"
+export {
   bias,
   biasPerlin,
   clamp,
@@ -9,17 +22,4 @@ export {
   invlerp,
   lerp,
   smooth,
-} from "./scalar.ts";
-export {
-  bake,
-  bakeRange,
-  evaluate,
-  evaluateBaked,
-  evaluateEnvelope,
-  sortPoints,
-  TENSION_STRENGTH,
-  tensionWarp,
-  type Basis,
-  type Curve,
-  type CurvePoint,
-} from "./curve.ts";
+} from "./scalar.ts"

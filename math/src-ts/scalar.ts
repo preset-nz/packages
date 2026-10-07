@@ -6,7 +6,7 @@
 
 /** `a + t * (b - a)`. Unclamped. */
 export function lerp(a: number, b: number, t: number): number {
-  return a + t * (b - a);
+  return a + t * (b - a)
 }
 
 /**
@@ -14,13 +14,13 @@ export function lerp(a: number, b: number, t: number): number {
  * When `min == max` it returns 0.5.
  */
 export function invlerp(v: number, min: number, max: number): number {
-  if (min === max) return 0.5;
-  return (v - min) / (max - min);
+  if (min === max) return 0.5
+  return (v - min) / (max - min)
 }
 
 /** `v` limited to `[min, max]`. */
 export function clamp(v: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, v));
+  return Math.min(max, Math.max(min, v))
 }
 
 /**
@@ -29,12 +29,18 @@ export function clamp(v: number, min: number, max: number): number {
  * following `invlerp`.
  */
 export function fit(v: number, omin: number, omax: number, nmin: number, nmax: number): number {
-  return lerp(nmin, nmax, clamp(invlerp(v, omin, omax), 0, 1));
+  return lerp(nmin, nmax, clamp(invlerp(v, omin, omax), 0, 1))
 }
 
 /** `fit` without the clamp: values outside the old range extrapolate. */
-export function fitUnclamped(v: number, omin: number, omax: number, nmin: number, nmax: number): number {
-  return lerp(nmin, nmax, invlerp(v, omin, omax));
+export function fitUnclamped(
+  v: number,
+  omin: number,
+  omax: number,
+  nmin: number,
+  nmax: number,
+): number {
+  return lerp(nmin, nmax, invlerp(v, omin, omax))
 }
 
 /**
@@ -42,10 +48,10 @@ export function fitUnclamped(v: number, omin: number, omax: number, nmin: number
  * (`3t² − 2t³`).
  */
 export function smooth(min: number, max: number, v: number): number {
-  if (v <= min) return 0;
-  if (v >= max) return 1;
-  const t = (v - min) / (max - min);
-  return t * t * (3 - 2 * t);
+  if (v <= min) return 0
+  if (v >= max) return 1
+  const t = (v - min) / (max - min)
+  return t * t * (3 - 2 * t)
 }
 
 /**
@@ -54,12 +60,12 @@ export function smooth(min: number, max: number, v: number): number {
  * it is cheap on the audio thread. `v` and `b` are clamped to `[0, 1]`.
  */
 export function bias(v: number, b: number): number {
-  const x = clamp(v, 0, 1);
-  const k = clamp(b, 0, 1);
-  if (x === 0 || x === 1) return x;
-  if (k === 0) return 0;
-  if (k === 1) return 1;
-  return x / ((1 / k - 2) * (1 - x) + 1);
+  const x = clamp(v, 0, 1)
+  const k = clamp(b, 0, 1)
+  if (x === 0 || x === 1) return x
+  if (k === 0) return 0
+  if (k === 1) return 1
+  return x / ((1 / k - 2) * (1 - x) + 1)
 }
 
 /**
@@ -68,8 +74,8 @@ export function bias(v: number, b: number): number {
  * convention as Perlin's `gain`.
  */
 export function gain(v: number, g: number): number {
-  const x = clamp(v, 0, 1);
-  return x < 0.5 ? bias(2 * x, 1 - g) / 2 : 1 - bias(2 - 2 * x, 1 - g) / 2;
+  const x = clamp(v, 0, 1)
+  return x < 0.5 ? bias(2 * x, 1 - g) / 2 : 1 - bias(2 - 2 * x, 1 - g) / 2
 }
 
 /**
@@ -78,16 +84,16 @@ export function gain(v: number, g: number): number {
  * existing looks. `v` and `b` are clamped to `[0, 1]`.
  */
 export function biasPerlin(v: number, b: number): number {
-  const x = clamp(v, 0, 1);
-  const k = clamp(b, 0, 1);
-  if (x === 0 || x === 1) return x;
-  if (k === 0) return 0;
-  if (k === 1) return 1;
-  return Math.pow(x, Math.log(k) / Math.log(0.5));
+  const x = clamp(v, 0, 1)
+  const k = clamp(b, 0, 1)
+  if (x === 0 || x === 1) return x
+  if (k === 0) return 0
+  if (k === 1) return 1
+  return x ** (Math.log(k) / Math.log(0.5))
 }
 
 /** Perlin's gain: two mirrored halves of `biasPerlin`. */
 export function gainPerlin(v: number, g: number): number {
-  const x = clamp(v, 0, 1);
-  return x < 0.5 ? biasPerlin(2 * x, 1 - g) / 2 : 1 - biasPerlin(2 - 2 * x, 1 - g) / 2;
+  const x = clamp(v, 0, 1)
+  return x < 0.5 ? biasPerlin(2 * x, 1 - g) / 2 : 1 - biasPerlin(2 - 2 * x, 1 - g) / 2
 }

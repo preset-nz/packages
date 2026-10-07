@@ -4,11 +4,11 @@
  * numbers, TypeScript that nothing moved by accident. Run `just fixtures`
  * and review the diff; a moved value is a behaviour change.
  */
-import { writeFileSync } from "node:fs";
-import * as m from "../src-ts/index.ts";
-import type { Curve } from "../src-ts/index.ts";
+import { writeFileSync } from "node:fs"
+import type { Curve } from "../src-ts/index.ts"
+import * as m from "../src-ts/index.ts"
 
-type ScalarCase = { fn: string; args: number[]; expected: number };
+type ScalarCase = { fn: string; args: number[]; expected: number }
 
 const scalarFns: Record<string, (...a: number[]) => number> = {
   lerp: m.lerp,
@@ -21,31 +21,91 @@ const scalarFns: Record<string, (...a: number[]) => number> = {
   gain: m.gain,
   biasPerlin: m.biasPerlin,
   gainPerlin: m.gainPerlin,
-};
+}
 
 const scalarArgs: Record<string, number[][]> = {
-  lerp: [[0, 10, 0.3], [5, -5, 0.5], [0, 1, 1.5], [0, 1, -0.5]],
-  invlerp: [[3, 0, 10], [0.5, 1, 0], [15, 0, 10], [2, 2, 2]],
-  clamp: [[-1, 0, 1], [0.4, 0, 1], [7, 0, 1]],
-  fit: [[0.3, 0, 1, 10, 20], [2, 0, 1, 10, 20], [-1, 0, 1, 10, 20], [5, 10, 0, 0, 1], [3, 3, 3, 0, 10]],
-  fitUnclamped: [[2, 0, 1, 10, 20], [-1, 0, 1, 10, 20], [0.25, 0, 1, 1, 0]],
-  smooth: [[0, 1, -0.1], [0, 1, 0.25], [0, 1, 0.5], [0, 1, 0.75], [2, 4, 5], [1, 1, 1]],
-  bias: [[0.5, 0.5], [0.25, 0.8], [0.25, 0.2], [0, 0.3], [1, 0.3], [0.6, 0], [0.6, 1]],
-  gain: [[0.25, 0.5], [0.25, 0.8], [0.1, 0.8], [0.75, 0.8], [0.9, 0.2], [0.5, 0.9]],
-  biasPerlin: [[0.5, 0.5], [0.25, 0.8], [0.25, 0.2], [0, 0.3], [0.6, 0], [0.6, 1]],
-  gainPerlin: [[0.25, 0.5], [0.25, 0.8], [0.1, 0.8], [0.75, 0.8], [0.9, 0.2]],
-};
+  lerp: [
+    [0, 10, 0.3],
+    [5, -5, 0.5],
+    [0, 1, 1.5],
+    [0, 1, -0.5],
+  ],
+  invlerp: [
+    [3, 0, 10],
+    [0.5, 1, 0],
+    [15, 0, 10],
+    [2, 2, 2],
+  ],
+  clamp: [
+    [-1, 0, 1],
+    [0.4, 0, 1],
+    [7, 0, 1],
+  ],
+  fit: [
+    [0.3, 0, 1, 10, 20],
+    [2, 0, 1, 10, 20],
+    [-1, 0, 1, 10, 20],
+    [5, 10, 0, 0, 1],
+    [3, 3, 3, 0, 10],
+  ],
+  fitUnclamped: [
+    [2, 0, 1, 10, 20],
+    [-1, 0, 1, 10, 20],
+    [0.25, 0, 1, 1, 0],
+  ],
+  smooth: [
+    [0, 1, -0.1],
+    [0, 1, 0.25],
+    [0, 1, 0.5],
+    [0, 1, 0.75],
+    [2, 4, 5],
+    [1, 1, 1],
+  ],
+  bias: [
+    [0.5, 0.5],
+    [0.25, 0.8],
+    [0.25, 0.2],
+    [0, 0.3],
+    [1, 0.3],
+    [0.6, 0],
+    [0.6, 1],
+  ],
+  gain: [
+    [0.25, 0.5],
+    [0.25, 0.8],
+    [0.1, 0.8],
+    [0.75, 0.8],
+    [0.9, 0.2],
+    [0.5, 0.9],
+  ],
+  biasPerlin: [
+    [0.5, 0.5],
+    [0.25, 0.8],
+    [0.25, 0.2],
+    [0, 0.3],
+    [0.6, 0],
+    [0.6, 1],
+  ],
+  gainPerlin: [
+    [0.25, 0.5],
+    [0.25, 0.8],
+    [0.1, 0.8],
+    [0.75, 0.8],
+    [0.9, 0.2],
+  ],
+}
 
 const scalars: ScalarCase[] = Object.entries(scalarArgs).flatMap(([fn, cases]) =>
+  // biome-ignore lint/style/noNonNullAssertion: keys come from the same table as scalarFns; every fn is defined
   cases.map((args) => ({ fn, args, expected: scalarFns[fn]!(...args) })),
-);
+)
 
 type CurveCase = {
-  name: string;
-  curve: Curve;
-  samples: { x: number; y: number }[];
-  envelope?: { t: number; release: number | null; y: number }[];
-};
+  name: string
+  curve: Curve
+  samples: { x: number; y: number }[]
+  envelope?: { t: number; release: number | null; y: number }[]
+}
 
 const curves: { name: string; curve: Curve; xs: number[]; env?: [number, number | null][] }[] = [
   {
@@ -55,7 +115,12 @@ const curves: { name: string; curve: Curve; xs: number[]; env?: [number, number 
   },
   {
     name: "linear ramp",
-    curve: { points: [{ x: 0, y: 0, basis: "linear" }, { x: 1, y: 1, basis: "linear" }] },
+    curve: {
+      points: [
+        { x: 0, y: 0, basis: "linear" },
+        { x: 1, y: 1, basis: "linear" },
+      ],
+    },
     xs: [-0.5, 0, 0.25, 0.5, 1, 1.5],
   },
   {
@@ -185,7 +250,7 @@ const curves: { name: string; curve: Curve; xs: number[]; env?: [number, number 
       [3, 1],
     ],
   },
-];
+]
 
 const curveCases: CurveCase[] = curves.map(({ name, curve, xs, env }) => ({
   name,
@@ -198,11 +263,14 @@ const curveCases: CurveCase[] = curves.map(({ name, curve, xs, env }) => ({
       y: m.evaluateEnvelope(curve, t, release ?? undefined),
     })),
   }),
-}));
+}))
 
 const write = (file: string, data: unknown) =>
-  writeFileSync(new URL(`../fixtures/${file}`, import.meta.url), `${JSON.stringify(data, null, 2)}\n`);
+  writeFileSync(
+    new URL(`../fixtures/${file}`, import.meta.url),
+    `${JSON.stringify(data, null, 2)}\n`,
+  )
 
-write("scalars.json", { tolerance: 1e-5, cases: scalars });
-write("curves.json", { tolerance: 1e-5, cases: curveCases });
-console.log(`fixtures: ${scalars.length} scalar cases, ${curveCases.length} curves`);
+write("scalars.json", { tolerance: 1e-5, cases: scalars })
+write("curves.json", { tolerance: 1e-5, cases: curveCases })
+console.log(`fixtures: ${scalars.length} scalar cases, ${curveCases.length} curves`)
