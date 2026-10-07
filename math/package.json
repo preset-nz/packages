@@ -1,6 +1,7 @@
 {
   "name": "@preset.nz/math",
   "version": "0.1.0",
+  "packageManager": "pnpm@11.1.1",
   "description": "Value shaping for the preset.nz desktop apps: fit, lerp, smooth, bias, gain and one curve that evaluates identically in TypeScript and Rust.",
   "license": "MIT",
   "repository": {
