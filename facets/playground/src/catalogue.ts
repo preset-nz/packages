@@ -34,7 +34,13 @@ export const CATALOGUE: KindEntry[] = [
       ["rows", "visible lines, default 3"],
     ],
     make: (n) => ({
-      field: { kind: "textarea", id: id("notes", n), path: id("notes", n), label: "Notes", rows: 3 },
+      field: {
+        kind: "textarea",
+        id: id("notes", n),
+        path: id("notes", n),
+        label: "Notes",
+        rows: 3,
+      },
       value: "",
     }),
   },
@@ -47,7 +53,14 @@ export const CATALOGUE: KindEntry[] = [
       ["step", "increment, default 1"],
     ],
     make: (n) => ({
-      field: { kind: "number", id: id("number", n), path: id("number", n), label: "Width", min: 0, step: 1 },
+      field: {
+        kind: "number",
+        id: id("number", n),
+        path: id("number", n),
+        label: "Width",
+        min: 0,
+        step: 1,
+      },
       value: 1024,
     }),
   },
@@ -60,7 +73,15 @@ export const CATALOGUE: KindEntry[] = [
       ["step", "increment, default 1"],
     ],
     make: (n) => ({
-      field: { kind: "slider", id: id("slider", n), path: id("slider", n), label: "Opacity", min: 0, max: 1, step: 0.01 },
+      field: {
+        kind: "slider",
+        id: id("slider", n),
+        path: id("slider", n),
+        label: "Opacity",
+        min: 0,
+        max: 1,
+        step: 0.01,
+      },
       value: 0.6,
     }),
   },
@@ -107,7 +128,8 @@ export const CATALOGUE: KindEntry[] = [
   },
   {
     kind: "file",
-    blurb: "Shows a file's name. Picking a file is the host's job, so this one is always read-only.",
+    blurb:
+      "Shows a file's name. Picking a file is the host's job, so this one is always read-only.",
     props: [
       ["accept", "file types, as on <input>"],
       ["helperText", "a hint (declared, not yet drawn)"],
@@ -158,7 +180,13 @@ export const CATALOGUE: KindEntry[] = [
     blurb: "A custom kind, registered by this playground. A whole number out of `max`.",
     props: [["max", "number of steps, default 5"]],
     make: (n) => ({
-      field: { kind: "rating", id: id("rating", n), path: id("rating", n), label: "Rating", max: 5 },
+      field: {
+        kind: "rating",
+        id: id("rating", n),
+        path: id("rating", n),
+        label: "Rating",
+        max: 5,
+      },
       value: 3,
     }),
   },

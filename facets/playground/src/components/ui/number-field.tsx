@@ -1,5 +1,5 @@
-import { useRef } from "react"
 import { NumberField as NumberFieldPrimitive } from "@base-ui/react/number-field"
+import { useRef } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -26,8 +26,19 @@ interface NumberFieldProps {
 }
 
 function NumberField({
-  value, onValueChange, min, max, step = 1, integer, precision, label, disabled, readOnly,
-  onScrubStart, onScrubEnd, className,
+  value,
+  onValueChange,
+  min,
+  max,
+  step = 1,
+  integer,
+  precision,
+  label,
+  disabled,
+  readOnly,
+  onScrubStart,
+  onScrubEnd,
+  className,
 }: NumberFieldProps) {
   const digits = integer ? 0 : (precision ?? 3)
   const started = useRef(false)
@@ -56,15 +67,18 @@ function NumberField({
         if (d.reason === "scrub") {
           started.current = false
           onScrubEnd?.()
-        }
-        else if (d.reason === "input-blur" && v !== null && v !== value) onValueChange?.(v, { reason: "typed" })
+        } else if (d.reason === "input-blur" && v !== null && v !== value)
+          onValueChange?.(v, { reason: "typed" })
       }}
       className={cn("flex h-8 min-w-0 flex-1 items-stretch border border-input text-xs", className)}
     >
       <NumberFieldPrimitive.ScrubArea className="flex shrink-0 cursor-ew-resize items-center border-r border-input px-2 text-muted-foreground select-none">
         {label}
       </NumberFieldPrimitive.ScrubArea>
-      <NumberFieldPrimitive.Input aria-label={label} className="h-full w-full min-w-0 bg-transparent px-2 text-right tabular-nums outline-none" />
+      <NumberFieldPrimitive.Input
+        aria-label={label}
+        className="h-full w-full min-w-0 bg-transparent px-2 text-right tabular-nums outline-none"
+      />
     </NumberFieldPrimitive.Root>
   )
 }

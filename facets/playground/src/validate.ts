@@ -28,8 +28,13 @@ function useful(e: ErrorObject): boolean {
 }
 
 function describe(e: ErrorObject): string {
-  const where = e.instancePath.replace(/\/(\d+)/g, "[$1]").replace(/\//g, ".").replace(/^\./, "") || "the schema"
-  if (e.keyword === "additionalProperties") return `${where}: unknown prop "${e.params.additionalProperty}"`
+  const where =
+    e.instancePath
+      .replace(/\/(\d+)/g, "[$1]")
+      .replace(/\//g, ".")
+      .replace(/^\./, "") || "the schema"
+  if (e.keyword === "additionalProperties")
+    return `${where}: unknown prop "${e.params.additionalProperty}"`
   if (e.keyword === "required") return `${where}: missing "${e.params.missingProperty}"`
   return `${where}: ${e.message}`
 }

@@ -30,7 +30,8 @@ export const NUMBER_WIDTH_INSIDE = "w-44 ml-auto"
  */
 export function labelColumnWidth(fields: FieldDef[]): string {
   const longest = fields.reduce(
-    (n, f) => (f.kind === "separator" || f.kind === "label" ? n : Math.max(n, (f.label ?? f.id).length)),
+    (n, f) =>
+      f.kind === "separator" || f.kind === "label" ? n : Math.max(n, (f.label ?? f.id).length),
     0,
   )
   return `${Math.min(16, Math.max(8, longest))}ch`

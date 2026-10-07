@@ -2,11 +2,7 @@
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "skipLibCheck": true,
@@ -21,13 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/components/ui/*": [
-        "./dev/ui/*"
-      ]
+      "@/components/ui/*": ["./dev/ui/*"]
     }
   },
-  "include": [
-    "src",
-    "dev"
-  ]
+  "include": ["src", "dev"]
 }

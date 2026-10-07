@@ -14,12 +14,24 @@ interface ColorFieldProps {
   className?: string
 }
 
-function ColorField({ value, onChange, label, presets, readOnly, disabled, onPickStart, onPickEnd, className }: ColorFieldProps) {
+function ColorField({
+  value,
+  onChange,
+  label,
+  presets,
+  readOnly,
+  disabled,
+  onPickStart,
+  onPickEnd,
+  className,
+}: ColorFieldProps) {
   const locked = readOnly || !onChange
   const picker = /^#[0-9a-f]{6}/i.test(value ?? "") ? value!.slice(0, 7) : "#000000"
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      {label && <span className="text-[11px] font-medium tracking-wide text-muted-foreground">{label}</span>}
+      {label && (
+        <span className="text-[11px] font-medium tracking-wide text-muted-foreground">{label}</span>
+      )}
       <div className="flex items-center gap-2">
         <input
           type="color"
@@ -40,7 +52,15 @@ function ColorField({ value, onChange, label, presets, readOnly, disabled, onPic
           className="h-8 min-w-0 flex-1 border border-input bg-transparent px-2 font-mono text-xs"
         />
         {presets?.map((c) => (
-          <button key={c} type="button" aria-label={c} disabled={disabled || locked} onClick={() => onChange?.(c)} className="size-4 border border-border" style={{ backgroundColor: c }} />
+          <button
+            key={c}
+            type="button"
+            aria-label={c}
+            disabled={disabled || locked}
+            onClick={() => onChange?.(c)}
+            className="size-4 border border-border"
+            style={{ backgroundColor: c }}
+          />
         ))}
       </div>
     </div>

@@ -15,8 +15,8 @@
  * Runs on Node's type stripping: `node scripts/check-schema.ts`.
  */
 import { readFileSync } from "node:fs"
-import ts from "typescript"
 import Ajv from "ajv"
+import ts from "typescript"
 import { STARTERS } from "../playground/src/defaults.ts"
 
 const root = new URL("../", import.meta.url)
@@ -97,7 +97,8 @@ const schemaKinds = (defs.field.allOf as any[])
   .map((b) => b.if.properties.kind.const)
   .filter((k): k is string => typeof k === "string")
 
-const same = (a: string[], b: string[]) => a.length === b.length && [...a].sort().join() === [...b].sort().join()
+const same = (a: string[], b: string[]) =>
+  a.length === b.length && [...a].sort().join() === [...b].sort().join()
 const sets: Array<[string, string[]]> = [
   ["BuiltinFieldDef kinds", defKinds],
   ["registerBuiltinRenderers()", renderers],
@@ -105,7 +106,9 @@ const sets: Array<[string, string[]]> = [
 ]
 for (const [name, kinds] of sets) {
   if (!same(unionKinds, kinds)) {
-    fail(`kinds differ: BuiltinFieldKind [${unionKinds.join(", ")}] vs ${name} [${kinds.join(", ")}]`)
+    fail(
+      `kinds differ: BuiltinFieldKind [${unionKinds.join(", ")}] vs ${name} [${kinds.join(", ")}]`,
+    )
   }
 }
 
@@ -116,14 +119,18 @@ function compare(label: string, typeName: string, def: any) {
   const code = [...props].filter(([, v]) => v.code).map(([k]) => k)
   const data = [...props].filter(([, v]) => !v.code)
   const want = data.map(([k]) => k)
-  const have = Object.keys(def.properties ?? {}).filter((k) => !(ALLOWED_EXTRA[label] ?? []).includes(k))
+  const have = Object.keys(def.properties ?? {}).filter(
+    (k) => !(ALLOWED_EXTRA[label] ?? []).includes(k),
+  )
   const missing = want.filter((k) => !have.includes(k))
   const extra = have.filter((k) => !want.includes(k))
   if (missing.length) fail(`${label}: in ${typeName}, not in the schema: ${missing.join(", ")}`)
   if (extra.length) fail(`${label}: in the schema, not in ${typeName}: ${extra.join(", ")}`)
   const req = data.filter(([, v]) => !v.optional).map(([k]) => k)
   if (!same(req, def.required ?? [])) {
-    fail(`${label}: required differs: ${typeName} [${req.join(", ")}] vs schema [${(def.required ?? []).join(", ")}]`)
+    fail(
+      `${label}: required differs: ${typeName} [${req.join(", ")}] vs schema [${(def.required ?? []).join(", ")}]`,
+    )
   }
   return code
 }
@@ -149,9 +156,42 @@ const wrap = (field: unknown) => ({ version: 1, groups: [{ id: "g", rows: [field
 const valid: Array<[string, unknown]> = [
   ...STARTERS.map((s): [string, unknown] => [`starter "${s.id}"`, s.schema]),
   ["a $schema key", { $schema: schema.$id, version: 1, groups: [] }],
-  ["a custom kind with extra props", wrap({ kind: "palette-strip", id: "p", path: "p", colours: ["#000"] })],
-  ["promote on a field and a separator", { version: 1, groups: [{ id: "g", rows: [{ kind: "slider", id: "a", path: "a", promote: ["card", "collapsed"] }, { kind: "separator", id: "s", promote: ["card"] }] }] }],
-  ["a paired row", { version: 1, groups: [{ id: "g", rows: [[{ kind: "text", id: "a", path: "a" }, { kind: "checkbox", id: "b", path: "b" }]] }] }],
+  [
+    "a custom kind with extra props",
+    wrap({ kind: "palette-strip", id: "p", path: "p", colours: ["#000"] }),
+  ],
+  [
+    "promote on a field and a separator",
+    {
+      version: 1,
+      groups: [
+        {
+          id: "g",
+          rows: [
+            { kind: "slider", id: "a", path: "a", promote: ["card", "collapsed"] },
+            { kind: "separator", id: "s", promote: ["card"] },
+          ],
+        },
+      ],
+    },
+  ],
+  [
+    "a paired row",
+    {
+      version: 1,
+      groups: [
+        {
+          id: "g",
+          rows: [
+            [
+              { kind: "text", id: "a", path: "a" },
+              { kind: "checkbox", id: "b", path: "b" },
+            ],
+          ],
+        },
+      ],
+    },
+  ],
 ]
 const invalid: Array<[string, unknown]> = [
   ["a misspelled prop on text", wrap({ kind: "text", id: "t", path: "t", placehodler: "x" })],
@@ -159,7 +199,10 @@ const invalid: Array<[string, unknown]> = [
   ["separator with a path", wrap({ kind: "separator", id: "s", path: "s" })],
   ["label without its text", wrap({ kind: "label", id: "l" })],
   ["vector without components", wrap({ kind: "vector", id: "v", path: "v" })],
-  ["an unknown disabledWhen operator", wrap({ kind: "text", id: "t", path: "t", disabledWhen: { path: "x", equal: 1 } })],
+  [
+    "an unknown disabledWhen operator",
+    wrap({ kind: "text", id: "t", path: "t", disabledWhen: { path: "x", equal: 1 } }),
+  ],
   ["an unknown promote view", wrap({ kind: "text", id: "t", path: "t", promote: ["toolbar"] })],
   ["promote as a bare string", wrap({ kind: "text", id: "t", path: "t", promote: "card" })],
   ["a view promoted twice", wrap({ kind: "text", id: "t", path: "t", promote: ["card", "card"] })],
@@ -169,7 +212,10 @@ const invalid: Array<[string, unknown]> = [
   ["an unknown top-level key", { version: 1, groups: [], name: "x" }],
 ]
 for (const [name, doc] of valid) {
-  if (!validate(doc)) fail(`should pass, fails: ${name}: ${validate.errors?.[0]?.instancePath} ${validate.errors?.[0]?.message}`)
+  if (!validate(doc))
+    fail(
+      `should pass, fails: ${name}: ${validate.errors?.[0]?.instancePath} ${validate.errors?.[0]?.message}`,
+    )
 }
 for (const [name, doc] of invalid) {
   if (validate(doc)) fail(`should fail, passes: ${name}`)

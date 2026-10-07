@@ -1,38 +1,51 @@
+import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
+import type { ReactCodeMirrorRef } from "@uiw/react-codemirror"
 import {
   Component,
   type CSSProperties,
+  type ReactNode,
   useEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
-  type ReactNode,
 } from "react"
-import {
-  PropertyPanel,
-  getFieldRenderer,
-  promotedFields,
-  registerScope,
-  type CheckboxFieldDef,
-  type PanelView,
-  type PromoteView,
-  type PropertySchema,
-} from "../../src"
-import type { ReactCodeMirrorRef } from "@uiw/react-codemirror"
-import { cursorTarget, describeTarget, idOffset } from "./cursor"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
-import { CATALOGUE, DISABLED_WHEN_DOC, GROUP_DOC, PROMOTE_DOC, type Doc, type KindEntry } from "./catalogue"
-import { DEFAULT_STARTER, STARTERS, pretty, type Starter } from "./defaults"
+import {
+  type CheckboxFieldDef,
+  getFieldRenderer,
+  type PanelView,
+  type PromoteView,
+  PropertyPanel,
+  type PropertySchema,
+  promotedFields,
+  registerScope,
+} from "../../src"
+import {
+  CATALOGUE,
+  DISABLED_WHEN_DOC,
+  type Doc,
+  GROUP_DOC,
+  type KindEntry,
+  PROMOTE_DOC,
+} from "./catalogue"
+import { cursorTarget, describeTarget, idOffset } from "./cursor"
+import { DEFAULT_STARTER, pretty, STARTERS, type Starter } from "./defaults"
+import { FACETS } from "./facets-version"
 import { JsonPane } from "./json-pane"
-import { load, save } from "./storage"
-import { ArrowCounterClockwiseIcon } from "@phosphor-icons/react"
 import { fieldKeys, parseSchema, parseValues, schemaFields } from "./parse"
 import { ResizeHandle, SplitHandle, useColumnWidths, useHelpSplit } from "./resize"
+import { load, save } from "./storage"
 import { schemaWarnings } from "./validate"
-import { FACETS } from "./facets-version"
 
 // One stable scope key. Its registration is replaced whenever the schema
 // changes; `read` hands the panel the values object as the selection.
@@ -46,12 +59,8 @@ interface LogEntry {
 
 export function App() {
   const initial = useMemo(load, [])
-  const [schemaText, setSchemaText] = useState(
-    initial.schemaText ?? pretty(DEFAULT_STARTER.schema),
-  )
-  const [valueText, setValueText] = useState(
-    initial.valueText ?? pretty(DEFAULT_STARTER.values),
-  )
+  const [schemaText, setSchemaText] = useState(initial.schemaText ?? pretty(DEFAULT_STARTER.schema))
+  const [valueText, setValueText] = useState(initial.valueText ?? pretty(DEFAULT_STARTER.values))
   const [readOnly, setReadOnly] = useState(initial.readOnly ?? false)
   // The toggle picks inspector or card; folding is a click on the
   // inspector's title bar. An older save may hold "collapsed".
@@ -82,6 +91,7 @@ export function App() {
   const [caret, setCaret] = useState(-1)
   const schemaEditor = useRef<ReactCodeMirrorRef>(null)
   const pendingFocus = useRef<string | null>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: schemaText is the trigger; the effect reads the editor view and a ref
   useEffect(() => {
     const id = pendingFocus.current
     const view = schemaEditor.current?.view
@@ -119,16 +129,13 @@ export function App() {
 
   const unknownKinds = useMemo(
     () =>
-      [...new Set(schemaFields(lastSchema).map((f) => f.kind))].filter(
-        (k) => !getFieldRenderer(k),
-      ),
+      [...new Set(schemaFields(lastSchema).map((f) => f.kind))].filter((k) => !getFieldRenderer(k)),
     [lastSchema],
   )
 
   // Palette clicks insert at the schema caret (see cursor.ts), then move the
   // caret onto what was inserted, so the next step is editing it.
-  const target = () =>
-    schemaParse.ok ? cursorTarget(schemaParse.value, schemaText, caret) : null
+  const target = () => (schemaParse.ok ? cursorTarget(schemaParse.value, schemaText, caret) : null)
 
   const applySchema = (schema: PropertySchema, focusId: string) => {
     setSchemaText(pretty(schema))
@@ -142,7 +149,11 @@ export function App() {
     const made = makeUnique(entry, schema)
     if (schema.groups.length === 0) schema.groups.push({ id: "group", title: "Group", rows: [] })
     const group = schema.groups[at?.group ?? schema.groups.length - 1]
-    group.rows.splice(at?.group != null && at.insertAt != null ? at.insertAt : group.rows.length, 0, made.field)
+    group.rows.splice(
+      at?.group != null && at.insertAt != null ? at.insertAt : group.rows.length,
+      0,
+      made.field,
+    )
     applySchema(schema, made.field.id)
     if ("path" in made.field) {
       setValueText(pretty({ ...valuesRef.current, [made.field.path]: made.value }))
@@ -153,7 +164,10 @@ export function App() {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
     const at = target()
-    const ids = new Set([...schema.groups.map((g) => g.id), ...schemaFields(schema).map((f) => f.id)])
+    const ids = new Set([
+      ...schema.groups.map((g) => g.id),
+      ...schemaFields(schema).map((f) => f.id),
+    ])
     let n = schema.groups.length + 1
     while (ids.has(`group${n}`)) n++
     const group = { id: `group${n}`, title: `Group ${n}`, collapsible: true, rows: [] }
@@ -180,7 +194,9 @@ export function App() {
       const made = makeUnique(CATALOGUE.find((e) => e.kind === "checkbox")!, schema)
       driver = made.field as CheckboxFieldDef
       for (const group of schema.groups) {
-        const i = group.rows.findIndex((row) => (Array.isArray(row) ? row.includes(target_) : row === target_))
+        const i = group.rows.findIndex((row) =>
+          Array.isArray(row) ? row.includes(target_) : row === target_,
+        )
         if (i >= 0) {
           group.rows.splice(i, 0, driver)
           break
@@ -229,7 +245,10 @@ export function App() {
           <a className="hover:text-foreground" href="https://github.com/preset-nz/facets">
             GitHub
           </a>
-          <a className="hover:text-foreground" href="https://www.npmjs.com/package/@preset.nz/facets">
+          <a
+            className="hover:text-foreground"
+            href="https://www.npmjs.com/package/@preset.nz/facets"
+          >
             npm
           </a>
         </nav>
@@ -237,10 +256,17 @@ export function App() {
 
       <main
         className="grid min-h-0 flex-1 grid-cols-1 overflow-auto md:grid-cols-(--cols) md:overflow-hidden"
-        style={{ "--cols": `${cols.widths.palette}px ${cols.widths.json}px minmax(0,1fr)` } as CSSProperties}
+        style={
+          {
+            "--cols": `${cols.widths.palette}px ${cols.widths.json}px minmax(0,1fr)`,
+          } as CSSProperties
+        }
       >
         {/* Palette */}
-        <aside ref={palette} className="relative flex min-h-0 flex-col border-b border-border bg-card md:border-r md:border-b-0">
+        <aside
+          ref={palette}
+          className="relative flex min-h-0 flex-col border-b border-border bg-card md:border-r md:border-b-0"
+        >
           <ResizeHandle
             label="Resize field kinds"
             width={cols.widths.palette}
@@ -248,71 +274,71 @@ export function App() {
             onReset={() => cols.reset("palette")}
           />
           <div className="min-h-0 flex-1 overflow-auto">
-          <PaneTitle>Fields</PaneTitle>
-          <ul className="py-1">
-            {CATALOGUE.filter((e) => !e.layout).map((entry) => (
-              <li key={entry.kind}>
-                <button
-                  type="button"
-                  disabled={!schemaParse.ok}
-                  onClick={() => addField(entry)}
-                  onPointerMove={() => setHovered(entry)}
-                  onFocus={() => setHovered(entry)}
-                  className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
-                >
-                  {entry.kind}
-                  {entry.custom && (
-                    <span className="font-sans text-[10px] text-muted-foreground">custom</span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <PaneTitle>Layout</PaneTitle>
-          <ul className="py-1">
-            <li>
-              <PaletteButton
-                label="group"
-                disabled={!schemaParse.ok}
-                onClick={addGroup}
-                onHover={() => setHovered(GROUP_DOC)}
-              />
-            </li>
-            {CATALOGUE.filter((e) => e.layout).map((entry) => (
-              <li key={entry.kind}>
+            <PaneTitle>Fields</PaneTitle>
+            <ul className="py-1">
+              {CATALOGUE.filter((e) => !e.layout).map((entry) => (
+                <li key={entry.kind}>
+                  <button
+                    type="button"
+                    disabled={!schemaParse.ok}
+                    onClick={() => addField(entry)}
+                    onPointerMove={() => setHovered(entry)}
+                    onFocus={() => setHovered(entry)}
+                    className="flex w-full items-center justify-between px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
+                  >
+                    {entry.kind}
+                    {entry.custom && (
+                      <span className="font-sans text-[10px] text-muted-foreground">custom</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <PaneTitle>Layout</PaneTitle>
+            <ul className="py-1">
+              <li>
                 <PaletteButton
-                  label={entry.kind}
+                  label="group"
                   disabled={!schemaParse.ok}
-                  onClick={() => addField(entry)}
-                  onHover={() => setHovered(entry)}
+                  onClick={addGroup}
+                  onHover={() => setHovered(GROUP_DOC)}
                 />
               </li>
-            ))}
-          </ul>
-          <PaneTitle>Conditions</PaneTitle>
-          <button
-            type="button"
-            disabled={!schemaParse.ok}
-            onClick={addDisabledWhen}
-            onPointerMove={() => setHovered(DISABLED_WHEN_DOC)}
-            onFocus={() => setHovered(DISABLED_WHEN_DOC)}
-            className="flex w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
-          >
-            disabledWhen
-          </button>
-          <PaneTitle>Views</PaneTitle>
-          <ul className="py-1">
-            {(["card", "collapsed"] as const).map((v) => (
-              <li key={v}>
-                <PaletteButton
-                  label={`promote: ${v}`}
-                  disabled={!schemaParse.ok}
-                  onClick={() => togglePromote(v)}
-                  onHover={() => setHovered(PROMOTE_DOC)}
-                />
-              </li>
-            ))}
-          </ul>
+              {CATALOGUE.filter((e) => e.layout).map((entry) => (
+                <li key={entry.kind}>
+                  <PaletteButton
+                    label={entry.kind}
+                    disabled={!schemaParse.ok}
+                    onClick={() => addField(entry)}
+                    onHover={() => setHovered(entry)}
+                  />
+                </li>
+              ))}
+            </ul>
+            <PaneTitle>Conditions</PaneTitle>
+            <button
+              type="button"
+              disabled={!schemaParse.ok}
+              onClick={addDisabledWhen}
+              onPointerMove={() => setHovered(DISABLED_WHEN_DOC)}
+              onFocus={() => setHovered(DISABLED_WHEN_DOC)}
+              className="flex w-full px-3 py-1.5 text-left font-mono text-xs hover:bg-accent disabled:opacity-50"
+            >
+              disabledWhen
+            </button>
+            <PaneTitle>Views</PaneTitle>
+            <ul className="py-1">
+              {(["card", "collapsed"] as const).map((v) => (
+                <li key={v}>
+                  <PaletteButton
+                    label={`promote: ${v}`}
+                    disabled={!schemaParse.ok}
+                    onClick={() => togglePromote(v)}
+                    onHover={() => setHovered(PROMOTE_DOC)}
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
           <div
             className="relative h-64 shrink-0 border-t border-border md:h-(--help)"
@@ -342,7 +368,14 @@ export function App() {
             onText={setSchemaText}
             onCursor={setCaret}
             warnings={warnings}
-            status={schemaParse.ok ? describeTarget(schemaParse.value, cursorTarget(schemaParse.value, schemaText, caret)) : null}
+            status={
+              schemaParse.ok
+                ? describeTarget(
+                    schemaParse.value,
+                    cursorTarget(schemaParse.value, schemaText, caret),
+                  )
+                : null
+            }
             editorRef={schemaEditor}
             error={schemaParse.ok ? null : schemaParse.error}
             dark={dark}
@@ -390,7 +423,9 @@ export function App() {
               </Select>
               <button
                 type="button"
-                onClick={() => loadStarter(STARTERS.find((st) => st.id === starter) ?? DEFAULT_STARTER)}
+                onClick={() =>
+                  loadStarter(STARTERS.find((st) => st.id === starter) ?? DEFAULT_STARTER)
+                }
                 title="Replace the schema and values with the selected starter"
                 className="flex items-center gap-1 hover:text-foreground"
               >
@@ -401,9 +436,8 @@ export function App() {
           <div className="min-h-0 flex-1 overflow-auto bg-muted/40 p-6">
             {unknownKinds.length > 0 && (
               <p className="mb-3 w-80 text-xs text-destructive">
-                No renderer registered for{" "}
-                {unknownKinds.map((k) => `"${k}"`).join(", ")}. The panel skips
-                those fields.
+                No renderer registered for {unknownKinds.map((k) => `"${k}"`).join(", ")}. The panel
+                skips those fields.
               </p>
             )}
             <ViewPreview
@@ -418,7 +452,6 @@ export function App() {
           </div>
           {showLog && <WriteLog log={log} onClear={() => setLog([])} />}
         </section>
-
       </main>
     </div>
   )
@@ -433,6 +466,7 @@ function ViewToggle({ view, onView }: { view: TopView; onView: (v: TopView) => v
   return (
     <div role="radiogroup" aria-label="View" className="flex border border-border text-xs">
       {VIEWS.map((v) => (
+        // biome-ignore lint/a11y/useSemanticElements: a styled segmented-control button, not a native radio
         <button
           key={v}
           type="button"
@@ -596,7 +630,8 @@ function KindCard({ entry }: { entry: Doc | null }) {
   if (!entry) {
     return (
       <p className={cn(HELP_BOX, "text-muted-foreground")}>
-        Click a kind to add it after the row your caret is in, or to the last group. Hover over one to see its props.
+        Click a kind to add it after the row your caret is in, or to the last group. Hover over one
+        to see its props.
       </p>
     )
   }

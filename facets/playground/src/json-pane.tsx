@@ -1,7 +1,7 @@
-import { useState, type Ref } from "react"
-import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror"
 import { json } from "@codemirror/lang-json"
 import { BracketsCurlyIcon, CheckIcon, CopyIcon } from "@phosphor-icons/react"
+import CodeMirror, { type ReactCodeMirrorRef } from "@uiw/react-codemirror"
+import { type Ref, useState } from "react"
 
 const extensions = [json()]
 
@@ -47,23 +47,23 @@ export function JsonPane({
       <header className="flex h-8 shrink-0 items-center justify-between border-b border-border px-3">
         <h2 className="font-mono text-[11px] text-muted-foreground">{title}</h2>
         <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={prettify}
-          disabled={error !== null}
-          title={`Prettify ${title}`}
-          className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-        >
-          <BracketsCurlyIcon className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={copy}
-          title={`Copy ${title}`}
-          className="text-muted-foreground hover:text-foreground"
-        >
-          {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
-        </button>
+          <button
+            type="button"
+            onClick={prettify}
+            disabled={error !== null}
+            title={`Prettify ${title}`}
+            className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+          >
+            <BracketsCurlyIcon className="size-4" />
+          </button>
+          <button
+            type="button"
+            onClick={copy}
+            title={`Copy ${title}`}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {copied ? <CheckIcon className="size-4" /> : <CopyIcon className="size-4" />}
+          </button>
         </div>
       </header>
       <div className="min-h-0 flex-1 overflow-auto text-xs">

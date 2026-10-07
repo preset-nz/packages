@@ -1,11 +1,11 @@
-export * from "./types"
+export { FieldShell, ReadOnlyText, registerBuiltinRenderers } from "./field-renderers"
+export { COLUMN_ROW, useLabelLayout } from "./layout"
+export { PropertyPanel, promotedFields, showsIn } from "./panel"
 export {
-  registerScope,
-  unregisterScope,
+  getFieldRenderer,
   getScope,
   registerFieldRenderer,
-  getFieldRenderer,
+  registerScope,
+  unregisterScope,
 } from "./registry"
-export { PropertyPanel, promotedFields, showsIn } from "./panel"
-export { registerBuiltinRenderers, FieldShell, ReadOnlyText } from "./field-renderers"
-export { useLabelLayout, COLUMN_ROW } from "./layout"
+export * from "./types"

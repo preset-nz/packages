@@ -1,13 +1,9 @@
-import {
-  registerFieldRenderer,
-  type CustomFieldDef,
-  type FieldRenderer,
-} from "../../src"
 import type React from "react"
 import { ColorPicker } from "@/components/ui/color-picker"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
+import { type CustomFieldDef, type FieldRenderer, registerFieldRenderer } from "../../src"
 
 // Custom kinds are matched by string. The type system can't see their extra
 // props, so each renderer documents what it reads.
@@ -75,6 +71,7 @@ const Rating: FieldRenderer<CustomFieldDef> = ({ field, value, disabled, onChang
       <div className={cn("flex gap-0.5 text-base leading-none", disabled && "opacity-50")}>
         {Array.from({ length: max }, (_, i) => (
           <button
+            // biome-ignore lint/suspicious/noArrayIndexKey: the index is the rating value
             key={i}
             type="button"
             aria-label={`${i + 1} of ${max}`}
@@ -114,7 +111,9 @@ const PickerColor: FieldRenderer<CustomFieldDef> = ({ field, value, disabled, on
           </>
         ) : (
           <div className="flex min-h-8 items-center gap-2 py-1 text-xs">
-            {hex && <span className="size-4 border border-border" style={{ backgroundColor: hex }} />}
+            {hex && (
+              <span className="size-4 border border-border" style={{ backgroundColor: hex }} />
+            )}
             <span className="font-mono">{hex ?? "—"}</span>
           </div>
         )}

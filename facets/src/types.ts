@@ -205,12 +205,7 @@ export type ScopeContext = any
 export interface Scope<S = unknown, V = Record<string, unknown>> {
   schema: PropertySchema
   read: (selection: S, ctx: ScopeContext) => V
-  write?: (
-    path: string,
-    value: unknown,
-    selection: S,
-    ctx: ScopeContext,
-  ) => void
+  write?: (path: string, value: unknown, selection: S, ctx: ScopeContext) => void
   /**
    * One drag as one undo step. A drag is a scrubbed number, a dragged slider
    * thumb or an open colour picker; `begin` fires when it starts, every
@@ -249,8 +244,6 @@ export interface FieldRendererProps<F extends FieldDef = FieldDef> {
   view?: PanelView
 }
 
-export type FieldRenderer<F extends FieldDef = FieldDef> = React.FC<
-  FieldRendererProps<F>
->
+export type FieldRenderer<F extends FieldDef = FieldDef> = React.FC<FieldRendererProps<F>>
 
 import type React from "react"

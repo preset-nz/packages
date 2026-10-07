@@ -49,6 +49,7 @@ export function ResizeHandle({
   label: string
 }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a focusable draggable splitter; <hr> is not interactive
     <div
       role="separator"
       aria-orientation="vertical"
@@ -118,6 +119,7 @@ export function SplitHandle({
   label: string
 }) {
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a focusable draggable splitter; <hr> is not interactive
     <div
       role="separator"
       aria-orientation="horizontal"

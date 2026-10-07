@@ -4,8 +4,11 @@
  * each renderer into its own file would be over-organisation for code that
  * never hot-reloads in isolation. */
 import { useMemo, useRef } from "react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { ColorField } from "@/components/ui/color-field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { NumberField } from "@/components/ui/number-field"
 import {
   Select,
   SelectContent,
@@ -13,27 +16,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
-import { NumberField } from "@/components/ui/number-field"
 import { Slider } from "@/components/ui/slider"
-import { ColorField } from "@/components/ui/color-field"
-import { registerFieldRenderer } from "./registry"
 import { COLUMN_ROW, NUMBER_WIDTH, NUMBER_WIDTH_INSIDE, useLabelLayout } from "./layout"
+import { registerFieldRenderer } from "./registry"
 import type {
   CheckboxFieldDef,
   ColorFieldDef,
   FieldRenderer,
   FieldRendererProps,
-  NumberFieldDef,
-  SelectFieldDef,
-  SliderFieldDef,
-  TextFieldDef,
-  TextareaFieldDef,
   FileFieldDef,
   LabelFieldDef,
+  NumberFieldDef,
   PanelView,
+  SelectFieldDef,
   SeparatorFieldDef,
+  SliderFieldDef,
+  TextareaFieldDef,
+  TextFieldDef,
   VectorFieldDef,
 } from "./types"
 
@@ -126,13 +126,7 @@ function formatPrimitive(value: unknown): string {
   return String(value)
 }
 
-const TextRenderer: FieldRenderer<TextFieldDef> = ({
-  field,
-  value,
-  disabled,
-  onChange,
-  view,
-}) => {
+const TextRenderer: FieldRenderer<TextFieldDef> = ({ field, value, disabled, onChange, view }) => {
   const display = formatPrimitive(value)
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
@@ -199,11 +193,7 @@ const NumberRenderer: FieldRenderer<NumberFieldDef> = ({
 }) => {
   const layout = useLabelLayout()
   const num =
-    typeof value === "number"
-      ? value
-      : value != null && value !== ""
-      ? Number(value)
-      : null
+    typeof value === "number" ? value : value != null && value !== "" ? Number(value) : null
   const finite = num != null && Number.isFinite(num)
   const label = field.label ?? field.id
   if (!onChange) {
@@ -299,9 +289,7 @@ const SliderRenderer: FieldRenderer<SliderFieldDef> = ({
           )}
         </div>
       ) : (
-        <ReadOnlyText>
-          {Number.isFinite(num) ? num.toLocaleString() : <Empty />}
-        </ReadOnlyText>
+        <ReadOnlyText>{Number.isFinite(num) ? num.toLocaleString() : <Empty />}</ReadOnlyText>
       )}
     </FieldShell>
   )
@@ -324,19 +312,13 @@ const SelectRenderer: FieldRenderer<SelectFieldDef> = ({
   if (!onChange) {
     return (
       <FieldShell label={field.label ?? field.id} view={view}>
-        <ReadOnlyText>
-          {matched ? matched.label : current ? current : <Empty />}
-        </ReadOnlyText>
+        <ReadOnlyText>{matched ? matched.label : current ? current : <Empty />}</ReadOnlyText>
       </FieldShell>
     )
   }
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
-      <Select
-        value={current}
-        onValueChange={(v) => onChange(v)}
-        disabled={disabled}
-      >
+      <Select value={current} onValueChange={(v) => onChange(v)} disabled={disabled}>
         <SelectTrigger className="w-full">
           {/* Children, not the primitive's own lookup: Base UI's Value shows
               the raw value unless it's told the label. */}
@@ -429,17 +411,11 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
   )
 }
 
-const FileRenderer: FieldRenderer<FileFieldDef> = ({
-  field,
-  value,
-  view,
-}) => {
+const FileRenderer: FieldRenderer<FileFieldDef> = ({ field, value, view }) => {
   const asset = value as { name?: string } | null | undefined
   return (
     <FieldShell label={field.label ?? field.id} view={view}>
-      <ReadOnlyText>
-        {asset?.name ? asset.name : <Empty />}
-      </ReadOnlyText>
+      <ReadOnlyText>{asset?.name ? asset.name : <Empty />}</ReadOnlyText>
     </FieldShell>
   )
 }
@@ -454,11 +430,7 @@ function toNumberArray(value: unknown, arity: number): Array<number | null> {
   })
 }
 
-function formatComponent(
-  n: number | null,
-  integer: boolean,
-  precision?: number,
-): string {
+function formatComponent(n: number | null, integer: boolean, precision?: number): string {
   if (n == null) return ""
   if (integer) return Math.trunc(n).toLocaleString()
   if (precision != null) return n.toFixed(precision)
@@ -493,6 +465,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
           style={{ gridTemplateColumns: `repeat(${arity}, minmax(0, 1fr))` }}
         >
           {field.components.map((c, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: components are a fixed positional tuple
             <div key={i} className="flex flex-col gap-0.5 min-w-0">
               {c.label && (
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -505,9 +478,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
                 ) : (
                   <>
                     {formatComponent(values[i], isInt, field.precision)}
-                    {c.suffix && (
-                      <span className="text-muted-foreground">{c.suffix}</span>
-                    )}
+                    {c.suffix && <span className="text-muted-foreground">{c.suffix}</span>}
                   </>
                 )}
               </div>
@@ -526,6 +497,7 @@ const VectorRenderer: FieldRenderer<VectorFieldDef> = ({
       >
         {field.components.map((c, i) => (
           <NumberField
+            // biome-ignore lint/suspicious/noArrayIndexKey: components are a fixed positional tuple
             key={i}
             label={c.label ?? AXES[i] ?? String(i + 1)}
             value={values[i] ?? c.min ?? 0}
@@ -566,63 +538,21 @@ const SeparatorRenderer: FieldRenderer<SeparatorFieldDef> = ({ field, view }) =>
 // The same in every mode: there is nothing to edit. Greys out under
 // disabledWhen so a hint can follow the field it describes.
 const LabelRenderer: FieldRenderer<LabelFieldDef> = ({ field, disabled }) => (
-  <p
-    className={
-      "text-xs text-muted-foreground" + (disabled ? " opacity-50" : "")
-    }
-  >
-    {field.label}
-  </p>
+  <p className={`text-xs text-muted-foreground${disabled ? " opacity-50" : ""}`}>{field.label}</p>
 )
 
 export function registerBuiltinRenderers(): void {
-  registerFieldRenderer(
-    "separator",
-    SeparatorRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "label",
-    LabelRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "text",
-    TextRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "textarea",
-    TextareaRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "number",
-    NumberRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "slider",
-    SliderRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "select",
-    SelectRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "color",
-    ColorRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "checkbox",
-    CheckboxRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "file",
-    FileRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
-  registerFieldRenderer(
-    "vector",
-    VectorRenderer as FieldRenderer<import("./types").FieldDef>,
-  )
+  registerFieldRenderer("separator", SeparatorRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("label", LabelRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("text", TextRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("textarea", TextareaRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("number", NumberRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("slider", SliderRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("select", SelectRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("color", ColorRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("checkbox", CheckboxRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("file", FileRenderer as FieldRenderer<import("./types").FieldDef>)
+  registerFieldRenderer("vector", VectorRenderer as FieldRenderer<import("./types").FieldDef>)
 }
 
-export type {
-  FieldRenderer,
-  FieldRendererProps,
-}
+export type { FieldRenderer, FieldRendererProps }

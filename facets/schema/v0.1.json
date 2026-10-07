@@ -4,10 +4,7 @@
   "title": "@preset.nz/facets PropertySchema, 0.1",
   "description": "An inspector panel as data: groups of rows of fields. Valid for every 0.1.x release; later 0.1 patches only add kinds and props. Playground: https://facets.preset.nz",
   "type": "object",
-  "required": [
-    "version",
-    "groups"
-  ],
+  "required": ["version", "groups"],
   "additionalProperties": false,
   "properties": {
     "$schema": {
@@ -33,10 +30,7 @@
   "definitions": {
     "group": {
       "type": "object",
-      "required": [
-        "id",
-        "rows"
-      ],
+      "required": ["id", "rows"],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -81,9 +75,7 @@
     "disabledWhen": {
       "type": "object",
       "description": "Greys the field out depending on another field's value. Set one operator; if several are set, the first of equals, notEquals, in, notIn wins.",
-      "required": [
-        "path"
-      ],
+      "required": ["path"],
       "additionalProperties": false,
       "properties": {
         "path": {
@@ -110,19 +102,13 @@
       "type": "array",
       "description": "The views the field shows in besides the inspector, like a parm promoted to a Houdini asset's interface. \"card\": on the card. \"collapsed\": in a closed group's header and in a folded scope. Omit for inspector-only.",
       "items": {
-        "enum": [
-          "card",
-          "collapsed"
-        ]
+        "enum": ["card", "collapsed"]
       },
       "uniqueItems": true
     },
     "selectOption": {
       "type": "object",
-      "required": [
-        "value",
-        "label"
-      ],
+      "required": ["value", "label"],
       "additionalProperties": false,
       "properties": {
         "value": {
@@ -164,10 +150,7 @@
     "field": {
       "type": "object",
       "description": "One field. kind picks the renderer: a built-in kind is checked strictly; any other kind is a custom kind registered by the host, which may carry extra props.",
-      "required": [
-        "kind",
-        "id"
-      ],
+      "required": ["kind", "id"],
       "properties": {
         "kind": {
           "type": "string",
@@ -194,9 +177,7 @@
       "allOf": [
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "text"
@@ -209,9 +190,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "textarea"
@@ -224,9 +203,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "number"
@@ -239,9 +216,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "slider"
@@ -254,9 +229,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "select"
@@ -269,9 +242,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "color"
@@ -284,9 +255,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "checkbox"
@@ -299,9 +268,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "file"
@@ -314,9 +281,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "vector"
@@ -329,9 +294,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "separator"
@@ -344,9 +307,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "const": "label"
@@ -359,9 +320,7 @@
         },
         {
           "if": {
-            "required": [
-              "kind"
-            ],
+            "required": ["kind"],
             "properties": {
               "kind": {
                 "not": {
@@ -391,11 +350,7 @@
     "text": {
       "type": "object",
       "description": "A single line of text. Value: string.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "text"
@@ -428,11 +383,7 @@
     "textarea": {
       "type": "object",
       "description": "Several lines of text. Value: string.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "textarea"
@@ -469,11 +420,7 @@
     "number": {
       "type": "object",
       "description": "A number typed into a box. Value: number.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "number"
@@ -522,11 +469,7 @@
     "slider": {
       "type": "object",
       "description": "A number dragged along a range. Value: number.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "slider"
@@ -567,11 +510,7 @@
     "select": {
       "type": "object",
       "description": "One choice from a list. Value: the chosen option's value (string). Options can also come from optionsProvider(ctx), a function, which is set in code and has no JSON form.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "select"
@@ -607,11 +546,7 @@
     "color": {
       "type": "object",
       "description": "A colour as a hex string, e.g. \"#2b7c76\". Value: string.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "color"
@@ -647,11 +582,7 @@
     "checkbox": {
       "type": "object",
       "description": "On or off. Value: boolean.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "checkbox"
@@ -680,11 +611,7 @@
     "file": {
       "type": "object",
       "description": "Shows a file's name; always read-only. Value: { \"name\": string }.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "const": "file"
@@ -721,12 +648,7 @@
     "vector": {
       "type": "object",
       "description": "Several numbers in one row: position, size, RGB, LCh. Value: number[], one per component.",
-      "required": [
-        "kind",
-        "id",
-        "path",
-        "components"
-      ],
+      "required": ["kind", "id", "path", "components"],
       "properties": {
         "kind": {
           "const": "vector"
@@ -770,10 +692,7 @@
     "separator": {
       "type": "object",
       "description": "A horizontal rule between rows, with label as an optional caption. Holds no value, so it has no path.",
-      "required": [
-        "kind",
-        "id"
-      ],
+      "required": ["kind", "id"],
       "properties": {
         "kind": {
           "const": "separator"
@@ -798,11 +717,7 @@
     "label": {
       "type": "object",
       "description": "Static text: a hint, a note, a sub-heading. The text is label. Holds no value, so it has no path.",
-      "required": [
-        "kind",
-        "id",
-        "label"
-      ],
+      "required": ["kind", "id", "label"],
       "properties": {
         "kind": {
           "const": "label"
@@ -827,11 +742,7 @@
     "custom": {
       "type": "object",
       "description": "A custom kind. The host's renderer decides which extra props it reads.",
-      "required": [
-        "kind",
-        "id",
-        "path"
-      ],
+      "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
           "type": "string"

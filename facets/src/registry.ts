@@ -14,16 +14,11 @@ export function unregisterScope(key: string): void {
   scopes.delete(key)
 }
 
-export function getScope(
-  key: string,
-): Scope<unknown, Record<string, unknown>> | undefined {
+export function getScope(key: string): Scope<unknown, Record<string, unknown>> | undefined {
   return scopes.get(key)
 }
 
-export function registerFieldRenderer(
-  kind: string,
-  Component: FieldRenderer,
-): void {
+export function registerFieldRenderer(kind: string, Component: FieldRenderer): void {
   fieldRenderers.set(kind, Component)
 }
 

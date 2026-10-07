@@ -22,7 +22,8 @@ export function cursorTarget(schema: PropertySchema, text: string, offset: numbe
   if (path[0] !== "groups" || typeof path[1] !== "number") return NONE
   const group = path[1]
   if (!schema.groups[group]) return NONE
-  if (path[2] !== "rows" || typeof path[3] !== "number") return { group, insertAt: null, field: null }
+  if (path[2] !== "rows" || typeof path[3] !== "number")
+    return { group, insertAt: null, field: null }
   const row = path[3]
   const cell = schema.groups[group].rows[row]
   if (cell === undefined) return { group, insertAt: null, field: null }
