@@ -1,6 +1,7 @@
 {
   "name": "@preset.nz/ux-kit",
   "version": "0.1.0",
+  "packageManager": "pnpm@11.1.1",
   "description": "One look and one way of working for the preset.nz desktop apps: tokens, palettes, fonts and Base UI primitives.",
   "license": "MIT",
   "repository": {
