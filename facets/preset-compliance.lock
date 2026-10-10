@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "pnpm-lock.yaml"
 ecosystem = "pnpm"
-sha256 = "190f10a27ae94dc8d39ee0ffb0cc816d4ec877788174698824071c805c3641ce"
+sha256 = "ba14fdae3c355f6bc2824d2183ab8dcb1f499ae7d9fae870e25e697b8a233497"
 
 [[packages]]
 ecosystem = "pnpm"
@@ -779,7 +779,7 @@ scope = "shipped"
 [[packages]]
 ecosystem = "pnpm"
 name = "@modelcontextprotocol/sdk"
-version = "1.30.1"
+version = "1.32.1"
 source = "registry"
 declared = "MIT"
 scope = "dev"
@@ -3363,7 +3363,7 @@ scope = "dev"
 [[packages]]
 ecosystem = "pnpm"
 name = "source-map-js"
-version = "1.2.1"
+version = "1.2.2"
 source = "registry"
 declared = "BSD-3-Clause"
 scope = "dev"
