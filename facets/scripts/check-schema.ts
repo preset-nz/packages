@@ -16,7 +16,8 @@
  */
 import { readFileSync } from "node:fs"
 import Ajv from "ajv"
-import ts from "typescript"
+// TS 7 is native and has no JS compiler API, so the parse uses TypeScript 5.9.
+import ts from "ts5"
 import { STARTERS } from "../playground/src/defaults.ts"
 
 const root = new URL("../", import.meta.url)
