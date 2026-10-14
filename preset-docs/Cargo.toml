@@ -1,0 +1,24 @@
+[package]
+name = "preset-docs"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Documentation pages for the preset.nz apps from what the apps declare: one markdown page per node, its controls generated between markers and the prose around them kept."
+repository = "https://github.com/preset-nz/preset-docs"
+readme = "README.md"
+keywords = ["documentation", "markdown", "generator"]
+categories = ["development-tools"]
+include = ["/src/**/*", "/README.md", "/LICENSE"]
+
+[features]
+# Converts a rhizome Schema into a Catalogue. Off by default: the core needs no rhizome.
+rhizome = ["dep:rhizome-core"]
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rhizome-core = { version = "0.1.5", optional = true }
+
+[[test]]
+name = "rhizome"
+required-features = ["rhizome"]

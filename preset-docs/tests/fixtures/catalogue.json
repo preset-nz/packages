@@ -1,0 +1,198 @@
+{
+  "categories": [
+    {
+      "name": "things",
+      "origin": "loaded"
+    }
+  ],
+  "types": [
+    {
+      "name": "bare",
+      "values": [
+        {
+          "key": "x",
+          "kind": "float",
+          "default": 0.0
+        }
+      ]
+    },
+    {
+      "name": "widget",
+      "label": "Widget",
+      "summary": "A made-up part: round, and a little louder when it spins.",
+      "group": "parts",
+      "values": [
+        {
+          "key": "widget.on",
+          "kind": "bool",
+          "default": true
+        },
+        {
+          "key": "widget.size",
+          "kind": "float",
+          "default": 1.0,
+          "range": [
+            0.5,
+            20.0
+          ],
+          "label": "Size",
+          "description": "How big it is | in centimetres.",
+          "unit": "cm"
+        },
+        {
+          "key": "widget.spin",
+          "kind": "float",
+          "default": 0.25,
+          "range": [
+            0.0,
+            1.0
+          ],
+          "label": "Spin",
+          "description": "How fast it turns.",
+          "unit": "%"
+        },
+        {
+          "key": "widget.reach",
+          "kind": "float",
+          "default": 2.0,
+          "range": [
+            0.0,
+            10.0
+          ],
+          "soft_max": true
+        },
+        {
+          "key": "widget.finish",
+          "kind": "choice",
+          "default": "gloss",
+          "choices": [
+            "matte",
+            "gloss",
+            "brushed"
+          ],
+          "label": "Finish",
+          "description": "How it catches the light."
+        },
+        {
+          "key": "widget.teeth",
+          "kind": "int",
+          "default": 12,
+          "range": [
+            0.0,
+            64.0
+          ]
+        },
+        {
+          "key": "widget.tint",
+          "kind": "colour",
+          "default": [
+            1.0,
+            0.5,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "key": "widget.offset",
+          "kind": "vec2",
+          "default": [
+            0.0,
+            -1.5
+          ]
+        },
+        {
+          "key": "widget.note",
+          "kind": "text",
+          "default": ""
+        },
+        {
+          "key": "widget.path",
+          "kind": "shaped",
+          "default": [],
+          "shape": {
+            "list": "vec2"
+          }
+        }
+      ],
+      "refs": [
+        "widget.source"
+      ],
+      "slots": [
+        "mask"
+      ]
+    },
+    {
+      "name": "wobble",
+      "label": "Wobble",
+      "summary": "Moves another value back and forth.",
+      "group": "movers",
+      "values": [
+        {
+          "key": "wobble.rate",
+          "kind": "float",
+          "default": 1.0,
+          "range": [
+            0.01,
+            40.0
+          ],
+          "label": "Rate",
+          "description": "How often it moves.",
+          "unit": "Hz"
+        },
+        {
+          "key": "wobble.cutoff",
+          "kind": "float",
+          "default": 1500.0,
+          "range": [
+            20.0,
+            20000.0
+          ],
+          "label": "Cutoff",
+          "description": "Where it stops.",
+          "unit": "Hz"
+        },
+        {
+          "key": "wobble.fade",
+          "kind": "float",
+          "default": 250.0,
+          "range": [
+            10.0,
+            2000.0
+          ],
+          "label": "Fade",
+          "description": "How long it takes.",
+          "unit": "ms"
+        },
+        {
+          "key": "wobble.tracking",
+          "kind": "int",
+          "default": 1,
+          "range": [
+            0.0,
+            2.0
+          ],
+          "label": "Tracking",
+          "description": "How far it follows the note.",
+          "names": [
+            "Off",
+            "Half",
+            "Full"
+          ]
+        }
+      ],
+      "bindable": [
+        {
+          "key": "depth",
+          "kind": "float",
+          "default": 0.5,
+          "range": [
+            -1.0,
+            1.0
+          ],
+          "label": "Depth",
+          "description": "How far it moves the value."
+        }
+      ]
+    }
+  ]
+}
