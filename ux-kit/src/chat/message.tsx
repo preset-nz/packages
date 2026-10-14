@@ -34,7 +34,8 @@ export function ChatMessage({ className, from, ...props }: ChatMessageProps) {
       data-slot="chat-message"
       data-from={from}
       className={cn(
-        "group flex w-full max-w-[95%] flex-col gap-2",
+        // Selectable: a reply is something you copy (ux-kit turns selection off app-wide).
+        "group flex w-full max-w-[95%] flex-col gap-2 select-text",
         from === "user" ? "is-user ml-auto justify-end" : "is-assistant",
         className,
       )}

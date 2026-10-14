@@ -15,7 +15,7 @@ sha256 = "82216adc2d130f0dcad95ad5f6b4f35e93f8a22b45e24fdd4c67325e4431785d"
 [[inputs]]
 path = "pnpm-lock.yaml"
 ecosystem = "pnpm"
-sha256 = "aa10b5d3625cc8d647ca3947d1854ef1afbf46d3f0d2acb7af7253f245af5feb"
+sha256 = "97a5eeb4af8fbdba88856d3aa0eb301d0b55a74c10e16edbb147ed08075a192b"
 
 [[packages]]
 ecosystem = "cargo"
