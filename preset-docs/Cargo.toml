@@ -17,12 +17,9 @@ rhizome = ["dep:rhizome-core"]
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-rhizome-core = { version = "0.1.5", optional = true }
+rhizome-core = { version = "0.1.6", optional = true }
 
 [[test]]
 name = "rhizome"
 required-features = ["rhizome"]
 
-# rhizome-core 0.1.6 (category, choice_labels) is not published yet; see runbooks/pending-releases.md
-[patch.crates-io]
-rhizome-core = { path = "../rhizome/crates/rhizome-core" }

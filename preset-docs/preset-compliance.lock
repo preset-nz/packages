@@ -6,11 +6,11 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "82bebfe4dc8c26baaaaff52359edd815ec9d4a299f53ae460018edb6738e36bc"
+sha256 = "979079d91c37205c65f0286895e7b48afdaad1411e3ba54d805548a954c7c640"
 
 [[inputs]]
 path = "Cargo.toml"
-sha256 = "752e0535d4d2b1f83db577f381df94344ace8cf33e9ce6965a43bb92877d6432"
+sha256 = "b9afe39d5b472d885020e9a900d565a3698e41df7cf62fda2bf95d654df7ea4e"
 
 [[packages]]
 ecosystem = "cargo"
@@ -167,8 +167,8 @@ scope = "shipped"
 [[packages]]
 ecosystem = "cargo"
 name = "rhizome-core"
-version = "0.1.5"
-source = "path"
+version = "0.1.6"
+source = "registry"
 declared = "MIT"
 scope = "shipped"
 
