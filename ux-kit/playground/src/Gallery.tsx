@@ -1,6 +1,7 @@
 import { cn, Icons } from "@preset.nz/ux-kit"
 import { useState } from "react"
 
+import { ChatPage } from "./pages/Chat"
 import { Primitives } from "./pages/Primitives"
 import { Tokens } from "./pages/Tokens"
 import { ToolbarPage } from "./pages/Toolbar"
@@ -9,6 +10,7 @@ import { useTheme } from "./theme"
 const SECTIONS = [
   { id: "tokens", label: "Tokens", Icon: Icons.PaletteIcon },
   { id: "primitives", label: "Primitives", Icon: Icons.CubeIcon },
+  { id: "chat", label: "Chat", Icon: Icons.ChatsIcon },
   { id: "toolbar", label: "Toolbar and colour", Icon: Icons.ToolboxIcon },
 ] as const
 
@@ -42,6 +44,7 @@ export function Gallery() {
       <main className="min-w-0 flex-1 overflow-auto p-6">
         {section === "tokens" && <Tokens dark={dark} onToggleTheme={toggle} />}
         {section === "primitives" && <Primitives />}
+        {section === "chat" && <ChatPage />}
         {section === "toolbar" && <ToolbarPage />}
       </main>
     </div>

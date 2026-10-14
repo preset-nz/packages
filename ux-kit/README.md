@@ -77,6 +77,33 @@ Without the `@source` line the build passes and the components render unstyled, 
 
 [facets](https://github.com/preset-nz/facets) 0.2 draws its number, slider and colour fields with the host app's components. An app on the kit re-exports them, for example `export { NumberField } from "@preset.nz/ux-kit"` in `src/components/ui/number-field.tsx`.
 
+## Chat
+
+`@preset.nz/ux-kit/chat` is a separate subpath, so apps without chat don't pull in streamdown. It is presentational: props in, callbacks out, no Tauri, no events, no model or fetch code. The host owns the messages and appends text deltas to the last one.
+
+```tsx
+import { ChatMarkdown, ChatMessage, ChatMessageContent, ChatScroller, ChatScrollerItem, PromptInput } from "@preset.nz/ux-kit/chat"
+```
+
+Add streamdown's classes to the app's CSS, next to the kit's `@source` line:
+
+```css
+@source "../node_modules/streamdown/dist/*.js";
+```
+
+| Export | Props worth knowing |
+|---|---|
+| `ChatScroller`, `ChatScrollerItem` | The scrolling list. It follows a streamed reply and stops following when the person scrolls up; a jump-to-latest button appears. `autoScroll`, `defaultScrollPosition`, `scrollButton`. Give an item `scrollAnchor` (on a user turn) to pin the view to it. Fills its parent, so give the parent a height. Built on `@shadcn/react/message-scroller` |
+| `ChatMessage`, `ChatMessageContent` | `from: "user" \| "assistant"`. A user turn is a right-hand bubble |
+| `ChatMarkdown` | Streamdown core: `children` is the text so far, `isAnimating` while it arrives. No code highlighting, diagrams or maths |
+| `ToolCall`, `ToolCallHeader`, `ToolCallContent`, `ToolCallInput`, `ToolCallOutput` | A collapsible row. Header takes `name` and `state: "running" \| "done" \| "refused"`; input and output show JSON or text; `errorText` replaces the output |
+| `Reasoning`, `ReasoningTrigger`, `ReasoningContent` | A folded "Thinking…" block. `isStreaming` opens it and folds it a second after it ends; `duration` is measured if not given; `open` / `defaultOpen` / `onOpenChange` for host control |
+| `Suggestions`, `Suggestion` | Starter prompts: `suggestion` text, `onClick(text)` |
+| `PromptInput` | `onSubmit(text)`, `onStop`, `status: "idle" \| "streaming" \| "stopped" \| "error"` (send becomes stop while streaming), `value` / `onValueChange` (optional, so a suggestion can fill it), `tools` (the toolbar slot, for example a `ToggleGroup`), `disabled`, `placeholder`. Enter sends, Shift+Enter breaks the line |
+| `ChatRole`, `ToolCallState`, `ChatStatus` | The small types the above share |
+
+The components are adapted from Vercel AI Elements (Apache-2.0) and shadcn/ui's MessageScroller (MIT). See `THIRD_PARTY_NOTICES.md`.
+
 ## Working on it
 
 ```sh
