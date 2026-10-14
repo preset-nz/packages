@@ -42,6 +42,8 @@ summary: A driven four-pole low-pass after the patch filter.
 (written by hand)
 ```
 
+A page can name a picture of its node under a `thumbnail` front-matter key, a path relative to the docs folder. preset-docs never writes that key and keeps it on every run; the index lists a group that has any as a table with a column of pictures. Bake the picture at the size it should show, since markdown can't size an image.
+
 ## Licence
 
 MIT

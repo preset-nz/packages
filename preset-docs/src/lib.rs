@@ -14,6 +14,10 @@
 //! gets front matter, a heading, the block and an empty "Using it" section for a person
 //! to write. The index is generated whole. A node with no label is titled by its name.
 //!
+//! A page may name a picture of its node under a `thumbnail` front-matter key, a path
+//! relative to the docs folder. The generator never writes that key; the index reads it from
+//! the pages on disk and lists a group that has any as a table with a column of pictures.
+//!
 //! The crate knows no app: it reads only the words an app put on its nodes and controls
 //! (`label`, `summary`, `group`, `description`, `unit`, `names`). An app on rhizome hands
 //! over its schema with the `rhizome` feature (`Catalogue::from(&schema)`), or as the JSON
@@ -92,9 +96,46 @@ pub fn read_catalogue(json: &str) -> serde_json::Result<Catalogue> {
 /// Every page as freshly generated, in name order: one per node type, then the index. `app`
 /// names the index's title ("<app> nodes"); empty gives "Nodes".
 pub fn pages(catalogue: &Catalogue, app: &str) -> Vec<Page> {
+    pages_with_thumbnails(catalogue, app, &BTreeMap::new())
+}
+
+/// [`pages`], with an index that shows `thumbnails` (node name to picture path, relative to
+/// the docs folder). [`write`] and [`check`] read them with [`thumbnails`].
+pub fn pages_with_thumbnails(
+    catalogue: &Catalogue,
+    app: &str,
+    thumbnails: &BTreeMap<String, String>,
+) -> Vec<Page> {
     let mut pages: Vec<Page> = types(catalogue).map(page).collect();
-    pages.push(index(catalogue, app));
+    pages.push(index(catalogue, app, thumbnails));
     pages
+}
+
+/// The front-matter key a page names its node's picture under. Not generated: whoever makes
+/// the picture writes it, and [`update`] keeps it.
+pub const THUMBNAIL_KEY: &str = "thumbnail";
+
+/// Every node page in `dir` that names a [`THUMBNAIL_KEY`], as node name to path.
+pub fn thumbnails(dir: &Path, catalogue: &Catalogue) -> io::Result<BTreeMap<String, String>> {
+    let mut out = BTreeMap::new();
+    for t in types(catalogue) {
+        let Some(page) = read(&dir.join(format!("{}.md", t.name)))? else {
+            continue;
+        };
+        let Some(span) = front_matter(&page) else {
+            continue;
+        };
+        let value = page[span]
+            .lines()
+            .find(|l| top_key(l) == Some(THUMBNAIL_KEY))
+            .and_then(|l| l.split_once(':'))
+            .map(|(_, v)| v.trim().trim_matches(['"', '\'']))
+            .filter(|v| !v.is_empty());
+        if let Some(v) = value {
+            out.insert(t.name.clone(), v.to_string());
+        }
+    }
+    Ok(out)
 }
 
 /// The front-matter keys the generator owns. [`update`] rewrites exactly these.
@@ -290,7 +331,7 @@ pub fn check(dir: &Path, catalogue: &Catalogue, app: &str) -> io::Result<Vec<Fin
             }
         }
     }
-    for p in pages(catalogue, app) {
+    for p in pages_with_thumbnails(catalogue, app, &thumbnails(dir, catalogue)?) {
         let Some(on_disk) = read(&dir.join(&p.file_name))? else {
             found.push(if p.file_name == INDEX {
                 Finding::StaleIndex
@@ -328,7 +369,8 @@ pub fn check(dir: &Path, catalogue: &Catalogue, app: &str) -> io::Result<Vec<Fin
 pub fn write(dir: &Path, catalogue: &Catalogue, app: &str) -> io::Result<Vec<String>> {
     fs::create_dir_all(dir)?;
     let mut changed = Vec::new();
-    for p in pages(catalogue, app) {
+    let thumbnails = thumbnails(dir, catalogue)?;
+    for p in pages_with_thumbnails(catalogue, app, &thumbnails) {
         let path = dir.join(&p.file_name);
         let on_disk = read(&path)?;
         let next = if p.file_name == INDEX {
@@ -472,7 +514,7 @@ fn table(values: &[Control]) -> String {
     s
 }
 
-fn index(catalogue: &Catalogue, app: &str) -> Page {
+fn index(catalogue: &Catalogue, app: &str, thumbnails: &BTreeMap<String, String>) -> Page {
     let heading = if app.is_empty() {
         "Nodes".to_string()
     } else {
@@ -493,6 +535,22 @@ fn index(catalogue: &Catalogue, app: &str) -> Page {
     );
     let list = |s: &mut String, ts: &[&Node]| {
         s.push('\n');
+        if ts.iter().any(|t| thumbnails.contains_key(&t.name)) {
+            s.push_str("| | Node | What it does |\n|---|---|---|\n");
+            for t in ts {
+                let picture = thumbnails
+                    .get(&t.name)
+                    .map(|p| format!("![{}]({p})", cell(title(t))))
+                    .unwrap_or_default();
+                s.push_str(&format!(
+                    "| {picture} | [{}]({}.md) | {} |\n",
+                    cell(title(t)),
+                    t.name,
+                    t.summary.as_deref().map(cell).unwrap_or_default()
+                ));
+            }
+            return;
+        }
         for t in ts {
             s.push_str(&format!("- [{}]({}.md)", one_line(title(t)), t.name));
             if let Some(sum) = &t.summary {

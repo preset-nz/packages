@@ -269,3 +269,38 @@ fn check_reports_front_matter_drift_until_rewritten() {
     assert!(!check(&dir, &schema, "Example").unwrap().contains(&drift));
     fs::remove_dir_all(&dir).unwrap();
 }
+
+#[test]
+fn a_page_with_a_thumbnail_puts_its_group_in_a_table() {
+    let dir = scratch("thumbnail");
+    write(&dir, &schema(), "Example").unwrap();
+    let plain = fs::read_to_string(dir.join(INDEX)).unwrap();
+    // the fixture's bare node has no summary, so a fresh folder is never quite clean
+    let before = check(&dir, &schema(), "Example").unwrap();
+    let path = dir.join("widget.md");
+    let named = fs::read_to_string(&path).unwrap().replacen(
+        "node: widget\n",
+        "node: widget\nthumbnail: \"img/widget.webp\"\n",
+        1,
+    );
+    fs::write(&path, &named).unwrap();
+
+    // the index is stale until it is written again, and the page keeps its key
+    assert!(
+        check(&dir, &schema(), "Example")
+            .unwrap()
+            .contains(&Finding::StaleIndex)
+    );
+    assert_eq!(write(&dir, &schema(), "Example").unwrap(), vec![INDEX]);
+    assert_eq!(fs::read_to_string(&path).unwrap(), named);
+    assert_eq!(check(&dir, &schema(), "Example").unwrap(), before);
+
+    let index = fs::read_to_string(dir.join(INDEX)).unwrap();
+    golden("README-thumbnails.md", &index);
+    // groups with no thumbnail are listed as before
+    assert_eq!(
+        index.split("## Parts").next(),
+        plain.split("## Parts").next()
+    );
+    fs::remove_dir_all(&dir).unwrap();
+}
