@@ -7,7 +7,7 @@
 
    Seeded from Strata's index.css. Dark mode is a .dark class on <html>. */
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import "./shadcn-tailwind.css";
 
 /* Two families only (Georg 2026-10-03): Geist for the interface, JetBrains Mono for values and code. */
 @import "@fontsource-variable/geist";
