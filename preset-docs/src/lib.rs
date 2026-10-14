@@ -10,7 +10,7 @@
 //! ```
 //!
 //! Regenerating rewrites only what lies between the markers and the front-matter keys the
-//! generator owns (`title`, `node`, `group`, `summary`); every other byte is kept. A new page
+//! generator owns (`title`, `node`, `group`, `category`, `summary`); every other byte is kept. A new page
 //! gets front matter, a heading, the block and an empty "Using it" section for a person
 //! to write. The index is generated whole. A node with no label is titled by its name.
 //!
@@ -38,6 +38,7 @@
 //!             range: Some((0.0, 10.0)),
 //!             soft_max: false,
 //!             choices: vec![],
+//!             choice_labels: Default::default(),
 //!             len: None,
 //!             names: None,
 //!             label: Some("Size".into()),
@@ -139,7 +140,7 @@ pub fn thumbnails(dir: &Path, catalogue: &Catalogue) -> io::Result<BTreeMap<Stri
 }
 
 /// The front-matter keys the generator owns. [`update`] rewrites exactly these.
-pub const GENERATED_KEYS: [&str; 4] = ["title", "node", "group", "summary"];
+pub const GENERATED_KEYS: [&str; 5] = ["title", "node", "group", "category", "summary"];
 
 /// The page `generated` merged into what is on disk. With no page yet, the generated page.
 /// With one, two places change and nothing else:
@@ -459,6 +460,9 @@ fn page(t: &Node) -> Page {
     if let Some(g) = &t.group {
         s.push_str(&format!("group: {}\n", yaml(g)));
     }
+    if let Some(c) = &t.category {
+        s.push_str(&format!("category: {}\n", yaml(c)));
+    }
     if let Some(sum) = &t.summary {
         s.push_str(&format!("summary: {}\n", yaml(sum)));
     }
@@ -523,7 +527,7 @@ fn index(catalogue: &Catalogue, app: &str, thumbnails: &BTreeMap<String, String>
     let mut groups: BTreeMap<&str, Vec<&Node>> = BTreeMap::new();
     let mut other = Vec::new();
     for t in types(catalogue) {
-        match &t.group {
+        match t.category.as_ref().or(t.group.as_ref()) {
             Some(g) => groups.entry(g.as_str()).or_default().push(t),
             None => other.push(t),
         }
@@ -590,7 +594,12 @@ fn range(v: &Control) -> String {
             }
             None => "any".into(),
         },
-        Kind::Choice => v.choices.join(", "),
+        Kind::Choice => v
+            .choices
+            .iter()
+            .map(|c| labelled(v, c))
+            .collect::<Vec<_>>()
+            .join(", "),
         Kind::Text => "text".into(),
         Kind::Vec2 => "x, y".into(),
         Kind::Vec3 => "x, y, z".into(),
@@ -600,6 +609,14 @@ fn range(v: &Control) -> String {
             None => "numbers".into(),
         },
         Kind::Shaped => "structured".into(),
+    }
+}
+
+/// A choice as the table shows it: `Instant (`polaroid_600`)` when labelled, else as it is.
+fn labelled(v: &Control, choice: &str) -> String {
+    match v.choice_labels.get(choice) {
+        Some(label) => format!("{label} (`{choice}`)"),
+        None => choice.to_string(),
     }
 }
 
@@ -630,6 +647,7 @@ fn default(v: &Control) -> String {
             }
         }
         (Kind::Text, Json::String(t)) if t.is_empty() => "empty".into(),
+        (Kind::Choice, Json::String(t)) => labelled(v, t),
         (_, Json::String(t)) => t.clone(),
         (Kind::Colour, Json::Array(a)) => hex(a).unwrap_or_else(|| numbers(a)),
         (Kind::Floats, Json::Array(a)) if a.len() > 4 => format!("{} numbers", a.len()),

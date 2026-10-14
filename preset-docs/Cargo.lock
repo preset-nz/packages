@@ -165,8 +165,6 @@ dependencies = [
 [[package]]
 name = "rhizome-core"
 version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9270992ec5527404939a3e57dccc1534b428064d00a979aa2ae8397139f7393"
 dependencies = [
  "serde",
  "serde_json",

@@ -3,6 +3,8 @@
 //! `bindable`, …), so an app on rhizome can hand over its schema as it is; an app that
 //! isn't can build a [`Catalogue`] by hand. Fields the generator doesn't use are ignored.
 
+use std::collections::BTreeMap;
+
 use serde::Deserialize;
 use serde_json::Value as Json;
 
@@ -26,6 +28,10 @@ pub struct Node {
     /// The heading it sits under in the index.
     #[serde(default)]
     pub group: Option<String>,
+    /// What the node is to someone browsing, such as `colour`. The index groups by it, and
+    /// falls back to `group` for a node without one.
+    #[serde(default)]
+    pub category: Option<String>,
     /// Its controls, in the order the table lists them.
     #[serde(default)]
     pub values: Vec<Control>,
@@ -51,6 +57,9 @@ pub struct Control {
     pub soft_max: bool,
     #[serde(default)]
     pub choices: Vec<String>,
+    /// A display label for some of the choices, by choice. A choice with none shows as it is.
+    #[serde(default)]
+    pub choice_labels: BTreeMap<String, String>,
     #[serde(default)]
     pub len: Option<usize>,
     /// A name for each step of an int control, read instead of the number.

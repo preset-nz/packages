@@ -304,3 +304,113 @@ fn a_page_with_a_thumbnail_puts_its_group_in_a_table() {
     );
     fs::remove_dir_all(&dir).unwrap();
 }
+
+/// Ops of a made-up editor: two categories, one node with only a group, one with neither.
+const CATEGORISED: &str = r#"{"types": [
+  {"name": "film", "label": "Film", "group": "modifier", "category": "colour", "summary": "A look.",
+   "values": [{"key": "stock", "kind": "choice", "default": "sx70",
+     "choices": ["sx70", "polaroid_600", "plain"],
+     "choice_labels": {"polaroid_600": "Instant"}}]},
+  {"name": "blur", "group": "modifier", "category": "distortion"},
+  {"name": "crop", "group": "geometry"},
+  {"name": "loose"}
+]}"#;
+
+fn categorised(name: &str) -> Page {
+    pages(&read_catalogue(CATEGORISED).unwrap(), "Example")
+        .into_iter()
+        .find(|p| p.file_name == name)
+        .unwrap()
+}
+
+#[test]
+fn the_index_groups_by_category_then_group_then_other() {
+    let index = categorised(INDEX).content;
+    let heading = |h: &str| index.find(h).unwrap_or_else(|| panic!("no {h}\n{index}"));
+    // headings keep their order: sorted, with Other last
+    assert!(heading("## Colour") < heading("## Distortion"));
+    assert!(heading("## Distortion") < heading("## Geometry"));
+    assert!(heading("## Geometry") < heading("## Other"));
+    assert!(
+        !index.contains("## Modifier"),
+        "the lane is shadowed by the category"
+    );
+    let colour = &index[heading("## Colour")..heading("## Distortion")];
+    assert!(colour.contains("[Film](film.md)"));
+}
+
+#[test]
+fn a_thumbnail_still_shows_under_a_category() {
+    let dir = scratch("category-thumbnail");
+    let catalogue = read_catalogue(CATEGORISED).unwrap();
+    write(&dir, &catalogue, "Example").unwrap();
+    let path = dir.join("film.md");
+    let named = fs::read_to_string(&path).unwrap().replacen(
+        "node: film\n",
+        "node: film\nthumbnail: \"img/film.webp\"\n",
+        1,
+    );
+    fs::write(&path, named).unwrap();
+    write(&dir, &catalogue, "Example").unwrap();
+    let index = fs::read_to_string(dir.join(INDEX)).unwrap();
+    let colour = index
+        .split("## Colour")
+        .nth(1)
+        .unwrap()
+        .split("## ")
+        .next()
+        .unwrap();
+    assert!(colour.contains("| ![Film](img/film.webp) | [Film](film.md) | A look. |"));
+    assert!(
+        index
+            .split("## Distortion")
+            .nth(1)
+            .unwrap()
+            .starts_with("\n\n- [blur](blur.md)")
+    );
+    fs::remove_dir_all(&dir).unwrap();
+}
+
+#[test]
+fn a_page_names_its_category_only_when_it_has_one() {
+    let film = categorised("film.md").content;
+    assert!(film.contains("group: modifier\ncategory: colour\nsummary: A look.\n"));
+    assert!(!categorised("crop.md").content.contains("category"));
+    // rewriting an old page adds the key in place and keeps the rest
+    let old = film.replace("category: colour\n", "");
+    assert_eq!(update(Some(&old), &categorised("film.md")), film);
+    // and a node that loses its category loses the key
+    assert!(!update(Some(&film), &categorised("crop.md")).contains("category: colour"));
+}
+
+#[test]
+fn a_labelled_choice_shows_its_label_and_key() {
+    let film = categorised("film.md").content;
+    assert!(
+        film.contains("sx70, Instant (`polaroid_600`), plain"),
+        "{film}"
+    );
+    // the default is shown the same way when labelled, and as it is when not
+    assert!(film.contains("| sx70 |"), "{film}");
+    let other = CATEGORISED.replace("\"default\": \"sx70\"", "\"default\": \"polaroid_600\"");
+    let page = pages(&read_catalogue(&other).unwrap(), "Example")
+        .into_iter()
+        .find(|p| p.file_name == "film.md")
+        .unwrap();
+    assert!(page.content.contains("| Instant (`polaroid_600`) |"));
+}
+
+#[test]
+fn no_category_or_labels_means_the_pages_as_before() {
+    // the goldens above are the fixture's pages from before the fields existed; an explicit
+    // empty form of the new fields reads to the very same pages
+    let explicit = FIXTURE.replace(
+        "\"kind\": \"choice\"",
+        "\"kind\": \"choice\", \"choice_labels\": {}",
+    );
+    assert_ne!(explicit, FIXTURE);
+    let a = pages(&schema(), "Example");
+    let b = pages(&read_catalogue(&explicit).unwrap(), "Example");
+    assert_eq!(a, b);
+    assert!(a.iter().all(|p| !p.content.contains("category:")));
+}
