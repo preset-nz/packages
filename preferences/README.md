@@ -99,9 +99,51 @@ Kinds and how the window renders them:
 | `List` | `Vec<String>` | comma-separated line |
 | `ReadonlyPath` | `String` | shown, selectable, not editable |
 
-A schema is checked once at load: every id is `section.key`, every section is
-declared, ids are unique, defaults pass their own kind. A bad declaration
-panics, because it is a programming error.
+A schema is checked once at load: every id is `section.key`, every section
+is declared, ids are unique, defaults pass their own kind, and pages hold
+their sections (below). A bad declaration panics, because it is a
+programming error.
+
+## Rust: pages and advanced sections
+
+A long list of settings splits into **pages**, drawn as tabs. Inside a page,
+a section marked **advanced** waits behind a closed *Advanced* disclosure at
+the page's foot. The first view of every page is the short list most people
+need; the rest is one click away.
+
+```rust
+use preset_preferences::{page, pref, section, Kind, Schema};
+
+Schema {
+    version: 1,
+    pages: vec![
+        page("general", "General").summary("How the app looks and starts."),
+        page("library", "Library").summary("Where images live and how long deleted ones stay."),
+    ],
+    sections: vec![
+        section("appearance", "Appearance").page("general"),
+        section("library", "Library").page("library"),
+        section("cache", "Cache").page("library").advanced(),
+    ],
+    prefs: vec![/* as before */],
+}
+```
+
+- A page is a level above sections and is presentation only. Ids stay
+  `section.key` and the file never names a page, so moving a section to
+  another page changes nothing on disk.
+- Sections show in declared order. A page's advanced sections all sit under
+  its one disclosure, also in declared order.
+- `advanced` is per section, never per preference. If half a section is
+  advanced, split it in two.
+- `pages` may be empty, as in every schema before pages existed: one page, no
+  tabs. The disclosure still works there. `Schema` derives `Default`, so
+  `..Schema::default()` fills the fields you leave out.
+- Checked at load: page ids are unique, section ids are unique, every section
+  names a declared page when there are pages and none when there are not, and
+  every page has at least one section that is not advanced.
+- A page's `summary` is one sentence. The window does not show it; the
+  generated docs lead with it (see *Documentation*).
 
 ## Rust: reading in the backend
 
@@ -236,6 +278,24 @@ each preference's help text, and prints the file path in its footer. Escape
 closes it. It draws its own modal shell on the same Tailwind tokens facets
 uses, so it needs no dialog primitive from your app.
 
+With pages declared, a row of tabs sits under the title. Arrow keys, Home and
+End move between tabs. A tab holding a changed value carries the same dot, and
+so does a closed *Advanced* row, so nothing set is out of sight without a
+sign. Two optional props:
+
+```tsx
+<SettingsWindow
+  open={open}
+  onOpenChange={setOpen}
+  persistKey="strata.settings"            // remember the tab and each Advanced row
+  icons={{ general: <Gear />, library: <Images /> }}  // by page id, above the label
+/>
+```
+
+Without `persistKey` the window opens on the first page with every
+disclosure closed. Icons are React nodes from your app's own icon set, so
+the schema carries no icon names.
+
 ## TypeScript: UI ephemera
 
 ```ts
@@ -249,6 +309,39 @@ are neither a preference nor part of a document: collapsed sections, a panel
 width, the last tab. Keys are `<app>.<surface>.<thing>` with the app prefix
 mandatory. Every read and write is guarded, so a blocked or missing
 localStorage just makes the app forgetful, not broken.
+A `null` key keeps the state in memory only, which lets a component make
+persistence opt-in without calling a different hook.
+
+---
+
+## Documentation
+
+Settings document themselves the way Oblique's ops do: through
+[preset-docs](https://github.com/preset-nz/preset-docs). Each page becomes one
+markdown page. Its generated block holds the page summary and one table per
+section, advanced sections last and marked. A preference's `help` is its
+row's sentence. Prose you write around the block is kept, and `--check`
+fails a missing or stale page, so it belongs in the app's `just check`.
+
+Dump the schema as JSON and hand it to the command line with
+`--preferences`:
+
+```rust
+// examples/settings-schema.rs in the app
+println!("{}", serde_json::to_string_pretty(&app::preferences::schema())?);
+```
+
+```sh
+cargo run -q --example settings-schema > target/settings.json
+preset-docs target/settings.json docs/settings --preferences --app Strata          # write
+preset-docs target/settings.json docs/settings --preferences --app Strata --check  # fail if stale
+```
+
+A snapshot (`preferences_get`'s output) reads too: preset-docs takes the
+schema under its `schema` key. Read-only paths show *set by the app* as their
+default, because the real one differs per machine. A schema without pages
+gives one page, `settings.md`, with no summary, and `--check` fails it: declare
+pages to document settings. The page format is in the preset-docs README.
 
 ---
 

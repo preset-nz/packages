@@ -1,9 +1,12 @@
 // From the crate's schema to a facets PropertySchema: one group per section,
 // one field per preference. Changed values get a marker on the label, so the
 // default state stays the visually quiet baseline.
+//
+// Pages split the sections into tabs, and each page splits again into the
+// sections it always shows and the advanced ones behind its disclosure.
 
 import type { FieldDef, PropertySchema } from "@preset.nz/facets"
-import { type PrefDef, type Snapshot, sectionOf } from "./api"
+import { type PrefDef, type PrefPage, type PrefSection, type Snapshot, sectionOf } from "./api"
 
 export const CHANGED_MARK = " •"
 
@@ -15,6 +18,37 @@ export function isDefault(snap: Snapshot, id: string): boolean {
 
 export function sectionHasChanges(snap: Snapshot, section: string): boolean {
   return snap.schema.prefs.some((p) => sectionOf(p.id) === section && !isDefault(snap, p.id))
+}
+
+/** A page as the window draws it: its sections split by disclosure level. */
+export type PageView = {
+  page: PrefPage
+  basic: PrefSection[]
+  advanced: PrefSection[]
+}
+
+/** Id of the one page a schema without pages gets. Never shown. */
+export const IMPLICIT_PAGE = ""
+
+/**
+ * The pages in declared order. A schema without pages gets one implicit page
+ * holding every section, so the window has a single code path.
+ */
+export function pageViews(snap: Snapshot): PageView[] {
+  const { pages = [], sections } = snap.schema
+  const declared = pages.length > 0 ? pages : [{ id: IMPLICIT_PAGE, label: "" }]
+  return declared.map((page) => {
+    const on = sections.filter((s) => pages.length === 0 || s.page === page.id)
+    return {
+      page,
+      basic: on.filter((s) => !s.advanced),
+      advanced: on.filter((s) => s.advanced),
+    }
+  })
+}
+
+export function sectionsHaveChanges(snap: Snapshot, sections: PrefSection[]): boolean {
+  return sections.some((s) => sectionHasChanges(snap, s.id))
 }
 
 export function hasAnyChanges(snap: Snapshot): boolean {
@@ -49,10 +83,11 @@ function toField(def: PrefDef, changed: boolean): FieldDef {
   }
 }
 
-export function toPropertySchema(snap: Snapshot): PropertySchema {
+/** The facets schema for `sections`; every section when none are given. */
+export function toPropertySchema(snap: Snapshot, sections?: PrefSection[]): PropertySchema {
   return {
     version: snap.schema.version,
-    groups: snap.schema.sections.map((s) => ({
+    groups: (sections ?? snap.schema.sections).map((s) => ({
       id: s.id,
       title: s.label,
       rows: snap.schema.prefs

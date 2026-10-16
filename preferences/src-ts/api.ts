@@ -23,10 +23,22 @@ export type PrefDef = PrefKind & {
   default: PrefValue
 }
 
-export type PrefSection = { id: string; label: string }
+/** A tab in the Settings window. Presentation only: ids and the file never name it. */
+export type PrefPage = { id: string; label: string; summary?: string }
+
+export type PrefSection = {
+  id: string
+  label: string
+  /** Set exactly when the schema declares pages. */
+  page?: string
+  /** Hidden behind the page's Advanced disclosure. */
+  advanced?: boolean
+}
 
 export type PrefSchema = {
   version: number
+  /** Absent or empty: one page holding every section, no tabs. */
+  pages?: PrefPage[]
   sections: PrefSection[]
   prefs: PrefDef[]
 }

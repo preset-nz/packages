@@ -90,10 +90,29 @@ pub struct Option_ {
     pub label: String,
 }
 
+/// A tab in the Settings window. Holds one or more sections. Pages are
+/// presentation only: ids and the TOML file never mention them, so moving a
+/// section to another page changes nothing on disk.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Page {
+    pub id: String,
+    pub label: String,
+    /// One sentence on what the page holds. The generated docs lead with it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Section {
     pub id: String,
     pub label: String,
+    /// The page it sits on. Required when the schema declares pages, absent
+    /// when it does not.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page: Option<String>,
+    /// Hidden behind the page's Advanced disclosure until someone opens it.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub advanced: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -110,9 +129,14 @@ pub struct PrefDef {
 
 /// Everything the app declares. `version` is the *file* version; bump it when
 /// a stored value's meaning changes and handle the migration in `migrate`.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+///
+/// `pages` may be empty: the window then shows every section on one page,
+/// with no tabs.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct Schema {
     pub version: u32,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pages: Vec<Page>,
     pub sections: Vec<Section>,
     pub prefs: Vec<PrefDef>,
 }
@@ -122,10 +146,21 @@ impl Schema {
         self.prefs.iter().find(|p| p.id == id)
     }
 
+    /// The sections on `page`, in declared order. With no pages declared,
+    /// every section is on the one implicit page, whatever id is asked for.
+    pub fn sections_on<'a>(&'a self, page: &'a str) -> impl Iterator<Item = &'a Section> {
+        let paged = !self.pages.is_empty();
+        self.sections
+            .iter()
+            .filter(move |s| !paged || s.page.as_deref() == Some(page))
+    }
+
     /// Check the declaration itself: every id is `section.key`, every section
-    /// exists, ids are unique, defaults match their kind. Called once by the
-    /// store; a bad schema is a programming error, so this panics.
+    /// exists, ids are unique, defaults match their kind, and pages hold
+    /// their sections. Called once by the store; a bad schema is a
+    /// programming error, so this panics.
     pub fn assert_valid(&self) {
+        self.assert_pages_valid();
         let mut seen = std::collections::HashSet::new();
         for p in &self.prefs {
             let (section, key) = split_id(&p.id)
@@ -149,6 +184,48 @@ impl Schema {
                 p.kind.validate(&p.default).is_ok(),
                 "preference `{}` has a default that fails its own kind",
                 p.id
+            );
+        }
+    }
+}
+
+impl Schema {
+    fn assert_pages_valid(&self) {
+        let mut pages = std::collections::HashSet::new();
+        for p in &self.pages {
+            assert!(pages.insert(&p.id), "page `{}` declared twice", p.id);
+        }
+        let mut sections = std::collections::HashSet::new();
+        for s in &self.sections {
+            assert!(sections.insert(&s.id), "section `{}` declared twice", s.id);
+            match (&s.page, self.pages.is_empty()) {
+                (Some(p), true) => {
+                    panic!(
+                        "section `{}` names page `{p}`, but no pages are declared",
+                        s.id
+                    )
+                }
+                (None, false) => panic!("section `{}` names no page", s.id),
+                (Some(p), false) => assert!(
+                    pages.contains(p),
+                    "section `{}` names undeclared page `{p}`",
+                    s.id
+                ),
+                (None, true) => {}
+            }
+        }
+        for p in &self.pages {
+            let mut on = self.sections_on(&p.id);
+            assert!(
+                on.any(|s| !s.advanced),
+                "page `{}` has no section that is not advanced",
+                p.id
+            );
+        }
+        if self.pages.is_empty() && !self.sections.is_empty() {
+            assert!(
+                self.sections.iter().any(|s| !s.advanced),
+                "every section is advanced"
             );
         }
     }
@@ -251,6 +328,37 @@ pub fn section(id: &str, label: &str) -> Section {
     Section {
         id: id.to_string(),
         label: label.to_string(),
+        page: None,
+        advanced: false,
+    }
+}
+
+impl Section {
+    /// Put the section on a declared page.
+    pub fn page(mut self, page: &str) -> Self {
+        self.page = Some(page.to_string());
+        self
+    }
+
+    /// Hide the section behind its page's Advanced disclosure.
+    pub fn advanced(mut self) -> Self {
+        self.advanced = true;
+        self
+    }
+}
+
+pub fn page(id: &str, label: &str) -> Page {
+    Page {
+        id: id.to_string(),
+        label: label.to_string(),
+        summary: None,
+    }
+}
+
+impl Page {
+    pub fn summary(mut self, summary: &str) -> Self {
+        self.summary = Some(summary.to_string());
+        self
     }
 }
 
@@ -305,7 +413,102 @@ mod tests {
                 },
                 4,
             )],
+            ..Schema::default()
         }
         .assert_valid();
+    }
+
+    fn paged(sections: Vec<Section>) -> Schema {
+        Schema {
+            version: 1,
+            pages: vec![page("general", "General"), page("library", "Library")],
+            sections,
+            prefs: vec![],
+        }
+    }
+
+    #[test]
+    fn pages_hold_their_sections_in_order() {
+        let s = paged(vec![
+            section("appearance", "Appearance").page("general"),
+            section("library", "Library").page("library"),
+            section("cache", "Cache").page("library").advanced(),
+        ]);
+        s.assert_valid();
+        let ids: Vec<_> = s.sections_on("library").map(|s| s.id.as_str()).collect();
+        assert_eq!(ids, ["library", "cache"]);
+    }
+
+    #[test]
+    fn without_pages_every_section_is_on_one_page() {
+        let s = Schema {
+            version: 1,
+            sections: vec![section("a", "A"), section("b", "B").advanced()],
+            ..Schema::default()
+        };
+        s.assert_valid();
+        assert_eq!(s.sections_on("anything").count(), 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "names no page")]
+    fn paged_schema_rejects_a_section_without_a_page() {
+        paged(vec![
+            section("appearance", "Appearance").page("general"),
+            section("library", "Library"),
+        ])
+        .assert_valid();
+    }
+
+    #[test]
+    #[should_panic(expected = "undeclared page")]
+    fn paged_schema_rejects_an_unknown_page() {
+        paged(vec![section("appearance", "Appearance").page("export")]).assert_valid();
+    }
+
+    #[test]
+    #[should_panic(expected = "no pages are declared")]
+    fn unpaged_schema_rejects_a_page_name() {
+        Schema {
+            version: 1,
+            sections: vec![section("a", "A").page("general")],
+            ..Schema::default()
+        }
+        .assert_valid();
+    }
+
+    #[test]
+    #[should_panic(expected = "has no section that is not advanced")]
+    fn a_page_needs_a_basic_section() {
+        paged(vec![
+            section("appearance", "Appearance").page("general"),
+            section("cache", "Cache").page("library").advanced(),
+        ])
+        .assert_valid();
+    }
+
+    #[test]
+    #[should_panic(expected = "section `a` declared twice")]
+    fn schema_rejects_a_duplicate_section() {
+        Schema {
+            version: 1,
+            sections: vec![section("a", "A"), section("a", "Again")],
+            ..Schema::default()
+        }
+        .assert_valid();
+    }
+
+    #[test]
+    fn a_schema_without_pages_serialises_as_before() {
+        let s = Schema {
+            version: 1,
+            sections: vec![section("a", "A")],
+            ..Schema::default()
+        };
+        let json = serde_json::to_value(&s).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({"version": 1, "sections": [{"id": "a", "label": "A"}], "prefs": []})
+        );
     }
 }

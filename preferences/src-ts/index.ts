@@ -1,5 +1,12 @@
 export * from "./api"
-export { hasAnyChanges, isDefault, sectionHasChanges } from "./facets-bridge"
+export {
+  hasAnyChanges,
+  isDefault,
+  type PageView,
+  pageViews,
+  sectionHasChanges,
+  sectionsHaveChanges,
+} from "./facets-bridge"
 export { onSettingsMenu, SETTINGS_MENU_EVENT } from "./menu"
 export { registerPreferenceRenderers } from "./renderers"
 export { SettingsWindow } from "./SettingsWindow"

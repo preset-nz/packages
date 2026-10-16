@@ -19,6 +19,7 @@
 //!         Kind::Int { min: Some(1), max: Some(365) },
 //!         30,
 //!     )],
+//!     ..Schema::default()
 //! };
 //! let prefs = Preferences::open(schema, "/tmp/preferences.toml");
 //! assert_eq!(prefs.get_int("library.retention_days"), Some(30));
@@ -32,7 +33,9 @@ pub mod tauri;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard};
 
-pub use schema::{options, pref, section, Kind, Option_, PrefDef, Schema, Section, Value};
+pub use schema::{
+    options, page, pref, section, Kind, Option_, Page, PrefDef, Schema, Section, Value,
+};
 pub use store::{Error, Store, Warning};
 
 /// A shared, thread-safe handle on one store. Clone it freely; every clone

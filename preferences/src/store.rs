@@ -318,6 +318,7 @@ mod tests {
                     &["jpg", "png"][..],
                 ),
             ],
+            ..Schema::default()
         }
     }
 

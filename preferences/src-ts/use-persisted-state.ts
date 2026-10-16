@@ -7,15 +7,18 @@
 // throw, so every read and write is guarded and the app behaves the same
 // without it, just forgetfully.
 //
-// Keys are `<app>.<surface>.<thing>`; the app prefix is mandatory.
+// Keys are `<app>.<surface>.<thing>`; the app prefix is mandatory. A null key
+// keeps the state in memory only, so a component can make persistence opt-in
+// without calling a different hook.
 
 import { useCallback, useEffect, useState } from "react"
 
 export function usePersistedState<T>(
-  key: string,
+  key: string | null,
   initial: T,
 ): [T, (next: T | ((prev: T) => T)) => void] {
   const [value, setValueRaw] = useState<T>(() => {
+    if (key === null) return initial
     try {
       const raw = localStorage.getItem(key)
       if (raw === null) return initial
@@ -33,6 +36,7 @@ export function usePersistedState<T>(
   }, [])
 
   useEffect(() => {
+    if (key === null) return
     try {
       localStorage.setItem(key, JSON.stringify(value))
     } catch {
