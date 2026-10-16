@@ -189,12 +189,31 @@ export interface PropertyGroupDef {
   description?: string
   collapsible?: boolean
   defaultCollapsed?: boolean
+  /** The id of the page the group sits on. Required when the schema declares `pages`, absent otherwise. */
+  page?: string
+  /** Sits behind the page's one closed Advanced row, at the foot of the page. */
+  advanced?: boolean
+}
+
+/**
+ * A tab in the inspector. Pages are presentation only: a field's `path` never
+ * names one, so moving a group to another page changes no values.
+ */
+export interface PropertyPageDef {
+  id: string
+  label: string
 }
 
 export interface PropertySchema {
   version: number
   /** What the scope is called, e.g. "Filter". Heads the card; `PropertyPanel`'s `title` overrides it. */
   title?: string
+  /**
+   * Splits the inspector into tabs, in this order. Omit it for one page and no
+   * tab row. Each page needs at least one group that isn't `advanced`; see
+   * `schemaProblems`.
+   */
+  pages?: PropertyPageDef[]
   groups: PropertyGroupDef[]
 }
 

@@ -1,11 +1,12 @@
-import type { FieldDef, PropertySchema } from "../../src"
+import { type FieldDef, type PropertySchema, schemaProblems } from "../../src"
 
 const DISPLAY_KINDS = new Set(["separator", "label"])
 
 type Parsed<T> = { ok: true; value: T } | { ok: false; error: string }
 
-// Structural checks only, enough that the panel won't throw on its way in.
-// Per-kind validation is the JSON Schema's job (epic 01), not this file's.
+// Structural checks, enough that the panel won't throw on its way in, and the
+// page rules registerScope enforces. Per-kind validation is the JSON Schema's
+// job (epic 01), not this file's.
 
 export function parseSchema(text: string): Parsed<PropertySchema> {
   let raw: unknown
@@ -34,7 +35,10 @@ export function parseSchema(text: string): Parsed<PropertySchema> {
       }
     }
   }
-  return { ok: true, value: raw as unknown as PropertySchema }
+  const schema = raw as unknown as PropertySchema
+  const [problem] = schemaProblems(schema)
+  if (problem) return fail(problem)
+  return { ok: true, value: schema }
 }
 
 export function parseValues(text: string): Parsed<Record<string, unknown>> {

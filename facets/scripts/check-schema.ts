@@ -10,7 +10,8 @@
  * 2. Props: per kind and per helper type, property names and which are
  *    required. Function-typed props are code-only and skipped.
  * 3. Fixtures: the playground's starters and some hand-made cases must pass;
- *    a set of known mistakes must fail.
+ *    a set of known mistakes must fail. The starters must also pass
+ *    schemaProblems(), the page rules JSON Schema can't express.
  *
  * Runs on Node's type stripping: `node scripts/check-schema.ts`.
  */
@@ -19,6 +20,7 @@ import Ajv from "ajv"
 // TS 7 is native and has no JS compiler API, so the parse uses TypeScript 5.9.
 import ts from "ts5"
 import { STARTERS } from "../playground/src/defaults.ts"
+import { schemaProblems } from "../src/pages.ts"
 
 const root = new URL("../", import.meta.url)
 const read = (p: string) => readFileSync(new URL(p, root), "utf8")
@@ -144,6 +146,7 @@ for (const typeName of unions.get("BuiltinFieldDef") ?? []) {
 }
 compare("custom", "BaseField", defs.custom)
 compare("group", "PropertyGroupDef", defs.group)
+compare("page", "PropertyPageDef", defs.page)
 compare("disabledWhen", "DisabledWhen", defs.disabledWhen)
 compare("selectOption", "SelectOption", defs.selectOption)
 compare("vectorComponent", "VectorComponentDef", defs.vectorComponent)
@@ -194,7 +197,41 @@ const valid: Array<[string, unknown]> = [
     },
   ],
 ]
+const paged = (groups: unknown[]) => ({
+  version: 1,
+  pages: [
+    { id: "general", label: "General" },
+    { id: "export", label: "Export" },
+  ],
+  groups,
+})
+valid.push(
+  [
+    "pages, with an advanced group",
+    paged([
+      { id: "a", page: "general", rows: [] },
+      { id: "b", page: "general", advanced: true, rows: [] },
+      { id: "c", page: "export", rows: [] },
+    ]),
+  ],
+  [
+    "an advanced group without pages",
+    { version: 1, groups: [{ id: "a", advanced: true, rows: [] }] },
+  ],
+)
 const invalid: Array<[string, unknown]> = [
+  ["a group without page when there are pages", paged([{ id: "a", rows: [] }])],
+  [
+    "a group with page when there are none",
+    { version: 1, groups: [{ id: "a", page: "x", rows: [] }] },
+  ],
+  ["a page without label", { version: 1, pages: [{ id: "p" }], groups: [] }],
+  [
+    "an unknown prop on a page",
+    { version: 1, pages: [{ id: "p", label: "P", icon: "x" }], groups: [] },
+  ],
+  ["an empty pages list", { version: 1, pages: [], groups: [] }],
+  ["advanced as a string", { version: 1, groups: [{ id: "a", advanced: "yes", rows: [] }] }],
   ["a misspelled prop on text", wrap({ kind: "text", id: "t", path: "t", placehodler: "x" })],
   ["number without path", wrap({ kind: "number", id: "n" })],
   ["separator with a path", wrap({ kind: "separator", id: "s", path: "s" })],
@@ -220,6 +257,9 @@ for (const [name, doc] of valid) {
 }
 for (const [name, doc] of invalid) {
   if (validate(doc)) fail(`should fail, passes: ${name}`)
+}
+for (const s of STARTERS) {
+  for (const p of schemaProblems(s.schema)) fail(`starter "${s.id}": ${p}`)
 }
 
 // ---- Report -------------------------------------------------------------------

@@ -12,6 +12,7 @@
       "scripts/**",
       "playground/src/**/*.ts",
       "playground/src/**/*.tsx",
+      "playground/test/**",
       "schema/**",
       "*.json",
       "!playground/dist"

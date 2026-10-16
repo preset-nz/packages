@@ -19,6 +19,14 @@
       "type": "string",
       "description": "What the scope is called, e.g. \"Filter\". Heads the card; the host can override it."
     },
+    "pages": {
+      "type": "array",
+      "description": "Splits the inspector into tabs, in this order. Omit it for one page and no tab row. With pages, every group names one in `page`, and every page needs a group that isn't advanced.",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/page"
+      }
+    },
     "groups": {
       "type": "array",
       "description": "Rendered top to bottom, with a rule between groups.",
@@ -53,6 +61,14 @@
           "type": "boolean",
           "description": "Start folded."
         },
+        "page": {
+          "type": "string",
+          "description": "The id of the page this group sits on. Required when the schema declares pages, not allowed otherwise."
+        },
+        "advanced": {
+          "type": "boolean",
+          "description": "Sits behind the page's one closed Advanced row, at the foot of the page."
+        },
         "rows": {
           "type": "array",
           "description": "A field is a full-width row; an array of fields is one row laid out as a grid (usually two).",
@@ -69,6 +85,23 @@
               }
             ]
           }
+        }
+      }
+    },
+    "page": {
+      "type": "object",
+      "description": "A tab in the inspector. Presentation only: no field path names a page.",
+      "required": ["id", "label"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Unique among the pages. Groups name it in `page`."
+        },
+        "label": {
+          "type": "string",
+          "description": "The tab's text."
         }
       }
     },
@@ -767,5 +800,46 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "pages": true
+        },
+        "required": ["pages"]
+      },
+      "then": {
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "page": true
+              },
+              "required": ["page"]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "not": {
+                "type": "object",
+                "properties": {
+                  "page": true
+                },
+                "required": ["page"]
+              }
+            }
+          }
+        }
+      },
+      "$comment": "With pages every group names one; without, none does. Which page, and whether it exists, is checked in code: schemaProblems()."
+    }
+  ]
 }

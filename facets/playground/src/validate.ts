@@ -36,5 +36,7 @@ function describe(e: ErrorObject): string {
   if (e.keyword === "additionalProperties")
     return `${where}: unknown prop "${e.params.additionalProperty}"`
   if (e.keyword === "required") return `${where}: missing "${e.params.missingProperty}"`
+  if (e.keyword === "not" && /^groups\[\d+\]$/.test(where))
+    return `${where}: "page" needs "pages" declared at the root`
   return `${where}: ${e.message}`
 }
