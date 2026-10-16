@@ -226,10 +226,11 @@ never reach the build. From `src/index.css`:
 Nothing fails when these lines are missing. The build succeeds and the
 Settings window renders unstyled.
 
-The window renders through facets, so the same five shadcn-shaped primitives
-facets needs must exist at `@/components/ui/{input,label,checkbox,separator,select}`.
-See the facets README for the exact exports. Nothing else is imported from
-your app.
+The window renders through facets, so the primitives facets needs must exist
+at `@/components/ui/*`; the facets README lists them. The window also imports
+`@/components/ui/tabs`, which re-exports ux-kit's Tabs (`Tabs`, `TabsList`,
+`TabsTrigger`, `TabsContent`), the same one-line re-export as the others.
+Nothing else is imported from your app.
 
 ## TypeScript: using
 
@@ -278,8 +279,8 @@ each preference's help text, and prints the file path in its footer. Escape
 closes it. It draws its own modal shell on the same Tailwind tokens facets
 uses, so it needs no dialog primitive from your app.
 
-With pages declared, a row of tabs sits under the title. Arrow keys, Home and
-End move between tabs. A tab holding a changed value carries the same dot, and
+With pages declared, a row of ux-kit tabs sits under the title. Arrow keys,
+Home and End move between tabs and select as they go. A tab holding a changed value carries the same dot, and
 so does a closed *Advanced* row, so nothing set is out of sight without a
 sign. Two optional props:
 

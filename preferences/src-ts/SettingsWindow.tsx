@@ -2,8 +2,8 @@
 // comes from the crate, the fields from facets, the values from the store.
 // Saves on every change, no Save button. Escape closes.
 //
-// A schema with pages gets a row of tabs under the title; one without gets
-// none. On each page the advanced sections sit behind a closed disclosure at
+// A schema with pages gets a row of tabs under the title (ux-kit's Tabs, via
+// the app's `@/components/ui/tabs`); one without gets none. On each page the advanced sections sit behind a closed disclosure at
 // the foot, so the first view is the short list most people need.
 //
 // It draws its own modal shell rather than importing a dialog primitive,
@@ -11,7 +11,8 @@
 // Tailwind on the same tokens facets already assumes.
 
 import { PropertyPanel, registerBuiltinRenderers, registerScope } from "@preset.nz/facets"
-import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react"
+import { type ReactNode, useEffect, useMemo, useRef } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { PrefSection, PrefValue, Snapshot } from "./api"
 import {
   CHANGED_MARK,
@@ -123,15 +124,36 @@ export function SettingsWindow({
       : current.basic
     : []
 
-  // With tabs, the scrolling body is the selected tab's panel.
-  const panelAttrs =
-    current && views.length > 1
-      ? {
-          role: "tabpanel",
-          id: tabPanelId(current.page.id),
-          "aria-labelledby": tabId(current.page.id),
-        }
-      : {}
+  // The page: its basic sections, the Advanced row, and the help and resets
+  // for whatever is in view. With pages it sits in the selected tab's panel.
+  const body =
+    !snap || !current ? (
+      <p className="p-4 text-xs text-muted-foreground">Loading…</p>
+    ) : (
+      <>
+        <PropertyPanel scopeKey={SCOPE} selection={snap} ctx={snap} />
+        {current.advanced.length > 0 && (
+          <AdvancedDisclosure
+            open={advancedOpen}
+            changed={sectionsHaveChanges(snap, current.advanced)}
+            onToggle={() => setExpanded((prev) => ({ ...prev, [current.page.id]: !advancedOpen }))}
+          >
+            <PropertyPanel scopeKey={ADVANCED_SCOPE} selection={snap} ctx={snap} />
+          </AdvancedDisclosure>
+        )}
+        <div className="flex flex-col gap-2 border-t border-border px-3 py-3 empty:hidden">
+          {shown.map((s) => (
+            <SectionFooter
+              key={s.id}
+              label={s.label}
+              changed={sectionHasChanges(snap, s.id)}
+              help={helpFor(snap, s.id)}
+              onReset={() => void reset(s.id)}
+            />
+          ))}
+        </div>
+      </>
+    )
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: backdrop click is a pointer shortcut; Escape closes from the keyboard
@@ -159,46 +181,43 @@ export function SettingsWindow({
             Reset all
           </button>
         </header>
-        {snap && views.length > 1 && current && (
+        {snap && current && views.length > 1 ? (
           <Tabs
-            snap={snap}
-            views={views}
-            current={current.page.id}
-            icons={icons}
-            onSelect={setTab}
-          />
-        )}
-        <div className="flex-1 overflow-y-auto" {...panelAttrs}>
-          {!snap || !current ? (
-            <p className="p-4 text-xs text-muted-foreground">Loading…</p>
-          ) : (
-            <>
-              <PropertyPanel scopeKey={SCOPE} selection={snap} ctx={snap} />
-              {current.advanced.length > 0 && (
-                <AdvancedDisclosure
-                  open={advancedOpen}
-                  changed={sectionsHaveChanges(snap, current.advanced)}
-                  onToggle={() =>
-                    setExpanded((prev) => ({ ...prev, [current.page.id]: !advancedOpen }))
-                  }
+            value={current.page.id}
+            onValueChange={(page) => setTab(String(page))}
+            className="min-h-0 flex-1 gap-0"
+          >
+            <TabsList
+              variant="line"
+              activateOnFocus
+              aria-label="Settings pages"
+              className="w-full shrink-0 gap-1 rounded-none border-b border-border px-2 pt-1.5 pb-2 group-data-[orientation=horizontal]/tabs:h-auto"
+            >
+              {views.map(({ page, basic, advanced }) => (
+                <TabsTrigger
+                  key={page.id}
+                  value={page.id}
+                  className="h-auto min-w-14 flex-none flex-col gap-0.5 px-2 py-1 text-[11px]"
                 >
-                  <PropertyPanel scopeKey={ADVANCED_SCOPE} selection={snap} ctx={snap} />
-                </AdvancedDisclosure>
-              )}
-              <div className="flex flex-col gap-2 border-t border-border px-3 py-3 empty:hidden">
-                {shown.map((s) => (
-                  <SectionFooter
-                    key={s.id}
-                    label={s.label}
-                    changed={sectionHasChanges(snap, s.id)}
-                    help={helpFor(snap, s.id)}
-                    onReset={() => void reset(s.id)}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+                  {icons?.[page.id] && (
+                    <span aria-hidden="true" className="flex size-5 items-center justify-center">
+                      {icons[page.id]}
+                    </span>
+                  )}
+                  <span>
+                    {page.label}
+                    {sectionsHaveChanges(snap, [...basic, ...advanced]) && CHANGED_MARK}
+                  </span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value={current.page.id} className="overflow-y-auto">
+              {body}
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="flex-1 overflow-y-auto">{body}</div>
+        )}
         <footer className="flex h-8 shrink-0 items-center border-t border-border px-4">
           <span className="select-text truncate font-mono text-[10px] text-muted-foreground">
             {snap?.path}
@@ -209,96 +228,13 @@ export function SettingsWindow({
   )
 }
 
-const tabId = (page: string) => `preferences-tab-${page}`
-const tabPanelId = (page: string) => `preferences-panel-${page}`
-
-/**
- * The toolbar row: one tab per page, macOS-style. Arrow keys, Home and End
- * move between tabs and select as they go; only the selected tab is in the
- * Tab order. A page holding a changed value carries the changed mark.
- */
-function Tabs({
-  snap,
-  views,
-  current,
-  icons,
-  onSelect,
-}: {
-  snap: Snapshot
-  views: PageView[]
-  current: string
-  icons?: Record<string, ReactNode>
-  onSelect: (page: string) => void
-}) {
-  const listRef = useRef<HTMLDivElement>(null)
-  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const at = views.findIndex((v) => v.page.id === current)
-    const next =
-      e.key === "ArrowRight"
-        ? (at + 1) % views.length
-        : e.key === "ArrowLeft"
-          ? (at - 1 + views.length) % views.length
-          : e.key === "Home"
-            ? 0
-            : e.key === "End"
-              ? views.length - 1
-              : -1
-    const view = views[next]
-    if (!view) return
-    e.preventDefault()
-    onSelect(view.page.id)
-    listRef.current
-      ?.querySelector<HTMLButtonElement>(`#${CSS.escape(tabId(view.page.id))}`)
-      ?.focus()
-  }
-  return (
-    <div
-      ref={listRef}
-      role="tablist"
-      aria-label="Settings pages"
-      onKeyDown={onKeyDown}
-      className="flex shrink-0 items-end justify-center gap-1 border-b border-border px-2 py-1.5"
-    >
-      {views.map(({ page, basic, advanced }) => {
-        const selected = page.id === current
-        const changed = sectionsHaveChanges(snap, [...basic, ...advanced])
-        const icon = icons?.[page.id]
-        return (
-          <button
-            key={page.id}
-            type="button"
-            role="tab"
-            id={tabId(page.id)}
-            aria-selected={selected}
-            aria-controls={tabPanelId(page.id)}
-            tabIndex={selected ? 0 : -1}
-            onClick={() => onSelect(page.id)}
-            className={`flex min-w-14 flex-col items-center gap-0.5 rounded px-2 py-1 text-[11px] ${
-              selected
-                ? "bg-muted text-foreground"
-                : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-            }`}
-          >
-            {icon && (
-              <span aria-hidden="true" className="flex size-5 items-center justify-center">
-                {icon}
-              </span>
-            )}
-            <span>
-              {page.label}
-              {changed && CHANGED_MARK}
-            </span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
 /**
  * The foot of a page: closed, one quiet row; open, the advanced sections in
- * place. A closed disclosure hiding a changed value carries the changed mark,
- * so nothing set is ever out of sight without a sign.
+ * place. Drawn like a facets collapsible group header (same chevron, same
+ * title type) so the window has one kind of fold. It is not a facets group
+ * because it folds several sections at once. A closed disclosure hiding a
+ * changed value carries the changed mark, so nothing set is ever out of
+ * sight without a sign.
  */
 function AdvancedDisclosure({
   open,
@@ -313,21 +249,24 @@ function AdvancedDisclosure({
 }) {
   return (
     <div className="border-t border-border">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={onToggle}
-        className="flex w-full items-center gap-1.5 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-      >
-        <span
-          aria-hidden="true"
-          className={`inline-block transition-transform ${open ? "rotate-90" : ""}`}
+      <h3 className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={onToggle}
+          className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-1 px-1 pb-3 text-left uppercase hover:text-foreground"
         >
-          ›
-        </span>
-        Advanced
-        {changed && !open && CHANGED_MARK}
-      </button>
+          <svg
+            aria-hidden
+            viewBox="0 0 16 16"
+            className={`size-3 shrink-0 transition-transform ${open ? "" : "-rotate-90"}`}
+          >
+            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          Advanced
+          {changed && !open && CHANGED_MARK}
+        </button>
+      </h3>
       {open && children}
     </div>
   )
