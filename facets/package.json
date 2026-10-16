@@ -1,0 +1,35 @@
+{
+  "name": "@preset.nz/facets",
+  "version": "0.2.0",
+  "packageManager": "pnpm@11.1.1",
+  "description": "Schema-as-data property/inspector panels for React: FieldDef schemas, a scope registry, an open field-renderer registry, and a generic PropertyPanel.",
+  "license": "MIT",
+  "homepage": "https://facets.preset.nz",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/preset-nz/facets.git"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema/v0.1.json": "./schema/v0.1.json"
+  },
+  "files": [
+    "src",
+    "schema"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": "^19"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/react": "^19",
+    "ajv": "^8.20.0",
+    "ts5": "npm:typescript@5.9.3",
+    "typescript": "^7.0.2"
+  }
+}
