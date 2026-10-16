@@ -26,6 +26,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
     "@tauri-apps/api": "^2",
+    "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16",
     "@types/node": "^24",
     "@types/react": "^19",

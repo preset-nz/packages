@@ -1,11 +1,11 @@
 [package]
 name = "rhizome-pom-tauri"
-version.workspace = true
+version = "0.1.6"
 description = "POM over Tauri: one open document as app-level commands and events, and the opened-from-Finder hand-off. Commands only; the webview never writes the tree."
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
-readme.workspace = true
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/preset-nz/rhizome"
+readme = "../../README.md"
 
 [dependencies]
 rhizome-pom = { path = "../rhizome-pom", version = "0.1.6" }

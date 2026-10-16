@@ -1,0 +1,17 @@
+# Every crate in the monorepo, one Cargo.lock. Each crate keeps its own version,
+# edition and metadata in its own manifest: knope versions them per package
+# (knope.toml), so nothing version-shaped is inherited from here.
+[workspace]
+resolver = "3"
+members = [
+    "app-kit",
+    "math",
+    "preferences",
+    "preset-docs",
+    "rhizome/crates/rhizome-core",
+    "rhizome/crates/rhizome-pom",
+    "rhizome/crates/rhizome-pom-tauri",
+]
+# The ux-kit playground is a Tauri app, not a package: it keeps its own lock, as
+# it did in the ux-kit repo.
+exclude = ["ux-kit/playground/src-tauri"]

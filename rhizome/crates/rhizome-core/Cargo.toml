@@ -1,11 +1,11 @@
 [package]
 name = "rhizome-core"
-version.workspace = true
+version = "0.1.6"
 description = "The node API the preset.nz desktop apps share: paths, node types, values, references, groups, bindings, orders, edits with undo, diff and a file format."
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
-readme.workspace = true
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/preset-nz/rhizome"
+readme = "../../README.md"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

@@ -5,16 +5,14 @@ default:
 [group('setup')]
 install:
     cargo fetch
-    lefthook install
 
 # Format, lint and test, with and without the rhizome adapter: the fast signal
 [group('quality')]
 check:
-    cargo fmt --all --check
+    cargo fmt --check
     cargo clippy --all-targets --all-features -- -D warnings
     cargo clippy --all-targets -- -D warnings
     cargo test --all-features
-    just licences
 
 # Run the tests
 [group('quality')]
@@ -27,29 +25,12 @@ bless:
     PRESET_DOCS_BLESS=1 cargo test --all-features --test docs
     git status --short tests
 
-# Licence check against the committed lock. Reads files only, no network.
-# Re-resolve with `preset-compliance licences scan` after changing dependencies.
-[group('quality')]
-licences:
-    preset-compliance licences check
-
 # Format the code
 [group('dev')]
 fmt:
-    cargo fmt --all
+    cargo fmt
 
 # Pages from a catalogue as JSON: `just docs <catalogue.json> <out-dir> [--check] [--app <name>]`
 [group('docs')]
 docs *args:
     cargo run -q -- {{args}}
-
-# Version, changelog, commit and tag from the conventional commits since the last
-# tag (knope.toml). Push and publish stay by hand.
-[group('build')]
-release:
-    knope release
-
-# What `release` would do, without touching anything.
-[group('build')]
-release-preview:
-    knope release --dry-run

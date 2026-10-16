@@ -1,0 +1,95 @@
+# Releases: `just release`. One [packages.<name>] per package, each with its own
+# version, CHANGELOG.md and scoped tag (`facets/v0.3.0`). knope bumps a package
+# from the conventional commits since its last tag. A commit counts for a package
+# when its scope is the package name (`feat(facets): …`); a commit with NO scope
+# counts for every package, so feat and fix commits always name their package.
+# Pushing and publishing stay manual (guidance runbooks/publish-npm-package.md).
+
+[packages.app-kit]
+versioned_files = [
+    "app-kit/Cargo.toml",
+    "app-kit/package.json",
+    { path = "Cargo.lock", dependency = "preset-app-kit" },
+]
+changelog = "app-kit/CHANGELOG.md"
+scopes = ["app-kit"]
+
+[packages.facets]
+versioned_files = [
+    "facets/package.json",
+]
+changelog = "facets/CHANGELOG.md"
+scopes = ["facets"]
+
+[packages.math]
+versioned_files = [
+    "math/Cargo.toml",
+    "math/package.json",
+    { path = "Cargo.lock", dependency = "preset-math" },
+]
+changelog = "math/CHANGELOG.md"
+scopes = ["math"]
+
+[packages.preferences]
+versioned_files = [
+    "preferences/Cargo.toml",
+    "preferences/package.json",
+    { path = "Cargo.lock", dependency = "preset-preferences" },
+]
+changelog = "preferences/CHANGELOG.md"
+scopes = ["preferences"]
+
+[packages.preset-docs]
+versioned_files = [
+    "preset-docs/Cargo.toml",
+    { path = "Cargo.lock", dependency = "preset-docs" },
+]
+changelog = "preset-docs/CHANGELOG.md"
+scopes = ["preset-docs"]
+
+[packages.rhizome]
+versioned_files = [
+    "rhizome/crates/rhizome-core/Cargo.toml",
+    "rhizome/crates/rhizome-pom/Cargo.toml",
+    "rhizome/crates/rhizome-pom-tauri/Cargo.toml",
+    "rhizome/package.json",
+    { path = "rhizome/crates/rhizome-pom/Cargo.toml", dependency = "rhizome-core" },
+    { path = "rhizome/crates/rhizome-pom-tauri/Cargo.toml", dependency = "rhizome-core" },
+    { path = "rhizome/crates/rhizome-pom-tauri/Cargo.toml", dependency = "rhizome-pom" },
+    { path = "Cargo.lock", dependency = "rhizome-core" },
+    { path = "Cargo.lock", dependency = "rhizome-pom" },
+    { path = "Cargo.lock", dependency = "rhizome-pom-tauri" },
+]
+changelog = "rhizome/CHANGELOG.md"
+scopes = ["rhizome"]
+
+[packages.ux-kit]
+versioned_files = [
+    "ux-kit/package.json",
+]
+changelog = "ux-kit/CHANGELOG.md"
+scopes = ["ux-kit"]
+
+[[workflows]]
+name = "release"
+
+[[workflows.steps]]
+type = "Command"
+command = "just check"
+
+[[workflows.steps]]
+type = "PrepareRelease"
+
+# knope writes package.json without a trailing newline, which Biome rejects;
+# the licence lock hashes the lockfiles, so a bump can make it stale.
+[[workflows.steps]]
+type = "Command"
+command = "for f in */package.json; do (cd \"$(dirname \"$f\")\" && ./node_modules/.bin/biome format --write package.json); done && preset-compliance licences scan && git add */package.json preset-compliance.lock"
+shell = true
+
+[[workflows.steps]]
+type = "Command"
+command = "git commit -m \"release: packages\""
+
+[[workflows.steps]]
+type = "Release"

@@ -1,0 +1,5 @@
+# preset-compliance: https://github.com/preset-nz/compliance
+# One config for the whole monorepo, over the root pnpm-lock.yaml and Cargo.lock.
+# Every package had this same config before the move.
+[licences]
+extends = "permissive@2"

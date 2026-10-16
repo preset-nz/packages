@@ -1,0 +1,20 @@
+# pnpm 10+ reads settings from here, not .npmrc.
+packages:
+  - app-kit
+  - facets
+  - facets/playground
+  - math
+  - preferences
+  - rhizome
+  - ux-kit
+  - ux-kit/playground
+
+# Do not materialise peers (React above all). `tsc` needs only @types/react, and
+# a real React in a package's node_modules is a second copy a consumer could
+# resolve through its link. Was facets' and preferences' setting; now everyone's.
+autoInstallPeers: false
+
+allowBuilds:
+  esbuild: true
+  lefthook: true
+  workerd: true

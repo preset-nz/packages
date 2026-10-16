@@ -5,20 +5,17 @@ default:
 [group('setup')]
 install:
     cargo fetch
-    pnpm install
-    ./node_modules/.bin/lefthook install
 
 # Format, lint and test: the fast signal
 [group('quality')]
 check: check-rust check-ts
-    just licences
 
 # Rust: format, lint, every suite.
 [group('quality')]
 check-rust:
-    cargo fmt --all --check
-    cargo clippy --all-targets -- -D warnings
-    cargo test
+    cargo fmt -p rhizome-core -p rhizome-pom -p rhizome-pom-tauri --check
+    cargo clippy -p rhizome-core -p rhizome-pom -p rhizome-pom-tauri --all-targets -- -D warnings
+    cargo test -p rhizome-core -p rhizome-pom -p rhizome-pom-tauri
 
 # TypeScript (src-ts/): typecheck, Biome (lint and format check), vitest. The tests read the
 # Rust goldens, so a wire shape that moved fails here.
@@ -31,7 +28,7 @@ check-ts:
 # Run the tests
 [group('quality')]
 test *args:
-    cargo test {{args}}
+    cargo test -p rhizome-core -p rhizome-pom -p rhizome-pom-tauri {{args}}
 
 # Run the acid test
 [group('quality')]
@@ -70,21 +67,4 @@ bless:
 [group('dev')]
 fmt:
     ./node_modules/.bin/biome check --write .
-    cargo fmt --all
-
-# Licence check against the committed lock. Reads files only, no network.
-# Re-resolve with `preset-compliance licences scan` after changing dependencies.
-[group('quality')]
-licences:
-    preset-compliance licences check
-
-# Version, changelog, commit and tag from the conventional commits since the last
-# tag (knope.toml). Push and publish stay by hand.
-[group('build')]
-release:
-    knope release
-
-# What `release` would do, without touching anything.
-[group('build')]
-release-preview:
-    knope release --dry-run
+    cargo fmt -p rhizome-core -p rhizome-pom -p rhizome-pom-tauri

@@ -1,11 +1,11 @@
 [package]
 name = "rhizome-pom"
-version.workspace = true
+version = "0.1.6"
 description = "POM, the Preset Object Model: the app-unaware base every app's object model is built on. Documents, kinds and their policy, presets, commands, projections."
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
-readme.workspace = true
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/preset-nz/rhizome"
+readme = "../../README.md"
 
 [dependencies]
 rhizome-core = { path = "../rhizome-core", version = "0.1.6" }
