@@ -9,7 +9,10 @@
 - Any other `kind` is a custom kind the host registers with `registerFieldRenderer(kind, Component)`. Extra props are allowed. A misspelt built-in kind validates as custom and renders nothing (console warning), so check kinds against the list.
 - `path` is a flat key into the record `read()` returns: "a.b" is one key, not a nested lookup.
 - A row is a field (full width) or an array of fields (one grid row, usually two).
-- Groups: { id, title?, description?, collapsible?, defaultCollapsed?, rows }.
+- Groups: { id, title?, description?, collapsible?, defaultCollapsed?, page?, advanced?, rows }.
+- Pages (from 0.3.0): root `pages: [{ id, label }]` draws tabs (two or more). With pages every group names a declared `page`; without, none does. Paths never name a page. Omit `pages` for one page, as before.
+- `advanced: true` on a group puts it behind the page's one closed Advanced row. Every page needs a group that isn't advanced. `schemaProblems(schema)` checks these cross-references, which JSON Schema can't; `registerScope` throws on any.
+- `<PropertyPanel page onPageChange advancedOpen onAdvancedOpenChange>` let a host remember the open tab and Advanced rows (`""` is an unpaged schema's page). Scope `changed: (selection, ctx) => paths` marks a tab, closed Advanced row or closed group hiding a changed field.
 - disabledWhen: { path, equals | notEquals | in | notIn }, reading one other field's value.
 - Read-only (no `write`, or `readOnly` on the panel): renderers get no onChange and draw values as text.
 - select `options: [{ value, label }]` in JSON; `optionsProvider(ctx)` is code only.
@@ -19,7 +22,7 @@
 
 ## Host setup (all four; the first three fail silently)
 
-1. shadcn-style primitives at `@/components/ui/{input,label,checkbox,separator,select,number-field,slider,color-field} (the last three from 0.2.0; see the README for their props)`, with `@` aliased to `src/`. Base UI or Radix.
+1. shadcn-style primitives at `@/components/ui/{input,label,checkbox,separator,select,number-field,slider,color-field,tabs}` (number-field, slider, color-field from 0.2.0; tabs, ux-kit's default variant, from 0.3.0; see the README for their props), with `@` aliased to `src/`. Base UI or Radix.
 2. Tailwind 4, in the CSS entry: `@source "../node_modules/@preset.nz/facets/src";` Without it the panel renders unstyled.
 3. Vite: `resolve.dedupe: ["react", "react-dom", "@preset.nz/facets"]`, for one React and one registry.
 4. Call `registerBuiltinRenderers()` once at startup, before registering custom renderers. Nothing registers on import (`sideEffects: false`).

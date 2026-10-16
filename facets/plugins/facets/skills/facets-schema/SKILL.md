@@ -37,7 +37,7 @@ Every kind takes `label` (defaults to `id`), `disabledWhen` and `promote`. Any o
 
 **Rows:** a field is a full-width row; an array of fields is one row laid out as a grid, usually two. That is the whole layout system.
 
-**Groups:** `{ id, title?, description?, collapsible?, defaultCollapsed?, rows }`. Collapsing needs a `title`.
+**Groups:** `{ id, title?, description?, collapsible?, defaultCollapsed?, page?, advanced?, rows }`. Collapsing needs a `title`. `page` and `advanced`: see Pages below.
 
 **`disabledWhen`:** `{ path, equals | notEquals | in | notIn }`, one operator, reading one other field's value. Example: `{ path: "blend", notIn: ["multiply", "screen"] }`. Disabled means greyed out, not hidden.
 
@@ -68,6 +68,30 @@ One scope draws three ways. `<PropertyPanel view>` picks one:
 - **A closed collapsible group** shows its `"collapsed"` fields under its title.
 - **Folding a whole scope is the host's job.** Draw the title bar and hold the open or closed state; render `view="collapsed"` when shut, `view="inspector"` when open.
 - **`promotedFields(schema, view)`** returns what a view would draw, to skip an empty card.
+
+## Pages and advanced groups
+
+From 0.3.0 (check the installed version; it also needs the host's `@/components/ui/tabs`). A long panel splits into tabs:
+
+```ts
+{
+  version: 1,
+  pages: [{ id: "general", label: "General" }, { id: "export", label: "Export" }],
+  groups: [
+    { id: "appearance", title: "Appearance", page: "general", rows: [/* … */] },
+    { id: "performance", title: "Performance", page: "general", advanced: true, rows: [/* … */] },
+    { id: "format", title: "Format", page: "export", rows: [/* … */] },
+  ],
+}
+```
+
+- **No `pages`: one page, no tab row**, as before. Don't add pages to a short panel; one declared page draws no tabs.
+- **With pages, every group names a declared `page`.** Without, no group has `page`. Paths never name a page.
+- **`advanced: true`** puts a group behind the page's one closed *Advanced* row, at its foot. Works with or without pages. Mark the groups most people never touch, not everything past the first.
+- **Every page needs a group that isn't advanced**, page ids are unique, and `pages` isn't empty. JSON Schema can't check all of this: run `schemaProblems(schema)` (exported), which `registerScope` also runs. It **throws** on any problem.
+- **Card and collapsed views ignore pages.**
+- **The open tab and Advanced rows are the panel's state.** A host that remembers them passes `page` / `onPageChange` and `advancedOpen` (page ids whose row is open; `""` for an unpaged schema) / `onAdvancedOpenChange`.
+- **Changed marks:** a scope's optional `changed: (selection, ctx) => string[]` lists changed paths. The panel puts a dot on a tab, a closed Advanced row or a closed group that hides one. It doesn't mark the field.
 
 ## Scopes and the panel
 
@@ -115,7 +139,7 @@ registerFieldRenderer("swatches", Swatches as FieldRenderer) // the cast is need
 
 facets ships unbuilt TypeScript that imports the host's shadcn primitives. All four steps are needed. The first three fail silently or late.
 
-1. **Primitives** at `@/components/ui/*`, with the `@` alias pointing at `src/`: `input` (`Input`), `label` (`Label`), `checkbox` (`Checkbox`), `separator` (`Separator`), and `select` (`Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`), and, from 0.2.0, `number-field` (`NumberField`), `slider` (`Slider`) and `color-field` (`ColorField`). Base UI or Radix both work. Scopes may add `gesture: { begin, end, cancel? }` so a drag is one undo step.
+1. **Primitives** at `@/components/ui/*`, with the `@` alias pointing at `src/`: `input` (`Input`), `label` (`Label`), `checkbox` (`Checkbox`), `separator` (`Separator`), and `select` (`Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`), and, from 0.2.0, `number-field` (`NumberField`), `slider` (`Slider`) and `color-field` (`ColorField`), and, from 0.3.0, `tabs` (`Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`; ux-kit's, default variant, no restyling). Base UI or Radix both work. Scopes may add `gesture: { begin, end, cancel? }` so a drag is one undo step.
 2. **Tailwind 4 `@source`** in the CSS entry, relative to that file. Without it the build passes and the panel renders unstyled:
    ```css
    @import "tailwindcss";

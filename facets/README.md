@@ -47,6 +47,7 @@ the conventional shadcn path, and your bundler's `@` alias resolves it:
 | `@/components/ui/number-field` | `NumberField` |
 | `@/components/ui/slider` | `Slider` |
 | `@/components/ui/color-field` | `ColorField` |
+| `@/components/ui/tabs` | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` |
 
 The last three are what make a panel feel like the rest of your app: a number
 you drag, a square slider, your colour picker. They are the **minimum** facets
@@ -68,7 +69,12 @@ reads (typed in `dev/ui/` in this repo):
   `presets`, `disabled`, `onPickStart` / `onPickEnd`. No `onChange` means
   read-only.
 
-So you need an `@/*` alias pointing at your `src/`, those eight modules present,
+`Tabs` draws a schema's pages. facets uses the shadcn API (`value`,
+`onValueChange` on `Tabs`; `value` on `TabsTrigger` and `TabsContent`) and the
+list's default variant, the segmented control. With ux-kit it is a one-liner:
+`export { Tabs, TabsContent, TabsList, TabsTrigger } from "@preset.nz/ux-kit"`.
+
+So you need an `@/*` alias pointing at your `src/`, those nine modules present,
 and Tailwind with shadcn's theme tokens (`muted-foreground`, `border` and
 friends are used throughout).
 
@@ -206,7 +212,9 @@ Built-ins register through the same call you would use, with no special casing.
 **`PropertyPanel`** — looks up the scope, calls `read`, walks the groups, hands
 each field to its renderer. Props: `scopeKey`, `selection`, `ctx`, plus optional
 `readOnly`, `emptyState`, `view`, `title` (see [Views](#views-inspector-card-collapsed)),
-`labelLayout` and `labelWidth` (see [Label layout](#label-layout)).
+`labelLayout` and `labelWidth` (see [Label layout](#label-layout)), and `page`,
+`onPageChange`, `advancedOpen` and `onAdvancedOpenChange` (see
+[Pages and advanced groups](#pages-and-advanced-groups)).
 
 `ctx` is yours. The package treats it as opaque and passes it through to every
 `read`, `write`, renderer and options provider. Put your app's API in it.
@@ -265,7 +273,76 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 
 Groups take `collapsible: true` to fold under their title, and
 `defaultCollapsed: true` to start folded. The open or closed state belongs to
-the group, so it resets when the panel remounts.
+the panel, so it resets when the panel remounts.
+
+---
+
+## Pages and advanced groups
+
+A long panel splits into pages, drawn as tabs. Declare them at the root, in
+order, and name one on every group:
+
+```ts
+const SETTINGS: PropertySchema = {
+  version: 1,
+  pages: [
+    { id: "general", label: "General" },
+    { id: "export", label: "Export" },
+  ],
+  groups: [
+    { id: "appearance", title: "Appearance", page: "general", rows: [/* … */] },
+    { id: "performance", title: "Performance", page: "general", advanced: true, rows: [/* … */] },
+    { id: "format", title: "Format", page: "export", rows: [/* … */] },
+  ],
+};
+```
+
+- **No `pages` is one page and no tab row**, exactly as before. One declared
+  page draws no tab row either.
+- **Pages are presentation only.** A `path` never names a page, so moving a
+  group to another page changes no values.
+- **`advanced: true`** puts a group behind one closed *Advanced* row at the foot
+  of its page, with or without pages. The row folds like a collapsible group.
+- **Every page needs a group that isn't advanced.** With pages, every group
+  names a declared page; without, none does. `schemaProblems(schema)` lists
+  what breaks these rules, and `registerScope` throws on any of them, so a bad
+  schema fails where it is registered, not as an empty tab.
+- **The card and collapsed views ignore pages and `advanced`.** They draw
+  promoted fields, wherever they sit.
+
+The open page and each page's Advanced row are the panel's own state: the first
+page, every row closed. A host that remembers them, as a Settings window does,
+passes them in:
+
+```tsx
+<PropertyPanel
+  scopeKey="settings" selection={prefs} ctx={ctx}
+  page={tab} onPageChange={setTab}
+  advancedOpen={openRows} onAdvancedOpenChange={setOpenRows}
+/>
+```
+
+`advancedOpen` lists the pages whose Advanced row is open. A schema without
+`pages` has one page, whose id is `""`. A `page` the schema doesn't declare
+shows the first page. Group folds and Advanced rows survive switching tabs.
+
+### Changed marks
+
+A scope may say which of its values count as changed (from their defaults,
+say). The panel then marks anything that hides one: a tab other than the open
+one, a closed Advanced row, a closed group. The mark is a dot, read by screen
+readers as "changed".
+
+```ts
+registerScope("settings", {
+  schema: SETTINGS,
+  read: (sel, ctx) => ctx.prefs(),
+  write: (path, value, sel, ctx) => ctx.setPref(path, value),
+  changed: (sel, ctx) => ctx.changedPrefs(), // paths, e.g. ["theme", "cacheSize"]
+});
+```
+
+The field itself carries no mark from facets; a label or renderer does that.
 
 ---
 
@@ -412,8 +489,11 @@ it does not take the rest of the panel down with it.
 - **Registration is explicit.** `registerBuiltinRenderers()` is a call, not an
   import side effect, and the package declares `sideEffects: false`. Call it
   before rendering a panel.
-- **Failures stay local.** A throwing `read` is caught and logged; an unknown
-  scope renders `emptyState`; an unknown kind skips that field.
+- **Failures stay local, except a bad page layout.** A throwing `read` is
+  caught and logged; an unknown scope renders `emptyState`; an unknown kind
+  skips that field. A schema whose pages don't add up throws from
+  `registerScope` (see [Pages](#pages-and-advanced-groups)), so the mistake
+  shows where the schema is registered rather than as an empty tab later.
 - **Schemas are serialisable.** Keep them that way — no closures in a
   `FieldDef` beyond `optionsProvider`. It keeps schemas versionable and lets them
   cross a plugin boundary later.
