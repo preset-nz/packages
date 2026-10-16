@@ -22,7 +22,7 @@ test *args:
 # Regenerate the golden pages. Read every changed golden before committing
 [group('quality')]
 bless:
-    PRESET_DOCS_BLESS=1 cargo test --all-features --test docs
+    PRESET_DOCS_BLESS=1 cargo test --all-features --test docs --test preferences
     git status --short tests
 
 # Format the code

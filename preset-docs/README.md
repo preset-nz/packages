@@ -34,6 +34,17 @@ preset-docs catalogue.json docs/nodes --app Oblique --check  # fail if out of da
 
 The JSON is the shape a rhizome schema dumps: `types`, each with `name`, `label`, `summary`, `group` and `values`.
 
+### Settings
+
+An app's settings come from its [preset-preferences](https://github.com/preset-nz/preferences) schema, dumped as JSON (a snapshot holding it under `schema` reads too):
+
+```sh
+preset-docs settings.json docs/settings --preferences --app Strata          # write
+preset-docs settings.json docs/settings --preferences --app Strata --check  # fail if out of date
+```
+
+or in Rust, `preset_docs::preferences::read(&json)?` for the `Catalogue`. Each settings page becomes one page, led by the page's summary. Each section gets its own table under a `###` heading, advanced sections last and marked *(advanced)*. A preference's `help` is its row's sentence. The index is titled "<app> settings". A read-only path shows *set by the app*, never the machine's own path. A schema without pages gives one page, `settings.md`, with no summary, which `--check` fails: declare pages to document settings.
+
 ## A page
 
 ```markdown

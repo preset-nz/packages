@@ -1,4 +1,4 @@
-//! `preset-docs <catalogue.json> <out-dir> [--check] [--app <name>]`
+//! `preset-docs <catalogue.json> <out-dir> [--check] [--app <name>] [--preferences]`
 //!
 //! Writes one markdown page per node in the catalogue into `out-dir`, plus a `README.md`
 //! index; existing pages change only between their markers and in the front-matter keys
@@ -6,12 +6,14 @@
 //! fails if a page is missing, stale (block or front matter) or orphaned, the index is
 //! stale, or a node has no summary. Values without a description are warnings, never
 //! failures. `--app` names the index's title. The catalogue is JSON: a `Catalogue`, such as a dumped rhizome
-//! schema, or an object holding one under `schema`.
+//! schema, or an object holding one under `schema`. With `--preferences` it is a
+//! preset-preferences schema (or a snapshot holding one), documented one page per settings page.
 
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: preset-docs <catalogue.json> <out-dir> [--check] [--app <name>]";
+const USAGE: &str =
+    "usage: preset-docs <catalogue.json> <out-dir> [--check] [--app <name>] [--preferences]";
 
 fn main() -> ExitCode {
     match run() {
@@ -27,10 +29,12 @@ fn run() -> Result<ExitCode, String> {
     let mut args = std::env::args().skip(1);
     let mut positional = Vec::new();
     let mut check = false;
+    let mut preferences = false;
     let mut app = String::new();
     while let Some(a) = args.next() {
         match a.as_str() {
             "--check" => check = true,
+            "--preferences" => preferences = true,
             "--app" => app = args.next().ok_or(USAGE)?,
             "-h" | "--help" => {
                 println!("{USAGE}");
@@ -45,7 +49,12 @@ fn run() -> Result<ExitCode, String> {
     };
     let dir = PathBuf::from(dir);
     let json = std::fs::read_to_string(path).map_err(|e| format!("{path}: {e}"))?;
-    let catalogue = preset_docs::read_catalogue(&json).map_err(|e| format!("{path}: {e}"))?;
+    let catalogue = if preferences {
+        preset_docs::preferences::read(&json)
+    } else {
+        preset_docs::read_catalogue(&json)
+    }
+    .map_err(|e| format!("{path}: {e}"))?;
 
     if !check {
         for file in preset_docs::write(&dir, &catalogue, &app).map_err(|e| e.to_string())? {

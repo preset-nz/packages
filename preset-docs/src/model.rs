@@ -13,6 +13,9 @@ use serde_json::Value as Json;
 pub struct Catalogue {
     #[serde(default)]
     pub types: Vec<Node>,
+    /// What the pages are, plural, for the index's title: "<app> <noun>". Default `nodes`.
+    #[serde(default)]
+    pub noun: Option<String>,
 }
 
 /// One kind of node: one page.
@@ -71,6 +74,10 @@ pub struct Control {
     pub description: Option<String>,
     #[serde(default)]
     pub unit: Option<String>,
+    /// The heading the row sits under. A page whose controls carry sections gets one table per
+    /// run of rows with the same section, each under its own heading.
+    #[serde(default)]
+    pub section: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]
@@ -86,6 +93,11 @@ pub enum Kind {
     Colour,
     Floats,
     Shaped,
+    /// A list of short strings.
+    List,
+    /// A filesystem path the app sets and shows. Its default differs per machine, so the
+    /// table never prints it.
+    Path,
 }
 
 #[cfg(feature = "rhizome")]

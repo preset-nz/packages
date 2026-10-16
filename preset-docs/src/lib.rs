@@ -21,7 +21,9 @@
 //! The crate knows no app: it reads only the words an app put on its nodes and controls
 //! (`label`, `summary`, `group`, `description`, `unit`, `names`). An app on rhizome hands
 //! over its schema with the `rhizome` feature (`Catalogue::from(&schema)`), or as the JSON
-//! the schema dumps; any other app builds a [`Catalogue`].
+//! the schema dumps. An app's settings come in as a preset-preferences schema's JSON
+//! through [`preferences::read`], one page per settings page. Any other app builds a
+//! [`Catalogue`].
 //!
 //! ```
 //! use preset_docs::{Catalogue, Control, Kind, Node};
@@ -44,9 +46,11 @@
 //!             label: Some("Size".into()),
 //!             description: Some("How big it is.".into()),
 //!             unit: Some("cm".into()),
+//!             section: None,
 //!         }],
 //!         ..Node::default()
 //!     }],
+//!     noun: None,
 //! };
 //! let pages = preset_docs::pages(&catalogue, "Example");
 //! let widget = pages.iter().find(|p| p.file_name == "widget.md").unwrap();
@@ -65,6 +69,7 @@ use std::path::Path;
 use serde_json::Value as Json;
 
 mod model;
+pub mod preferences;
 pub use model::{Catalogue, Control, Kind, Node};
 
 /// The start of the begin marker. The rest of its line, up to `-->`, is free.
@@ -95,7 +100,7 @@ pub fn read_catalogue(json: &str) -> serde_json::Result<Catalogue> {
 }
 
 /// Every page as freshly generated, in name order: one per node type, then the index. `app`
-/// names the index's title ("<app> nodes"); empty gives "Nodes".
+/// names the index's title ("<app> nodes", or the catalogue's own noun); empty gives "Nodes".
 pub fn pages(catalogue: &Catalogue, app: &str) -> Vec<Page> {
     pages_with_thumbnails(catalogue, app, &BTreeMap::new())
 }
@@ -486,6 +491,16 @@ fn block(t: &Node) -> String {
     }
     if t.values.is_empty() {
         s.push_str("No controls.\n");
+    } else if t.values.iter().any(|v| v.section.is_some()) {
+        for (i, run) in t.values.chunk_by(|a, b| a.section == b.section).enumerate() {
+            if i > 0 {
+                s.push('\n');
+            }
+            if let Some(section) = &run[0].section {
+                s.push_str(&format!("### {}\n\n", one_line(section)));
+            }
+            s.push_str(&table(run));
+        }
     } else {
         s.push_str(&table(&t.values));
     }
@@ -519,10 +534,11 @@ fn table(values: &[Control]) -> String {
 }
 
 fn index(catalogue: &Catalogue, app: &str, thumbnails: &BTreeMap<String, String>) -> Page {
+    let noun = catalogue.noun.as_deref().unwrap_or("nodes");
     let heading = if app.is_empty() {
-        "Nodes".to_string()
+        capitalised(noun)
     } else {
-        format!("{app} nodes")
+        format!("{app} {noun}")
     };
     let mut groups: BTreeMap<&str, Vec<&Node>> = BTreeMap::new();
     let mut other = Vec::new();
@@ -609,6 +625,8 @@ fn range(v: &Control) -> String {
             None => "numbers".into(),
         },
         Kind::Shaped => "structured".into(),
+        Kind::List => "a list of text".into(),
+        Kind::Path => "a path, shown only".into(),
     }
 }
 
@@ -631,6 +649,12 @@ fn default(v: &Control) -> String {
             .join(", ")
     };
     match (v.kind, d) {
+        (Kind::Path, _) => "set by the app".into(),
+        (Kind::List, Json::Array(a)) if !a.is_empty() => a
+            .iter()
+            .map(|x| x.as_str().map_or_else(|| x.to_string(), str::to_string))
+            .collect::<Vec<_>>()
+            .join(", "),
         (Kind::Bool, Json::Bool(b)) => if *b { "on" } else { "off" }.into(),
         (Kind::Int | Kind::Float, Json::Number(n)) => {
             let x = n.as_f64().unwrap_or_default();
