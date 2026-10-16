@@ -1,0 +1,181 @@
+{
+  "title": "Save, apply, rename and delete a layer preset; make a layer from one",
+  "why": "Presets belong to a kind. A user preset is document data: saved from one layer, offered on every layer, and a new layer can be made from it in one step.",
+  "steps": [
+    "new",
+    {
+      "edit": {
+        "label": "Realm",
+        "ops": [
+          {
+            "op": "add",
+            "parent": "/realms",
+            "type": "realm",
+            "name": "west"
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": "map.add",
+        "payload": {
+          "to": "/realms/west",
+          "name": "north"
+        }
+      }
+    },
+    {
+      "run": {
+        "id": "layer.add",
+        "payload": {
+          "to": "/realms/west/north",
+          "name": "hills"
+        }
+      }
+    },
+    {
+      "run": {
+        "id": "layer.add",
+        "payload": {
+          "to": "/realms/west/north",
+          "name": "woods"
+        }
+      }
+    },
+    {
+      "edit": {
+        "label": "Seed",
+        "ops": [
+          {
+            "op": "set",
+            "at": "/realms/west/north/hills",
+            "key": "layer.seed",
+            "value": 123
+          }
+        ]
+      }
+    },
+    {
+      "run": {
+        "id": "preset.save",
+        "payload": {
+          "at": "/realms/west/north/hills",
+          "label": "Mountains"
+        }
+      }
+    },
+    {
+      "run": {
+        "id": "preset.save",
+        "payload": {
+          "at": "/realms/west/north/hills",
+          "label": "Mountains"
+        }
+      }
+    },
+    {
+      "names": {
+        "at": "/realms/west/north/woods"
+      }
+    },
+    {
+      "current": {
+        "at": "/realms/west/north/hills"
+      }
+    },
+    {
+      "current": {
+        "at": "/realms/west/north/woods"
+      }
+    },
+    {
+      "run": {
+        "id": "preset.apply",
+        "payload": {
+          "at": "/realms/west/north/woods",
+          "preset": {
+            "user": "Mountains"
+          }
+        }
+      }
+    },
+    {
+      "current": {
+        "at": "/realms/west/north/woods"
+      }
+    },
+    {
+      "run": {
+        "id": "node.add",
+        "payload": {
+          "parent": "/realms/west/north",
+          "type": "layer",
+          "name": "crags",
+          "preset": {
+            "user": "Mountains"
+          }
+        }
+      }
+    },
+    {
+      "run": {
+        "id": "node.add",
+        "payload": {
+          "parent": "/realms/west/north",
+          "type": "layer",
+          "name": "scree",
+          "preset": {
+            "catalogue": "rocky"
+          }
+        }
+      }
+    },
+    {
+      "run": {
+        "id": "preset.rename",
+        "payload": {
+          "at": "/realms/west/north/hills",
+          "label": "Mountains",
+          "to": "Peaks"
+        }
+      }
+    },
+    {
+      "names": {
+        "at": "/realms/west/north/woods"
+      }
+    },
+    {
+      "run": {
+        "id": "preset.delete",
+        "payload": {
+          "at": "/realms/west/north/hills",
+          "label": "Peaks"
+        }
+      }
+    },
+    {
+      "names": {
+        "at": "/realms/west/north/woods"
+      }
+    },
+    {
+      "run": {
+        "id": "edit.undo",
+        "payload": {}
+      }
+    },
+    {
+      "names": {
+        "at": "/realms/west/north/woods"
+      }
+    },
+    {
+      "names": {
+        "at": "/realms/west"
+      }
+    },
+    "status"
+  ]
+}

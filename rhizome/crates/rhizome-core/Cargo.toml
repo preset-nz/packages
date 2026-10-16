@@ -1,0 +1,14 @@
+[package]
+name = "rhizome-core"
+version.workspace = true
+description = "The node API the preset.nz desktop apps share: paths, node types, values, references, groups, bindings, orders, edits with undo, diff and a file format."
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["float_roundtrip"] }
+thiserror = "2"
+ulid = "1"

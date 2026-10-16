@@ -1,0 +1,33 @@
+# Pick a map's aspect
+> new
+> edit Realm
+  /realms/west  added realm
+> run map.add {"name":"north","to":"/realms/west"}
+  /realms/west/north  added map
+  /realms/west/north/grid  added grid
+  /realms/west/north/paper  added paper
+> run layer.add {"name":"hills","to":"/realms/west/north"}
+  /realms/west/north  order draw  [paper, grid] → [paper, hills, grid]
+  /realms/west/north/hills  added layer
+> presets at /realms/west/north
+  4x3, 16x9, square
+> presets at /realms/west/north/hills
+  rocky
+> current preset at /realms/west/north
+  4x3
+> run preset.apply {"at":"/realms/west/north","preset":{"catalogue":"16x9"}}
+  /realms/west/north  map.size  unset → (800.0, 450.0)
+> current preset at /realms/west/north
+  16x9
+> edit Nudge
+  /realms/west/north  map.size  (800.0, 450.0) → (800.0, 452.0)
+> current preset at /realms/west/north
+  16x9
+> run preset.apply {"at":"/realms/west/north/hills","preset":{"catalogue":"square"}}
+  refused: a layer has no built-in preset “square”
+> run edit.undo {}
+  /realms/west/north  map.size  (800.0, 452.0) → (800.0, 450.0)
+> run edit.undo {}
+  /realms/west/north  map.size  (800.0, 450.0) → unset
+> current preset at /realms/west/north
+  4x3
