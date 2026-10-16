@@ -252,12 +252,15 @@ export const PROMOTE_DOC: Doc = {
 
 export const GROUP_DOC: Doc = {
   kind: "group",
-  blurb: "A new group after the one at the caret, or at the end.",
+  blurb:
+    'A new group after the one at the caret, or at the end. On a paged schema it joins the caret\'s page, or the open one. Pages are declared at the root: "pages": [{ "id", "label" }].',
   props: [
     ["title", "the heading; omit for none"],
     ["description", "a line under the title"],
     ["collapsible", "fold under the title"],
     ["defaultCollapsed", "start folded"],
+    ["page", "the page it sits on; required when the root declares pages"],
+    ["advanced", "behind the page's closed Advanced row"],
     ["rows", "fields, or [field, field] for a row of two"],
   ],
   example: `{

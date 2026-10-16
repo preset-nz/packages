@@ -40,9 +40,13 @@ export function cursorTarget(schema: PropertySchema, text: string, offset: numbe
   return { group, insertAt, field: field ?? null }
 }
 
-/** One line for the UI: where the next palette click lands. */
-export function describeTarget(schema: PropertySchema, t: CursorTarget): string {
-  const g = t.group ?? schema.groups.length - 1
+/** One line for the UI: where the next palette click lands. `fallback`: the group with no caret. */
+export function describeTarget(
+  schema: PropertySchema,
+  t: CursorTarget,
+  fallback = schema.groups.length - 1,
+): string {
+  const g = t.group ?? fallback
   const group = schema.groups[g]
   if (!group) return "Inserts into a new group"
   const name = group.title ?? group.id

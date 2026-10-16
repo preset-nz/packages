@@ -67,6 +67,8 @@ export function App() {
   const [view, setView] = useState<TopView>(initial.view === "card" ? "card" : "inspector")
   const [folded, setFolded] = useState(initial.folded ?? false)
   const [starter, setStarter] = useState(initial.starter ?? DEFAULT_STARTER.id)
+  // The preview's open page, held here so a palette click lands on it.
+  const [page, setPage] = useState<string>()
   const [showLog, setShowLog] = useState(false)
   const [log, setLog] = useState<LogEntry[]>([])
   const [hovered, setHovered] = useState<Doc | null>(null)
@@ -152,13 +154,28 @@ export function App() {
     pendingFocus.current = focusId
   }
 
+  // The page the preview shows: the open one, if the schema still declares it.
+  const openPage = (schema: PropertySchema) =>
+    schema.pages?.find((p) => p.id === page)?.id ?? schema.pages?.[0]?.id
+
+  // With no caret, a new field goes to the last group the preview shows: on
+  // the open page, and not behind its Advanced row if it can help it.
+  const fallbackGroup = (schema: PropertySchema) => {
+    const pageId = openPage(schema)
+    const shown = schema.groups.filter((g) => pageId === undefined || g.page === pageId)
+    const pick =
+      [...shown].reverse().find((g) => !g.advanced) ?? shown.at(-1) ?? schema.groups.at(-1)
+    return pick ? schema.groups.indexOf(pick) : schema.groups.length - 1
+  }
+
   const addField = (entry: KindEntry) => {
     if (!schemaParse.ok) return
     const schema = structuredClone(schemaParse.value)
     const at = target()
     const made = makeUnique(entry, schema)
     if (schema.groups.length === 0) schema.groups.push({ id: "group", title: "Group", rows: [] })
-    const group = schema.groups[at?.group ?? schema.groups.length - 1]
+    const group = schema.groups[at?.group ?? fallbackGroup(schema)]
+    if (group.page) setPage(group.page)
     group.rows.splice(
       at?.group != null && at.insertAt != null ? at.insertAt : group.rows.length,
       0,
@@ -180,7 +197,16 @@ export function App() {
     ])
     let n = schema.groups.length + 1
     while (ids.has(`group${n}`)) n++
-    const group = { id: `group${n}`, title: `Group ${n}`, collapsible: true, rows: [] }
+    // On a paged schema the group needs a page: the caret's group's, else the open one.
+    const pageId = schema.pages && (schema.groups[at?.group ?? -1]?.page ?? openPage(schema))
+    const group = {
+      id: `group${n}`,
+      title: `Group ${n}`,
+      ...(pageId ? { page: pageId } : {}),
+      collapsible: true,
+      rows: [],
+    }
+    if (pageId) setPage(pageId)
     schema.groups.splice(at?.group != null ? at.group + 1 : schema.groups.length, 0, group)
     applySchema(schema, group.id)
   }
@@ -386,6 +412,7 @@ export function App() {
                 ? describeTarget(
                     schemaParse.value,
                     cursorTarget(schemaParse.value, schemaText, caret),
+                    fallbackGroup(schemaParse.value),
                   )
                 : null
             }
@@ -461,6 +488,8 @@ export function App() {
               schemaText={schemaText}
               values={lastValues}
               readOnly={readOnly}
+              page={page}
+              onPage={setPage}
             />
           </div>
           {showLog && <WriteLog log={log} onClear={() => setLog([])} />}
@@ -511,6 +540,8 @@ function ViewPreview({
   schemaText,
   values,
   readOnly,
+  page,
+  onPage,
 }: {
   view: TopView
   folded: boolean
@@ -519,10 +550,20 @@ function ViewPreview({
   schemaText: string
   values: Record<string, unknown>
   readOnly: boolean
+  page: string | undefined
+  onPage: (page: string) => void
 }) {
   const panel = (v: PanelView) => (
     <PanelBoundary resetKey={schemaText}>
-      <PropertyPanel scopeKey={SCOPE} selection={values} ctx={null} readOnly={readOnly} view={v} />
+      <PropertyPanel
+        scopeKey={SCOPE}
+        selection={values}
+        ctx={null}
+        readOnly={readOnly}
+        view={v}
+        page={page}
+        onPageChange={onPage}
+      />
     </PanelBoundary>
   )
   const hint = (v: PromoteView) => (
