@@ -233,6 +233,14 @@ export interface Scope<S = unknown, V = Record<string, unknown>> {
    * the value back. Omit `gesture` and drags are plain repeated `write`s.
    */
   gesture?: ScopeGesture<S>
+  /**
+   * The paths whose values differ from their defaults, or whatever "changed"
+   * means to the host. The panel marks a tab, a closed Advanced row or a
+   * closed group that hides one of them, so a change is never out of sight
+   * without a trace. It doesn't mark the field itself: a renderer or label
+   * does that. Called like `read`, when the selection or ctx changes.
+   */
+  changed?: (selection: S, ctx: ScopeContext) => readonly string[]
 }
 
 export interface ScopeGesture<S = unknown> {

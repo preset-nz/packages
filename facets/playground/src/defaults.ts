@@ -277,7 +277,129 @@ const operator: Starter = {
   values: { type: "lowpass", cutoff: 1200, resonance: 0.3, master: 0.8, pan: 0, width: 1 },
 }
 
-export const STARTERS: Starter[] = [empty, simple, operator, everything]
-export const DEFAULT_STARTER = simple
+// Pages and an advanced group: a tab per page, and on each page the groups
+// most people never need behind one closed Advanced row.
+const settings: Starter = {
+  id: "settings",
+  name: "Settings (pages)",
+  schema: {
+    version: 1,
+    title: "Settings",
+    pages: [
+      { id: "general", label: "General" },
+      { id: "export", label: "Export" },
+    ],
+    groups: [
+      {
+        id: "appearance",
+        title: "Appearance",
+        page: "general",
+        rows: [
+          {
+            kind: "select",
+            id: "theme",
+            path: "theme",
+            label: "Theme",
+            options: [
+              { value: "system", label: "Match system" },
+              { value: "light", label: "Light" },
+              { value: "dark", label: "Dark" },
+            ],
+          },
+          { kind: "color", id: "accent", path: "accent", label: "Accent colour" },
+        ],
+      },
+      {
+        id: "editing",
+        title: "Editing",
+        page: "general",
+        rows: [
+          { kind: "checkbox", id: "snap", path: "snap", label: "Snap to grid" },
+          {
+            kind: "number",
+            id: "undoDepth",
+            path: "undoDepth",
+            label: "Undo steps",
+            min: 10,
+            max: 1000,
+            step: 10,
+            integer: true,
+          },
+        ],
+      },
+      {
+        id: "performance",
+        title: "Performance",
+        page: "general",
+        advanced: true,
+        rows: [
+          {
+            kind: "slider",
+            id: "cacheSize",
+            path: "cacheSize",
+            label: "Cache (MB)",
+            min: 64,
+            max: 4096,
+            step: 64,
+          },
+          { kind: "checkbox", id: "gpu", path: "gpu", label: "GPU previews" },
+        ],
+      },
+      {
+        id: "format",
+        title: "Format",
+        page: "export",
+        rows: [
+          {
+            kind: "select",
+            id: "format",
+            path: "format",
+            label: "Format",
+            options: [
+              { value: "png", label: "PNG" },
+              { value: "jpeg", label: "JPEG" },
+              { value: "webp", label: "WebP" },
+            ],
+          },
+          {
+            kind: "slider",
+            id: "quality",
+            path: "quality",
+            label: "Quality",
+            min: 0,
+            max: 1,
+            step: 0.05,
+            disabledWhen: { path: "format", equals: "png" },
+          },
+        ],
+      },
+      {
+        id: "metadata",
+        title: "Metadata",
+        page: "export",
+        advanced: true,
+        rows: [
+          { kind: "checkbox", id: "stripExif", path: "stripExif", label: "Strip EXIF" },
+          { kind: "text", id: "copyright", path: "copyright", label: "Copyright" },
+        ],
+      },
+    ],
+  },
+  values: {
+    theme: "system",
+    accent: "#2b7c76",
+    snap: true,
+    undoDepth: 200,
+    cacheSize: 512,
+    gpu: true,
+    format: "png",
+    quality: 0.85,
+    stripExif: false,
+    copyright: "",
+  },
+}
+
+export const STARTERS: Starter[] = [empty, simple, settings, operator, everything]
+export const DEFAULT_STARTER = settings
 
 export const pretty = (v: unknown) => JSON.stringify(v, null, 2)

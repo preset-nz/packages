@@ -106,12 +106,22 @@ export function App() {
   const valuesRef = useRef(lastValues)
   valuesRef.current = lastValues
   const logCount = useRef(0)
+  // "Changed" here is a value that differs from the chosen starter's, so a
+  // tab or a closed fold hiding one shows its mark.
+  const starterRef = useRef(starter)
+  starterRef.current = starter
 
   useMemo(
     () =>
       registerScope<Record<string, unknown>, Record<string, unknown>>(SCOPE, {
         schema: lastSchema,
         read: (selection) => selection,
+        changed: (selection) => {
+          const base = (STARTERS.find((st) => st.id === starterRef.current) ?? DEFAULT_STARTER)
+            .values
+          const differs = (k: string) => JSON.stringify(selection[k]) !== JSON.stringify(base[k])
+          return Object.keys(selection).filter(differs)
+        },
         write: (path, value) => {
           const next = { ...valuesRef.current, [path]: value }
           valuesRef.current = next
