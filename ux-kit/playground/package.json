@@ -1,0 +1,33 @@
+{
+  "name": "ux-kit-playground",
+  "private": true,
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@preset.nz/app-kit": "link:../../app-kit",
+    "@preset.nz/facets": "link:../../facets",
+    "@preset.nz/math": "link:../../math",
+    "@preset.nz/preferences": "link:../../preferences",
+    "@preset.nz/ux-kit": "link:..",
+    "@tauri-apps/api": "^2.11.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.1",
+    "@tauri-apps/cli": "^2.11.3",
+    "@types/node": "^24.13.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "tailwindcss": "^4.3.1",
+    "typescript": "~7.0.2",
+    "vite": "^7.3.5"
+  }
+}

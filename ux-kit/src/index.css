@@ -1,0 +1,199 @@
+/* @preset.nz/ux-kit: tokens, palettes and fonts.
+   Import this after tailwindcss, and add an @source line for the kit's src:
+
+     @import "tailwindcss";
+     @source "../node_modules/@preset.nz/ux-kit/src";
+     @import "@preset.nz/ux-kit/index.css";
+
+   Seeded from Strata's index.css. Dark mode is a .dark class on <html>. */
+@import "tw-animate-css";
+@import "./shadcn-tailwind.css";
+
+/* Two families only (Georg 2026-10-03): Geist for the interface, JetBrains Mono for values and code. */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    /* Headings use the interface face; hierarchy comes from size and weight. */
+    --font-heading: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    /* Body text face. */
+    --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono Variable', monospace;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-warning: var(--warning);
+    --color-selection: var(--selection);
+    --color-warning-foreground: var(--warning-foreground);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    /* Petrol-tinted neutrals; no background or fill is pure white or black (Georg 2026-10-03). */
+    --background: oklch(0.972 0.006 215);
+    --foreground: oklch(0.2 0.012 215);
+    --card: oklch(0.985 0.004 215);
+    --card-foreground: oklch(0.2 0.012 215);
+    --popover: oklch(0.985 0.004 215);
+    --popover-foreground: oklch(0.2 0.012 215);
+    --primary: oklch(0.5 0.085 210);
+    --primary-foreground: oklch(0.97 0.008 215);
+    --secondary: oklch(0.935 0.006 215);
+    --secondary-foreground: oklch(0.25 0.012 215);
+    --muted: oklch(0.935 0.006 215);
+    --muted-foreground: oklch(0.5 0.012 215);
+    --accent: oklch(0.93 0.025 210);
+    --accent-foreground: oklch(0.3 0.05 210);
+    --destructive: oklch(0.55 0.14 27);
+    --destructive-foreground: oklch(0.97 0.008 215);
+    --warning: oklch(0.7 0.12 70);
+    --warning-foreground: oklch(0.25 0.04 70);
+    --border: oklch(0.87 0.008 215);
+    --input: oklch(0.87 0.008 215);
+    --selection: oklch(0.66 0.04 210); /* quieter than primary: selected things, not actions */
+    --ring: oklch(0.5 0.085 210);
+    --chart-1: oklch(0.5 0.085 210);
+    --chart-2: oklch(0.7 0.12 70);
+    --chart-3: oklch(0.62 0.07 180);
+    --chart-4: oklch(0.42 0.05 240);
+    --chart-5: oklch(0.6 0.01 215);
+    --sidebar: oklch(0.955 0.006 215);
+    --sidebar-foreground: oklch(0.2 0.012 215);
+    --sidebar-primary: oklch(0.5 0.085 210);
+    --sidebar-primary-foreground: oklch(0.97 0.008 215);
+    --sidebar-accent: oklch(0.92 0.025 210);
+    --sidebar-accent-foreground: oklch(0.3 0.05 210);
+    --sidebar-border: oklch(0.87 0.008 215);
+    --sidebar-ring: oklch(0.5 0.085 210);
+    --radius: 0.125rem; /* 2px: industrial, not soft SaaS (Georg 2026-10-03; iterating) */
+}
+
+.dark {
+    /* Petrol-tinted neutrals; no background or fill is pure white or black (Georg 2026-10-03). */
+    --background: oklch(0.19 0.01 215);
+    --foreground: oklch(0.93 0.006 215);
+    --card: oklch(0.23 0.012 215);
+    --card-foreground: oklch(0.93 0.006 215);
+    --popover: oklch(0.23 0.012 215);
+    --popover-foreground: oklch(0.93 0.006 215);
+    --primary: oklch(0.68 0.09 205);
+    --primary-foreground: oklch(0.18 0.02 215);
+    --secondary: oklch(0.28 0.012 215);
+    --secondary-foreground: oklch(0.93 0.006 215);
+    --muted: oklch(0.28 0.012 215);
+    --muted-foreground: oklch(0.68 0.012 215);
+    --accent: oklch(0.32 0.04 210);
+    --accent-foreground: oklch(0.93 0.006 215);
+    --destructive: oklch(0.66 0.13 25);
+    --destructive-foreground: oklch(0.18 0.02 215);
+    --warning: oklch(0.76 0.11 70);
+    --warning-foreground: oklch(0.22 0.04 70);
+    --border: oklch(0.32 0.012 215);
+    --input: oklch(0.35 0.012 215);
+    --selection: oklch(0.56 0.045 205);
+    --ring: oklch(0.68 0.09 205);
+    --chart-1: oklch(0.68 0.09 205);
+    --chart-2: oklch(0.76 0.11 70);
+    --chart-3: oklch(0.7 0.07 175);
+    --chart-4: oklch(0.6 0.06 245);
+    --chart-5: oklch(0.55 0.01 215);
+    --sidebar: oklch(0.215 0.012 215);
+    --sidebar-foreground: oklch(0.93 0.006 215);
+    --sidebar-primary: oklch(0.68 0.09 205);
+    --sidebar-primary-foreground: oklch(0.18 0.02 215);
+    --sidebar-accent: oklch(0.3 0.035 210);
+    --sidebar-accent-foreground: oklch(0.93 0.006 215);
+    --sidebar-border: oklch(0.32 0.012 215);
+    --sidebar-ring: oklch(0.68 0.09 205);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+
+  /* Make it feel like a native desktop app, not a webpage. */
+  html,
+  body {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+    overscroll-behavior: none;
+  }
+
+  /* Restore text selection where typing happens. */
+  input,
+  textarea,
+  [contenteditable] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* Opt-in class for selectable content (filenames, error messages, etc). */
+  .select-text {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  /* No drag-image ghost when grabbing an <img>. */
+  img {
+    -webkit-user-drag: none;
+    user-drag: none;
+  }
+}
+
+/* Selection is a faint tint with a 1px edge; focus is the ring. Never two rings (ux-patterns.md,
+   Georg 2026-10-03). Put `selectable` on a row, card or item and set `data-selected` (or
+   aria-selected="true") on the selected one. The edge is a background gradient, not a border or a
+   shadow, so it never shifts the layout and never competes with a focus ring's box-shadow. */
+@utility selectable {
+  &:is([data-selected], [aria-selected="true"]) {
+    background-color: color-mix(in oklab, var(--selection) 12%, transparent);
+    background-image: linear-gradient(var(--selection), var(--selection));
+    background-size: 1px 100%;
+    background-repeat: no-repeat;
+  }
+}
