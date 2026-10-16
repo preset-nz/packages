@@ -24,16 +24,21 @@ manifests() {
 if [ $# -eq 0 ]; then all; exit; fi
 
 base=$1
-changed=$(git diff --name-only "$(git merge-base "$base" HEAD)" -- ; git diff --name-only HEAD; git ls-files --others --exclude-standard)
+# No such ref (no remote yet, a fresh clone): everything.
+git rev-parse --verify -q "$base^{commit}" >/dev/null || { all; exit; }
+changed=$({ git diff --name-only "$(git merge-base "$base" HEAD)"; git ls-files --others --exclude-standard; } | sort -u)
+[ -z "$changed" ] && exit 0
 # A root file (the workspaces, the lock, the toolchain) can change any package.
-if printf '%s\n' "$changed" | grep -qv /; then all; exit; fi
+# Here-strings, not pipes: `grep -q` exits early, and pipefail would read the
+# writer's SIGPIPE as a failure.
+if grep -qv / <<<"$changed"; then all; exit; fi
 
-hit=$(for p in $(all); do printf '%s\n' "$changed" | grep -q "^$p/" && echo "$p"; done)
+hit=$(for p in $(all); do if grep -q "^$p/" <<<"$changed"; then echo "$p"; fi; done)
 dependants=$(for p in $hit; do
   for n in $(names "$p"); do
     for q in $(all); do
       [ "$q" = "$p" ] && continue
-      manifests "$q" | xargs grep -lqE "\"$n\"|^$n *=" 2>/dev/null && echo "$q"
+      if manifests "$q" | xargs grep -lE "\"$n\"|^$n *=" >/dev/null 2>&1; then echo "$q"; fi
     done
   done
 done)
