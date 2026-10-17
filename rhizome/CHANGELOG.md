@@ -1,3 +1,9 @@
+## 0.1.7 (2026-10-17)
+
+### Fixes
+
+- ship the MIT licence in each crate
+
 ## 0.1.6 (2026-10-14)
 
 ### Features
