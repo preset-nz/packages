@@ -215,7 +215,9 @@ export const setOpsLayout = (v: OpsLayout) => {
 
 /** Oblique's choices are bare values ("bleach_bypass"); the panel shows them as words ("Bleach bypass"). */
 function choiceLabel(value: string): string {
-  if (value === "sx70") return "SX-70"
+  // Oblique's labels for its film stocks; the values stay as they are
+  if (value === "polaroid_600") return "Instant"
+  if (value === "sx70") return "Instant, Faded"
   const words = value.replace(/_/g, " ")
   return words.charAt(0).toUpperCase() + words.slice(1)
 }
