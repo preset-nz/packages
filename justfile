@@ -77,3 +77,9 @@ release *pkg:
 [group('build')]
 release-preview *pkg:
     scripts/release.sh --dry-run {{pkg}}
+
+# Publish a released package from its tag: crates, npm, GitHub release. Run it
+# yourself (2FA); `--dry-run` stops short of uploading
+[group('build')]
+publish pkg *flags:
+    scripts/publish.sh {{pkg}} {{flags}}
