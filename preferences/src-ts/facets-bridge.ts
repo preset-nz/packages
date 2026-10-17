@@ -1,14 +1,11 @@
 // From the crate's schema to a facets PropertySchema: one group per section,
-// one field per preference. Changed values get a marker on the label, so the
-// default state stays the visually quiet baseline.
-//
-// Pages split the sections into tabs, and each page splits again into the
-// sections it always shows and the advanced ones behind its disclosure.
+// one field per preference. Pages and advanced sections map across as facets'
+// pages and advanced groups, so facets draws the tabs and the Advanced row.
+// Changed values are marked by facets from `changedPaths`, so the default
+// state stays the visually quiet baseline.
 
 import type { FieldDef, PropertySchema } from "@preset.nz/facets"
-import { type PrefDef, type PrefPage, type PrefSection, type Snapshot, sectionOf } from "./api"
-
-export const CHANGED_MARK = " •"
+import { type PrefDef, type Snapshot, sectionOf } from "./api"
 
 export function isDefault(snap: Snapshot, id: string): boolean {
   const def = snap.schema.prefs.find((p) => p.id === id)
@@ -20,39 +17,13 @@ export function sectionHasChanges(snap: Snapshot, section: string): boolean {
   return snap.schema.prefs.some((p) => sectionOf(p.id) === section && !isDefault(snap, p.id))
 }
 
-/** A page as the window draws it: its sections split by disclosure level. */
-export type PageView = {
-  page: PrefPage
-  basic: PrefSection[]
-  advanced: PrefSection[]
-}
-
-/** Id of the one page a schema without pages gets. Never shown. */
-export const IMPLICIT_PAGE = ""
-
-/**
- * The pages in declared order. A schema without pages gets one implicit page
- * holding every section, so the window has a single code path.
- */
-export function pageViews(snap: Snapshot): PageView[] {
-  const { pages = [], sections } = snap.schema
-  const declared = pages.length > 0 ? pages : [{ id: IMPLICIT_PAGE, label: "" }]
-  return declared.map((page) => {
-    const on = sections.filter((s) => pages.length === 0 || s.page === page.id)
-    return {
-      page,
-      basic: on.filter((s) => !s.advanced),
-      advanced: on.filter((s) => s.advanced),
-    }
-  })
-}
-
-export function sectionsHaveChanges(snap: Snapshot, sections: PrefSection[]): boolean {
-  return sections.some((s) => sectionHasChanges(snap, s.id))
-}
-
 export function hasAnyChanges(snap: Snapshot): boolean {
   return snap.schema.prefs.some((p) => !isDefault(snap, p.id))
+}
+
+/** The ids whose values differ from their defaults: facets' `Scope.changed`. */
+export function changedPaths(snap: Snapshot): string[] {
+  return snap.schema.prefs.filter((p) => !isDefault(snap, p.id)).map((p) => p.id)
 }
 
 function sameValue(a: unknown, b: unknown): boolean {
@@ -62,9 +33,8 @@ function sameValue(a: unknown, b: unknown): boolean {
   return a === b
 }
 
-function toField(def: PrefDef, changed: boolean): FieldDef {
-  const label = changed ? def.label + CHANGED_MARK : def.label
-  const base = { id: def.id, label, path: def.id }
+function toField(def: PrefDef): FieldDef {
+  const base = { id: def.id, label: def.label, path: def.id }
   switch (def.kind) {
     case "bool":
       return { ...base, kind: "checkbox" }
@@ -83,23 +53,40 @@ function toField(def: PrefDef, changed: boolean): FieldDef {
   }
 }
 
-/** The facets schema for `sections`; every section when none are given. */
-export function toPropertySchema(snap: Snapshot, sections?: PrefSection[]): PropertySchema {
-  return {
-    version: snap.schema.version,
-    groups: (sections ?? snap.schema.sections).map((s) => ({
-      id: s.id,
-      title: s.label,
-      rows: snap.schema.prefs
-        .filter((p) => sectionOf(p.id) === s.id)
-        .map((p) => toField(p, !isDefault(snap, p.id))),
-    })),
-  }
+/**
+ * A section's help, as its group's description: facets fields carry no help of
+ * their own. One preference with help reads as its help alone; several name
+ * the preference each sentence belongs to.
+ */
+function sectionHelp(prefs: PrefDef[]): string | undefined {
+  const helped = prefs.filter((p) => p.help)
+  if (helped.length === 0) return undefined
+  if (helped.length === 1) return helped[0].help
+  return helped.map((p) => `${p.label}: ${p.help}`).join(" ")
 }
 
-/** Help text per id, rendered under the panel because facets fields carry none. */
-export function helpFor(snap: Snapshot, section: string): Array<[string, string]> {
-  return snap.schema.prefs
-    .filter((p) => sectionOf(p.id) === section && p.help)
-    .map((p) => [p.label, p.help as string])
+/**
+ * The facets schema for the whole window. A schema without pages maps to one
+ * without `pages` (one page, no tabs); facets' validation then holds because
+ * the crate's own refuses the same bad declarations at load.
+ */
+export function toPropertySchema(snap: Snapshot): PropertySchema {
+  const { version, pages = [], sections, prefs } = snap.schema
+  const paged = pages.length > 0
+  return {
+    version,
+    ...(paged ? { pages: pages.map(({ id, label }) => ({ id, label })) } : {}),
+    groups: sections.map((s) => {
+      const own = prefs.filter((p) => sectionOf(p.id) === s.id)
+      const description = sectionHelp(own)
+      return {
+        id: s.id,
+        title: s.label,
+        rows: own.map(toField),
+        ...(description ? { description } : {}),
+        ...(paged && s.page ? { page: s.page } : {}),
+        ...(s.advanced ? { advanced: true } : {}),
+      }
+    }),
+  }
 }
