@@ -6,6 +6,8 @@
 # (lefthook.yml) makes every feat, fix, perf and breaking commit name a package,
 # and the history imported from the old repos was rescoped to match (2026-10-17).
 # A BREAKING CHANGE footer goes into the changelog only up to its first line break.
+# Every Cargo.lock that takes a package's crate by path is in its versioned_files:
+# the root's and the ux-kit playground's (outside the workspace, its own lock).
 # Pushing and publishing stay manual (guidance runbooks/publish-npm-package.md).
 
 [packages.app-kit]
@@ -13,6 +15,7 @@ versioned_files = [
     "app-kit/Cargo.toml",
     "app-kit/package.json",
     { path = "Cargo.lock", dependency = "preset-app-kit" },
+    { path = "ux-kit/playground/src-tauri/Cargo.lock", dependency = "preset-app-kit" },
 ]
 changelog = "app-kit/CHANGELOG.md"
 scopes = ["app-kit"]
@@ -38,6 +41,7 @@ versioned_files = [
     "preferences/Cargo.toml",
     "preferences/package.json",
     { path = "Cargo.lock", dependency = "preset-preferences" },
+    { path = "ux-kit/playground/src-tauri/Cargo.lock", dependency = "preset-preferences" },
 ]
 changelog = "preferences/CHANGELOG.md"
 scopes = ["preferences"]
@@ -62,6 +66,7 @@ versioned_files = [
     { path = "Cargo.lock", dependency = "rhizome-core" },
     { path = "Cargo.lock", dependency = "rhizome-pom" },
     { path = "Cargo.lock", dependency = "rhizome-pom-tauri" },
+    { path = "ux-kit/playground/src-tauri/Cargo.lock", dependency = "rhizome-core" },
 ]
 changelog = "rhizome/CHANGELOG.md"
 scopes = ["rhizome"]
