@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "27a2ec3df67e13d10e65404d30c6a77484e2326c903bdf565517f1ae9bc14799"
+sha256 = "875338583a5cd63afc891729c4899036ddd19d76b556b12e32291031eb193598"
 
 [[inputs]]
 path = "Cargo.toml"
@@ -31,7 +31,7 @@ sha256 = "00596af01374024c0b77c9b53e89d7c84c418b449c04a1cc5c52d571a73f1741"
 
 [[inputs]]
 path = "preset-docs/Cargo.toml"
-sha256 = "558f1ab084948952b6b98a46c751db158de07548ffe010cda8b58bc97052c0ba"
+sha256 = "50481d94b1463da96fdde866f2d5a545f5e39385c85f89a6c802593c236edfd2"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-core/Cargo.toml"
@@ -2210,14 +2210,6 @@ scope = "shipped"
 ecosystem = "cargo"
 name = "rfd"
 version = "0.16.0"
-source = "registry"
-declared = "MIT"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "cargo"
-name = "rhizome-core"
-version = "0.1.6"
 source = "registry"
 declared = "MIT"
 scope = "shipped"
