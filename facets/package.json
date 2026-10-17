@@ -7,7 +7,8 @@
   "homepage": "https://facets.preset.nz",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/facets.git"
+    "url": "git+https://github.com/preset-nz/packages.git",
+    "directory": "facets"
   },
   "type": "module",
   "sideEffects": false,

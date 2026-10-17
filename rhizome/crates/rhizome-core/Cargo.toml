@@ -4,7 +4,7 @@ version = "0.1.7"
 description = "The node API the preset.nz desktop apps share: paths, node types, values, references, groups, bindings, orders, edits with undo, diff and a file format."
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/preset-nz/rhizome"
+repository = "https://github.com/preset-nz/packages"
 readme = "../../README.md"
 
 [dependencies]

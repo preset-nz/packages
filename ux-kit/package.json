@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/ux-kit.git"
+    "url": "git+https://github.com/preset-nz/packages.git",
+    "directory": "ux-kit"
   },
   "type": "module",
   "sideEffects": [

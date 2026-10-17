@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/rhizome.git"
+    "url": "git+https://github.com/preset-nz/packages.git",
+    "directory": "rhizome"
   },
   "type": "module",
   "sideEffects": false,

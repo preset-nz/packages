@@ -4,7 +4,7 @@ version = "0.1.7"
 description = "POM, the Preset Object Model: the app-unaware base every app's object model is built on. Documents, kinds and their policy, presets, commands, projections."
 edition = "2024"
 license = "MIT"
-repository = "https://github.com/preset-nz/rhizome"
+repository = "https://github.com/preset-nz/packages"
 readme = "../../README.md"
 
 [dependencies]

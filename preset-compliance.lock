@@ -14,11 +14,11 @@ sha256 = "85319de54e0201d6d6f5977b4f909c4d3f7e844383694e67f2a4ed4209bd0744"
 
 [[inputs]]
 path = "app-kit/Cargo.toml"
-sha256 = "1518700ecf6328aadf2e942fd03d94af7ec5e721fa5de620c36ceaa43b529697"
+sha256 = "fa2762581caa89bb964cf5534f5a9074f3ef808fb3af33c8b85a0b8f49a8396d"
 
 [[inputs]]
 path = "math/Cargo.toml"
-sha256 = "7af458f4723263cffbdc2258b87105586b4e808919c7985f4600c65f3cb7e362"
+sha256 = "5e4d6376b631466069efe415bad8052d5fa534033a3edf42cbeb168c26465ee7"
 
 [[inputs]]
 path = "pnpm-lock.yaml"
@@ -27,7 +27,7 @@ sha256 = "ff01d9c7ad37e8b85aa47a87ed0774a16c2f3c5f1ead8b0ecdf157fe967511a5"
 
 [[inputs]]
 path = "preferences/Cargo.toml"
-sha256 = "00596af01374024c0b77c9b53e89d7c84c418b449c04a1cc5c52d571a73f1741"
+sha256 = "95011b2e47c454b0ffdedb7e3953c430b14aacc06800f2c3b2e2f9dce99ef2e8"
 
 [[inputs]]
 path = "preset-docs/Cargo.toml"
@@ -35,15 +35,15 @@ sha256 = "50481d94b1463da96fdde866f2d5a545f5e39385c85f89a6c802593c236edfd2"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-core/Cargo.toml"
-sha256 = "bd0d132a6095c469a1c7099d4a34328907d4d326356d5a5120b218684f819eb4"
+sha256 = "81b41fd00bbed72fc8a39a3558b674841d798261479f526b0c42830114b7ead1"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-pom/Cargo.toml"
-sha256 = "2f32be3482525a12b44577a506137b899e36d9054de7bd23900d4294c4379328"
+sha256 = "816a84747eea187486ed3b420e2a0aee2ebc027ccdbc4ee36a29e83535b09c9c"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-pom-tauri/Cargo.toml"
-sha256 = "dde8fee51c9a0c7aced8ecc43584de5268bcb9b9d94c9a4c60b1d76375574e8a"
+sha256 = "48abc8e36e18e79d8def4a7e26fdf300b3a262d5a4973c449582b59bae316597"
 
 [[inputs]]
 path = "ux-kit/playground/src-tauri/Cargo.lock"

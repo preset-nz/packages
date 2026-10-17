@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/preferences.git"
+    "url": "git+https://github.com/preset-nz/packages.git",
+    "directory": "preferences"
   },
   "type": "module",
   "sideEffects": false,

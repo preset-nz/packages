@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/math.git"
+    "url": "git+https://github.com/preset-nz/packages.git",
+    "directory": "math"
   },
   "type": "module",
   "sideEffects": false,

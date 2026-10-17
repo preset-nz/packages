@@ -6,7 +6,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/preset-nz/app-kit.git"
+    "url": "git+https://github.com/preset-nz/packages.git",
+    "directory": "app-kit"
   },
   "type": "module",
   "sideEffects": false,
