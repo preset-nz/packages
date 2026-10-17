@@ -1,6 +1,7 @@
 // From the crate's schema to a facets PropertySchema: one group per section,
-// one field per preference. Pages and advanced sections map across as facets'
-// pages and advanced groups, so facets draws the tabs and the Advanced row.
+// one field per preference, its help drawn under it by facets. Pages and
+// advanced sections map across as facets' pages and advanced groups, so facets
+// draws the tabs and the Advanced row.
 // Changed values are marked by facets from `changedPaths`, so the default
 // state stays the visually quiet baseline.
 
@@ -34,7 +35,12 @@ function sameValue(a: unknown, b: unknown): boolean {
 }
 
 function toField(def: PrefDef): FieldDef {
-  const base = { id: def.id, label: def.label, path: def.id }
+  const base = {
+    id: def.id,
+    label: def.label,
+    path: def.id,
+    ...(def.help ? { help: def.help } : {}),
+  }
   switch (def.kind) {
     case "bool":
       return { ...base, kind: "checkbox" }
@@ -54,18 +60,6 @@ function toField(def: PrefDef): FieldDef {
 }
 
 /**
- * A section's help, as its group's description: facets fields carry no help of
- * their own. One preference with help reads as its help alone; several name
- * the preference each sentence belongs to.
- */
-function sectionHelp(prefs: PrefDef[]): string | undefined {
-  const helped = prefs.filter((p) => p.help)
-  if (helped.length === 0) return undefined
-  if (helped.length === 1) return helped[0].help
-  return helped.map((p) => `${p.label}: ${p.help}`).join(" ")
-}
-
-/**
  * The facets schema for the whole window. A schema without pages maps to one
  * without `pages` (one page, no tabs); facets' validation then holds because
  * the crate's own refuses the same bad declarations at load.
@@ -76,17 +70,12 @@ export function toPropertySchema(snap: Snapshot): PropertySchema {
   return {
     version,
     ...(paged ? { pages: pages.map(({ id, label }) => ({ id, label })) } : {}),
-    groups: sections.map((s) => {
-      const own = prefs.filter((p) => sectionOf(p.id) === s.id)
-      const description = sectionHelp(own)
-      return {
-        id: s.id,
-        title: s.label,
-        rows: own.map(toField),
-        ...(description ? { description } : {}),
-        ...(paged && s.page ? { page: s.page } : {}),
-        ...(s.advanced ? { advanced: true } : {}),
-      }
-    }),
+    groups: sections.map((s) => ({
+      id: s.id,
+      title: s.label,
+      rows: prefs.filter((p) => sectionOf(p.id) === s.id).map(toField),
+      ...(paged && s.page ? { page: s.page } : {}),
+      ...(s.advanced ? { advanced: true } : {}),
+    })),
   }
 }
