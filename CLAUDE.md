@@ -4,21 +4,21 @@
 
 **Working here:** roadmaps stay per package (each package's guidance project), handovers go in `handovers/packages/handover-<pkg>.md`, and a session may start in a package folder, with the catches in [`projects/packages`, Working in the monorepo](../guidance/projects/packages/README.md#working-in-the-monorepo).
 
-Versions released, pending and the apps behind: [`runbooks/pending-releases.md`](../guidance/runbooks/pending-releases.md) (owner), the registries and the scoped git tags are the truth. This table says only what exists and where it publishes. The Repo column is the package's old repo, which the published versions still link to until epic 03 of the monorepo project.
+Versions released, pending and the apps behind: [`runbooks/pending-releases.md`](../guidance/runbooks/pending-releases.md) (owner), the registries and the scoped git tags are the truth. This table says only what exists and where it publishes. Every package lives in `preset-nz/packages`, in the folder named in the first column. Versions published before a package's next release link to its old per-package repo, now archived; after that release `repository` points here with `directory: <pkg>`. Tags are scoped (`facets/v0.3.0`). Release with `just release <pkg>`; Georg runs `just publish <pkg>`.
 
-| Package | Repo | Registries | Notes |
-|---|---|---|---|
-| `facets/` | `preset-nz/facets` | npm `@preset.nz/facets` | 0.2 needs the host's NumberField, Slider and ColorField, so apps take it with ux-kit. preferences (peer) |
-| `preferences/` | `preset-nz/preferences` | npm `@preset.nz/preferences` + crates.io `preset-preferences`, lockstep | |
-| `rhizome/` | `preset-nz/rhizome` | crates.io `rhizome-core`, `rhizome-pom`, `rhizome-pom-tauri`; npm `@preset.nz/pom` | knope versions the workspace together |
-| `preset-docs/` | `preset-nz/preset-docs` (private; public at its first publish) | none yet: crates.io `preset-docs` | Oblique (`docs/gen`) and Shard take it by path, `rhizome` feature. Moved out of rhizome 2026-10-14 ([`projects/preset-docs`](../guidance/projects/preset-docs/README.md)) |
-| `ux-kit/` | `preset-nz/ux-kit` | npm `@preset.nz/ux-kit` | its own `playground/` (Tauri, links its siblings; `just check` covers it) |
-| `app-kit/` | `preset-nz/app-kit` | npm `@preset.nz/app-kit` + crate `preset-app-kit`, lockstep | ux-kit playground by path + link |
-| `math/` | `preset-nz/math` | npm `@preset.nz/math` + crate `preset-math`, lockstep | [`design/math.md`](../guidance/design/math.md) |
-| `paths/` | not created yet: `preset-nz/paths` | none yet: npm `@preset.nz/paths` + crate `preset-paths`, lockstep | Proposed 2026-10-06 ([`design/paths.md`](../guidance/design/paths.md)) |
-| `app-folders/` | not created yet | none | Proposed 2026-09-27 ([`design/app-folders.md`](../guidance/design/app-folders.md)). Feeds app-kit's `documents_folder` hook from the app, not by dependency |
+| Package | Registries | Notes |
+|---|---|---|
+| `facets/` | npm `@preset.nz/facets` | 0.2 needs the host's NumberField, Slider and ColorField, so apps take it with ux-kit. preferences (peer). The facets Claude plugin's marketplace is at the monorepo root (`.claude-plugin/marketplace.json`), the plugin in `facets/plugins/facets` |
+| `preferences/` | npm `@preset.nz/preferences` + crates.io `preset-preferences`, lockstep | |
+| `rhizome/` | crates.io `rhizome-core`, `rhizome-pom`, `rhizome-pom-tauri`; npm `@preset.nz/pom` | knope versions the workspace together |
+| `preset-docs/` | none yet: crates.io `preset-docs`, public in the monorepo, unpublished | Oblique (`docs/gen`) and Shard take it by path, `rhizome` feature. Moved out of rhizome 2026-10-14 ([`projects/preset-docs`](../guidance/projects/preset-docs/README.md)) |
+| `ux-kit/` | npm `@preset.nz/ux-kit` | its own `playground/` (Tauri, links its siblings; `just check` covers it) |
+| `app-kit/` | npm `@preset.nz/app-kit` + crate `preset-app-kit`, lockstep | ux-kit playground by path + link |
+| `math/` | npm `@preset.nz/math` + crate `preset-math`, lockstep | [`design/math.md`](../guidance/design/math.md) |
+| `paths/` | none yet: npm `@preset.nz/paths` + crate `preset-paths`, lockstep | Proposed 2026-10-06 ([`design/paths.md`](../guidance/design/paths.md)) |
+| `app-folders/` | none | Proposed 2026-09-27 ([`design/app-folders.md`](../guidance/design/app-folders.md)). Feeds app-kit's `documents_folder` hook from the app, not by dependency |
 
-**Every library package is public, MIT and published** (Georg, 2026-10-06, [`family-alignment.md`](../guidance/design/family-alignment.md#going-public)). Exceptions: preset-docs goes public at its first publish, and create-preset-app is private. Apps may commit a path dependency on a package (`link:` or `[patch]`) and take a registry version when one is cut (Georg, 2026-10-12, reversing registry-only). Stay on 0.x. Issues, projects and wiki off. The ux-kit playground is the one place that links siblings, as the workspace harness.
+**Every library package is public, MIT and published** (Georg, 2026-10-06, [`family-alignment.md`](../guidance/design/family-alignment.md#going-public)). Exception: preset-docs is public but not yet published (crates.io at its first release). Apps may commit a path dependency on a package (`link:` or `[patch]`) and take a registry version when one is cut (Georg, 2026-10-12, reversing registry-only). Stay on 0.x. Issues, projects and wiki off. The ux-kit playground is the one place that links siblings, as the workspace harness.
 
 **Publish when an app needs it** (Georg, 2026-10-06). A package changes freely in the playground, committed and pushed as often as you like (push needs no asking: [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)). A release happens when an app's work needs the change on the registry, and it takes everything that has built up since the last one. Pushing is cheap; a publish costs 2FA and npm's validation wait, so it isn't done per feature.
 
@@ -40,7 +40,7 @@ Planning docs live in the guidance repo, not here.
 - `~/rhizomatic-preset/guidance/runbooks/publish-npm-package.md` — **the release procedure.** Follow it; fix it when it's wrong.
 - `~/rhizomatic-preset/guidance/runbooks/package-release-qa.md` — **the QA pass** before a release or a consumer switch. The working tree lies: verify in a clean room and inspect the built output.
 - `~/rhizomatic-preset/guidance/runbooks/project-visibility-and-licensing.md` — the five-clause gate for going public.
-- `~/rhizomatic-preset/guidance/handovers/<package>/handover.md` — session state.
+- `~/rhizomatic-preset/guidance/handovers/packages/handover-<pkg>.md` — session state (the repo's own is `handover.md`).
 
 ## Conventions
 
