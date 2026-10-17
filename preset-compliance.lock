@@ -23,7 +23,7 @@ sha256 = "5e4d6376b631466069efe415bad8052d5fa534033a3edf42cbeb168c26465ee7"
 [[inputs]]
 path = "pnpm-lock.yaml"
 ecosystem = "pnpm"
-sha256 = "f94cae120f16e224e5f897b2bf9c9b9351bbcb6176142186f5be95157924cc7b"
+sha256 = "275c77574bd672d89d5e026973ca7f37fd383511e5ecd750cf2338586347acd5"
 
 [[inputs]]
 path = "preferences/Cargo.toml"
@@ -4917,30 +4917,6 @@ version = "2.1.10"
 source = "registry"
 declared = "MIT"
 scope = "shipped"
-
-[[packages]]
-ecosystem = "pnpm"
-name = "@preset.nz/facets"
-version = "0.2.0"
-source = "registry"
-declared = "MIT"
-scope = "dev"
-
-[[packages]]
-ecosystem = "pnpm"
-name = "@preset.nz/math"
-version = "0.1.0"
-source = "registry"
-declared = "MIT"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "pnpm"
-name = "@preset.nz/ux-kit"
-version = "0.1.1"
-source = "registry"
-declared = "MIT"
-scope = "dev"
 
 [[packages]]
 ecosystem = "pnpm"
