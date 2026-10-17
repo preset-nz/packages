@@ -1,10 +1,17 @@
 import { createContext, useContext, useId, useMemo, useState } from "react"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { LABEL_WIDTH_VAR, LabelLayoutContext, labelColumnWidth, useLabelLayout } from "./layout"
+import {
+  HELP_ROW,
+  LABEL_WIDTH_VAR,
+  LabelLayoutContext,
+  labelColumnWidth,
+  useLabelLayout,
+} from "./layout"
 import { getFieldRenderer, getScope } from "./registry"
 import type {
   FieldDef,
+  FileFieldDef,
   LabelLayout,
   PanelView,
   PropertyGroupDef,
@@ -609,7 +616,7 @@ function FieldSlot({
 
   // Display-only kinds (separator, label) have no path: no value, no writes.
   const path = "path" in field ? field.path : undefined
-  return renderer({
+  const control = renderer({
     field,
     value: path === undefined ? undefined : values[path],
     disabled,
@@ -619,5 +626,40 @@ function FieldSlot({
     onGestureCancel: gesture && path !== undefined ? () => gesture.cancel(path) : undefined,
     ctx,
     view,
-  })
+    // Renderers are synchronous; React's FC type allows a promise, which nothing returns.
+  }) as React.ReactNode
+  const help = view === "inspector" ? helpOf(field) : undefined
+  if (!help) return control
+  // One block, so in a grid row of two (the auto layout) the help stays in its field's cell.
+  return (
+    <div className="flex flex-col gap-0.5">
+      {control}
+      <FieldHelp text={help} />
+    </div>
+  )
+}
+
+/** A field's help; file fields' deprecated `helperText` when it has none. */
+function helpOf(field: FieldDef): string | undefined {
+  if ("help" in field && field.help) return field.help
+  if (field.kind === "file") return (field as FileFieldDef).helperText
+  return undefined
+}
+
+/**
+ * The help under a field: in a label column it starts at the control's edge,
+ * otherwise under the label. Quieter than the label, and selectable.
+ */
+function FieldHelp({ text }: { text: string }) {
+  const layout = useLabelLayout()
+  const p = <p className="select-text text-[11px] leading-snug text-muted-foreground">{text}</p>
+  if (layout === "column") {
+    return (
+      <div className={HELP_ROW}>
+        <span aria-hidden="true" />
+        {p}
+      </div>
+    )
+  }
+  return p
 }

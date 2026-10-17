@@ -132,7 +132,7 @@ export const CATALOGUE: KindEntry[] = [
       "Shows a file's name. Picking a file is the host's job, so this one is always read-only.",
     props: [
       ["accept", "file types, as on <input>"],
-      ["helperText", "a hint (declared, not yet drawn)"],
+      ["helperText", "deprecated: use help, which every field has"],
     ],
     make: (n) => ({
       field: { kind: "file", id: id("file", n), path: id("file", n), label: "Source" },

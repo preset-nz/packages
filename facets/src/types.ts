@@ -18,6 +18,11 @@ export interface BaseField {
   id: string
   label?: string
   path: string
+  /**
+   * One or two sentences on what the field does, drawn under the control in the
+   * inspector view. The card and collapsed views leave it out.
+   */
+  help?: string
   disabledWhen?: DisabledWhen
   promote?: PromoteView[]
 }
@@ -139,6 +144,7 @@ export interface VectorFieldDef extends BaseField {
 export interface FileFieldDef extends BaseField {
   kind: "file"
   accept?: string
+  /** @deprecated Use `help`, which every field has. Drawn as `help` when that's absent. */
   helperText?: string
 }
 

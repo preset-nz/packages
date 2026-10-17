@@ -33,7 +33,7 @@ A panel is a `PropertySchema`: groups of rows of fields. Each field has a `kind`
 | `separator` | none; no `path` | `label` as an optional caption |
 | `label` | none; no `path` | `label` (required) is the text |
 
-Every kind takes `label` (defaults to `id`), `disabledWhen` and `promote`. Any other `kind` string is a custom kind (below).
+Every kind takes `label` (defaults to `id`), `disabledWhen` and `promote`. Every kind with a `path` also takes `help` (from 0.3.0): a sentence or two under the control in the inspector, never on the card or collapsed; write one for any field whose label doesn't say what it does. Any other `kind` string is a custom kind (below).
 
 **Rows:** a field is a full-width row; an array of fields is one row laid out as a grid, usually two. That is the whole layout system.
 

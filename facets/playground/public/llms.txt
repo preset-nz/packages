@@ -14,6 +14,7 @@
 - `advanced: true` on a group puts it behind the page's one closed Advanced row. Every page needs a group that isn't advanced. `schemaProblems(schema)` checks these cross-references, which JSON Schema can't; `registerScope` throws on any.
 - `<PropertyPanel page onPageChange advancedOpen onAdvancedOpenChange>` let a host remember the open tab and Advanced rows (`""` is an unpaged schema's page). Scope `changed: (selection, ctx) => paths` marks a tab, closed Advanced row or closed group hiding a changed field.
 - disabledWhen: { path, equals | notEquals | in | notIn }, reading one other field's value.
+- `help` (from 0.3.0) on any field with a `path`: a sentence or two under the control, in the inspector only. `file`'s `helperText` is deprecated.
 - Read-only (no `write`, or `readOnly` on the panel): renderers get no onChange and draw values as text.
 - select `options: [{ value, label }]` in JSON; `optionsProvider(ctx)` is code only.
 - Views (from 0.1.4): `<PropertyPanel view="inspector" | "card" | "collapsed">`, default "inspector". A field's `promote: ["card", "collapsed"]` lists the views it shows in besides the inspector. The two are independent, not nested. Omit `promote` for inspector-only.

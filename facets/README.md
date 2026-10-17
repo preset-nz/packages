@@ -271,6 +271,10 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 | `separator` | none | a horizontal rule, with `label` as an optional caption. No `path` |
 | `label` | none | static text: a hint or a sub-heading. The text is `label`. No `path` |
 
+Every field that holds a value takes `help` (from 0.3.0): a sentence or two
+drawn under the control in the inspector, and left out of the card and the
+collapsed view. `file`'s `helperText` is its deprecated name.
+
 Groups take `collapsible: true` to fold under their title, and
 `defaultCollapsed: true` to start folded. The open or closed state belongs to
 the panel, so it resets when the panel remounts.

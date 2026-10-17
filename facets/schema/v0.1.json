@@ -396,6 +396,10 @@
           "type": "string",
           "description": "Shown above the field. Defaults to id."
         },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
+        },
         "path": {
           "type": "string",
           "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
@@ -428,6 +432,10 @@
         "label": {
           "type": "string",
           "description": "Shown above the field. Defaults to id."
+        },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
         },
         "path": {
           "type": "string",
@@ -465,6 +473,10 @@
         "label": {
           "type": "string",
           "description": "Shown above the field. Defaults to id."
+        },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
         },
         "path": {
           "type": "string",
@@ -515,6 +527,10 @@
           "type": "string",
           "description": "Shown above the field. Defaults to id."
         },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
+        },
         "path": {
           "type": "string",
           "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
@@ -556,6 +572,10 @@
           "type": "string",
           "description": "Shown above the field. Defaults to id."
         },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
+        },
         "path": {
           "type": "string",
           "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
@@ -591,6 +611,10 @@
         "label": {
           "type": "string",
           "description": "Shown above the field. Defaults to id."
+        },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
         },
         "path": {
           "type": "string",
@@ -628,6 +652,10 @@
           "type": "string",
           "description": "Shown above the field. Defaults to id."
         },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
+        },
         "path": {
           "type": "string",
           "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
@@ -657,6 +685,10 @@
           "type": "string",
           "description": "Shown above the field. Defaults to id."
         },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
+        },
         "path": {
           "type": "string",
           "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
@@ -670,7 +702,7 @@
         },
         "helperText": {
           "type": "string",
-          "description": "A hint. Declared in 0.1; the built-in renderer does not draw it."
+          "description": "Deprecated: use help, which every field has. Drawn as help when that's absent."
         },
         "promote": {
           "$ref": "#/definitions/promote"
@@ -693,6 +725,10 @@
         "label": {
           "type": "string",
           "description": "Shown above the field. Defaults to id."
+        },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
         },
         "path": {
           "type": "string",
@@ -787,6 +823,10 @@
         "label": {
           "type": "string",
           "description": "Shown above the field. Defaults to id."
+        },
+        "help": {
+          "type": "string",
+          "description": "One or two sentences on what the field does, drawn under the control in the inspector view. The card and collapsed views leave it out."
         },
         "path": {
           "type": "string",
