@@ -351,8 +351,8 @@ plugin with a skill for writing schemas, scopes and custom renderers lives in
 this repo:
 
 ```sh
-claude plugin marketplace add preset-nz/facets
-claude plugin install facets@preset-nz-facets
+claude plugin marketplace add preset-nz/packages
+claude plugin install facets@preset-nz-packages
 ```
 
 ---

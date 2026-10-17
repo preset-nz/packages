@@ -9,7 +9,7 @@ A panel is a `PropertySchema`: groups of rows of fields. Each field has a `kind`
 
 - JSON Schema: https://facets.preset.nz/schema/v0.1.json (also `@preset.nz/facets/schema/v0.1.json`)
 - Playground to try a schema: https://facets.preset.nz
-- Source: https://github.com/preset-nz/facets
+- Source: https://github.com/preset-nz/packages/tree/main/facets
 
 ## Before writing a schema
 

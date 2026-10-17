@@ -242,7 +242,10 @@ export function App() {
           <a className="hover:text-foreground" href="https://preset.nz">
             preset.nz
           </a>
-          <a className="hover:text-foreground" href="https://github.com/preset-nz/facets">
+          <a
+            className="hover:text-foreground"
+            href="https://github.com/preset-nz/packages/tree/main/facets"
+          >
             GitHub
           </a>
           <a

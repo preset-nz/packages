@@ -26,9 +26,9 @@
 
 ## Guides
 
-- [Claude skill, full guide](https://raw.githubusercontent.com/preset-nz/facets/main/plugins/facets/skills/facets-schema/SKILL.md): schemas, scopes, custom kinds and overrides, host setup, checks. Install it in Claude Code: `claude plugin marketplace add preset-nz/facets`, then `claude plugin install facets@preset-nz-facets`.
-- [README](https://raw.githubusercontent.com/preset-nz/facets/main/README.md): install, worked example, read-only, custom kinds.
-- [Types](https://raw.githubusercontent.com/preset-nz/facets/main/src/types.ts): FieldDef, PropertySchema, Scope, FieldRendererProps.
+- [Claude skill, full guide](https://raw.githubusercontent.com/preset-nz/packages/main/facets/plugins/facets/skills/facets-schema/SKILL.md): schemas, scopes, custom kinds and overrides, host setup, checks. Install it in Claude Code: `claude plugin marketplace add preset-nz/packages`, then `claude plugin install facets@preset-nz-packages`.
+- [README](https://raw.githubusercontent.com/preset-nz/packages/main/facets/README.md): install, worked example, read-only, custom kinds.
+- [Types](https://raw.githubusercontent.com/preset-nz/packages/main/facets/src/types.ts): FieldDef, PropertySchema, Scope, FieldRendererProps.
 
 ## Try it
 

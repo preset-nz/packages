@@ -1,11 +1,11 @@
 {
-  "name": "preset-nz-facets",
-  "description": "The facets plugin for @preset.nz/facets.",
+  "name": "preset-nz-packages",
+  "description": "Claude Code plugins for the preset.nz libraries.",
   "owner": { "name": "preset.nz" },
   "plugins": [
     {
       "name": "facets",
-      "source": "./plugins/facets",
+      "source": "./facets/plugins/facets",
       "description": "Write and wire inspector panels with @preset.nz/facets: schemas, scopes, custom field renderers, host setup."
     }
   ]
