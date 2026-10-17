@@ -2,6 +2,8 @@
 
 `packages/` is one git repo, the `preset-nz/packages` monorepo (since 2026-10-16). Each package directly under it keeps its own version, changelog, registry names and scoped tags (`facets/v0.2.0`). The root owns the tooling: one pnpm and one Cargo workspace, `knope.toml`, `lefthook.yml`, CI and the licence lock. `just check [<pkg>…]` and `just check-changed` run from the root; each package's own recipes are `just <pkg>::<recipe>`. It is public on GitHub since 2026-10-17, and the old per-package repos are frozen: don't commit or push to them.
 
+**Working here:** roadmaps stay per package (each package's guidance project), handovers go in `handovers/packages/handover-<pkg>.md`, and a session may start in a package folder, with the catches in [`projects/packages`, Working in the monorepo](../guidance/projects/packages/README.md#working-in-the-monorepo).
+
 Versions released, pending and the apps behind: [`runbooks/pending-releases.md`](../guidance/runbooks/pending-releases.md) (owner), the registries and the scoped git tags are the truth. This table says only what exists and where it publishes. The Repo column is the package's old repo, which the published versions still link to until epic 03 of the monorepo project.
 
 | Package | Repo | Registries | Notes |
@@ -20,7 +22,7 @@ Versions released, pending and the apps behind: [`runbooks/pending-releases.md`]
 
 **Publish when an app needs it** (Georg, 2026-10-06). A package changes freely in the playground, committed and pushed as often as you like (push needs no asking: [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)). A release happens when an app's work needs the change on the registry, and it takes everything that has built up since the last one. Pushing is cheap; a publish costs 2FA and npm's validation wait, so it isn't done per feature.
 
-**One monorepo, `preset-nz/packages`, rooted at this folder** (Georg, 2026-10-15): [`projects/packages-monorepo`](../guidance/projects/packages-monorepo/README.md). A new package is a folder here, not a repo. compliance and create-preset-app aren't packages here: they are their own repos in `~/rhizomatic-preset/tools/` (Georg, 2026-10-16).
+**One monorepo, `preset-nz/packages`, rooted at this folder** (Georg, 2026-10-15): [`projects/packages`](../guidance/projects/packages/README.md). A new package is a folder here, not a repo. compliance and create-preset-app aren't packages here: they are their own repos in `~/rhizomatic-preset/tools/` (Georg, 2026-10-16).
 
 **Where shared code lives is decided per case**, not by a second consumer: [family-alignment rule 6](../guidance/design/family-alignment.md#rules).
 

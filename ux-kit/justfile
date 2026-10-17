@@ -4,6 +4,12 @@
 default:
     @just --list
 
+# The workspace's dependencies, and the playground's crates (outside the Cargo workspace)
+[group('setup')]
+install:
+    pnpm install
+    cargo fetch --manifest-path playground/src-tauri/Cargo.toml
+
 # Run the playground as a desktop app (Tauri shell).
 [group('dev')]
 dev:

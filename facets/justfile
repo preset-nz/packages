@@ -1,6 +1,5 @@
-# Standard verbs: prep, install, run, check, build.
-# `facets` is unbuilt source with no runtime of its own — `run` and `build`
-# would have nothing to do, so they are deliberately absent.
+# Library verbs: install, check, fmt. `facets` is unbuilt source with no
+# runtime of its own, so it has no `run` or `build`; `prep` is the root's.
 #
 # `check` typechecks src/ against the reference primitives in dev/ui/ — stand-ins
 # typed to the shadcn API, NOT what any consumer ships. It is the fast signal;
@@ -9,6 +8,11 @@
 
 default:
     @just --list
+
+# The workspace's dependencies, from the root lockfile
+[group('setup')]
+install:
+    pnpm install
 
 [group('quality')]
 check:
