@@ -66,15 +66,14 @@ licences:
 licences-scan:
     preset-compliance licences scan
 
-# Version, changelog, commit and a scoped tag for every package with releasable
-# commits since its last tag (knope.toml). Push and publish stay by hand.
-# knope picks the package from the commit's scope, so check `release-preview`
-# first: every package with changes releases in the same run.
+# Version, changelog, commit and a scoped tag (knope.toml): `just release facets`
+# for one package, `just release` for every package with releasable commits
+# since its last tag. Push and publish stay by hand.
 [group('build')]
-release:
-    knope release
+release *pkg:
+    scripts/release.sh {{pkg}}
 
 # What `release` would do, without touching anything
 [group('build')]
-release-preview:
-    knope release --dry-run
+release-preview *pkg:
+    scripts/release.sh --dry-run {{pkg}}
