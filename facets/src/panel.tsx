@@ -299,7 +299,7 @@ function Inspector({
   return (
     <Tabs value={current.id} onValueChange={(v) => choosePage(String(v))}>
       <div className="px-3 pt-3">
-        <TabsList className="w-full">
+        <TabsList>
           {pages.map((p) => (
             <TabsTrigger key={p.id} value={p.id}>
               {p.label}
