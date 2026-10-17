@@ -67,6 +67,10 @@ commit-msg:
         printf '%s' "$s" | grep -qE '^((feat|fix|perf|refactor|style|test|docs|build|ci|chore|revert|release)(\([a-z0-9-]+\))?!?: [^ ]|Merge |Revert ")' \
           || { echo "commit-msg: subject must be 'type(scope): subject' (feat, fix, perf, refactor, style, test, docs, build, ci, chore, revert)"; exit 1; }
         [ ${#s} -le 72 ] || { echo "commit-msg: subject is ${#s} characters; keep it to 72 and put the why in the body"; exit 1; }
-        if printf '%s' "$s" | grep -qE '^(feat|fix|perf)(!)?: '; then
-          echo "commit-msg: name the package in the scope, e.g. feat(facets): …; a feat or fix with no scope releases every package"; exit 1
+        # A commit knope releases (feat, fix, perf, or anything breaking) names one
+        # package as its scope; a feat with no scope would release every package.
+        if printf '%s' "$s" | grep -qE '^(feat|fix|perf)(\(|!|:)|^[a-z]+(\([^)]*\))?!: ' || grep -q '^BREAKING[ -]CHANGE: ' {1}; then
+          scope=$(printf '%s' "$s" | sed -nE 's/^[a-z]+\(([^)]*)\)!?: .*/\1/p')
+          scripts/packages.sh | grep -qxF -- "$scope" \
+            || { echo "commit-msg: name one package as the scope, e.g. feat(facets): schema — …; scopes: $(scripts/packages.sh | tr '\n' ' ')"; echo "  A change to two packages is two commits."; exit 1; }
         fi

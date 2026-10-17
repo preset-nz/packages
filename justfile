@@ -68,13 +68,11 @@ licences-scan:
 
 # Version, changelog, commit and a scoped tag for every package with releasable
 # commits since its last tag (knope.toml). Push and publish stay by hand.
-# Blocked until knope attributes commits to the right package: it reads only the
-# scope, and counts the imported unscoped history for every package
-# (guidance projects/packages-monorepo, epic 01).
+# knope picks the package from the commit's scope, so check `release-preview`
+# first: every package with changes releases in the same run.
 [group('build')]
 release:
-    @echo "release is blocked: knope would bump every package (packages-monorepo epic 01). See \`just release-preview\`." >&2
-    @exit 1
+    knope release
 
 # What `release` would do, without touching anything
 [group('build')]

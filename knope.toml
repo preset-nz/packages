@@ -1,8 +1,11 @@
 # Releases: `just release`. One [packages.<name>] per package, each with its own
 # version, CHANGELOG.md and scoped tag (`facets/v0.3.0`). knope bumps a package
 # from the conventional commits since its last tag. A commit counts for a package
-# when its scope is the package name (`feat(facets): …`); a commit with NO scope
-# counts for every package, so feat and fix commits always name their package.
+# when its scope is the package name (`feat(facets): …`), never by the paths it
+# touches; a commit with NO scope counts for every package. The commit-msg hook
+# (lefthook.yml) makes every feat, fix, perf and breaking commit name a package,
+# and the history imported from the old repos was rescoped to match (2026-10-17).
+# A BREAKING CHANGE footer goes into the changelog only up to its first line break.
 # Pushing and publishing stay manual (guidance runbooks/publish-npm-package.md).
 
 [packages.app-kit]
