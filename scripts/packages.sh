@@ -15,10 +15,12 @@ names() {
       -exec sed -n 's/^name = "\(.*\)"$/\1/p' {} +; } | sort -u
 }
 
-# The manifests of a package, without its playground.
+# The manifests of a package, its playground's included: a playground that
+# links a sibling breaks when that sibling changes (the ux-kit playground on
+# preferences' settings pages, 2026-10-17), so the package re-checks.
 manifests() {
-  find "$1" -maxdepth 3 \( -name package.json -o -name Cargo.toml \) \
-    -not -path '*/node_modules/*' -not -path '*/target/*' -not -path '*/playground/*'
+  find "$1" -maxdepth 4 \( -name package.json -o -name Cargo.toml \) \
+    -not -path '*/node_modules/*' -not -path '*/target/*'
 }
 
 if [ $# -eq 0 ]; then all; exit; fi

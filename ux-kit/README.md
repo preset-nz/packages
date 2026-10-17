@@ -107,12 +107,11 @@ The components are adapted from Vercel AI Elements (Apache-2.0) and shadcn/ui's 
 ## Working on it
 
 ```sh
-just install   # pnpm install
+just install   # pnpm install, and the playground's crates
 just dev       # the playground as a desktop app
-just check     # typecheck and lint the kit
-just check-all # the kit, the playground and cargo check
+just check     # the kit, the playground and cargo check
 ```
 
-The playground links the sibling packages (rhizome, app-kit, preferences, facets, math), so `just dev` and `just check-all` need them checked out next to this repo. `just check` needs only this repo.
+Run them in `ux-kit/` of [preset-nz/packages](https://github.com/preset-nz/packages). The playground links the other packages in that repo (rhizome, app-kit, preferences, facets, math), so a change to one of them that breaks it fails `just check`.
 
 MIT.

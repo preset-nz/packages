@@ -12,7 +12,7 @@ Versions released, pending and the apps behind: [`runbooks/pending-releases.md`]
 | `preferences/` | `preset-nz/preferences` | npm `@preset.nz/preferences` + crates.io `preset-preferences`, lockstep | |
 | `rhizome/` | `preset-nz/rhizome` | crates.io `rhizome-core`, `rhizome-pom`, `rhizome-pom-tauri`; npm `@preset.nz/pom` | knope versions the workspace together |
 | `preset-docs/` | `preset-nz/preset-docs` (private; public at its first publish) | none yet: crates.io `preset-docs` | Oblique (`docs/gen`) and Shard take it by path, `rhizome` feature. Moved out of rhizome 2026-10-14 ([`projects/preset-docs`](../guidance/projects/preset-docs/README.md)) |
-| `ux-kit/` | `preset-nz/ux-kit` | npm `@preset.nz/ux-kit` | its own `playground/` (Tauri, by link; `just check-all`) |
+| `ux-kit/` | `preset-nz/ux-kit` | npm `@preset.nz/ux-kit` | its own `playground/` (Tauri, links its siblings; `just check` covers it) |
 | `app-kit/` | `preset-nz/app-kit` | npm `@preset.nz/app-kit` + crate `preset-app-kit`, lockstep | ux-kit playground by path + link |
 | `math/` | `preset-nz/math` | npm `@preset.nz/math` + crate `preset-math`, lockstep | [`design/math.md`](../guidance/design/math.md) |
 | `paths/` | not created yet: `preset-nz/paths` | none yet: npm `@preset.nz/paths` + crate `preset-paths`, lockstep | Proposed 2026-10-06 ([`design/paths.md`](../guidance/design/paths.md)) |
