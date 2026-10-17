@@ -31,7 +31,7 @@ sha256 = "00596af01374024c0b77c9b53e89d7c84c418b449c04a1cc5c52d571a73f1741"
 
 [[inputs]]
 path = "preset-docs/Cargo.toml"
-sha256 = "b9afe39d5b472d885020e9a900d565a3698e41df7cf62fda2bf95d654df7ea4e"
+sha256 = "558f1ab084948952b6b98a46c751db158de07548ffe010cda8b58bc97052c0ba"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-core/Cargo.toml"
