@@ -3,7 +3,8 @@
    it. Consumers point the same line at node_modules/@preset.nz/facets/src. */
 @source "../../src";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* ux-kit's vendored copy: the shadcn package would pull in its whole CLI. */
+@import "../../../ux-kit/src/shadcn-tailwind.css";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/jetbrains-mono";
 
