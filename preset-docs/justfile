@@ -6,13 +6,14 @@ default:
 install:
     cargo fetch
 
-# Format, lint and test, with and without the rhizome adapter: the fast signal
+# Format, lint, test and build the docs, with and without the rhizome adapter: the fast signal
 [group('quality')]
 check:
     cargo fmt --check
     cargo clippy --all-targets --all-features -- -D warnings
     cargo clippy --all-targets -- -D warnings
     cargo test --all-features
+    RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 
 # Run the tests
 [group('quality')]

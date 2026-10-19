@@ -2,7 +2,7 @@
 //!
 //! Writes one markdown page per node in the catalogue into `out-dir`, plus a `README.md`
 //! index; existing pages change only between their markers and in the front-matter keys
-//! the generator owns (title, node, group, summary). With `--check` it writes nothing and
+//! the generator owns (title, node, group, category, summary). With `--check` it writes nothing and
 //! fails if a page is missing, stale (block or front matter) or orphaned, the index is
 //! stale, or a node has no summary. Values without a description are warnings, never
 //! failures. `--app` names the index's title. The catalogue is JSON: a `Catalogue`, such as a dumped rhizome

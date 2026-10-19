@@ -36,7 +36,7 @@ The JSON is the shape a rhizome schema dumps: `types`, each with `name`, `label`
 
 ### Settings
 
-An app's settings come from its [preset-preferences](https://github.com/preset-nz/preferences) schema, dumped as JSON (a snapshot holding it under `schema` reads too):
+An app's settings come from its [preset-preferences](https://github.com/preset-nz/packages/tree/main/preferences) schema, dumped as JSON (a snapshot holding it under `schema` reads too):
 
 ```sh
 preset-docs settings.json docs/settings --preferences --app Strata          # write

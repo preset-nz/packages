@@ -100,13 +100,13 @@ pub fn read_catalogue(json: &str) -> serde_json::Result<Catalogue> {
 }
 
 /// Every page as freshly generated, in name order: one per node type, then the index. `app`
-/// names the index's title ("<app> nodes", or the catalogue's own noun); empty gives "Nodes".
+/// names the index's title (`<app> nodes`, or the catalogue's own noun); empty gives "Nodes".
 pub fn pages(catalogue: &Catalogue, app: &str) -> Vec<Page> {
     pages_with_thumbnails(catalogue, app, &BTreeMap::new())
 }
 
 /// [`pages`], with an index that shows `thumbnails` (node name to picture path, relative to
-/// the docs folder). [`write`] and [`check`] read them with [`thumbnails`].
+/// the docs folder). [`write()`] and [`check()`] read them with [`thumbnails()`].
 pub fn pages_with_thumbnails(
     catalogue: &Catalogue,
     app: &str,

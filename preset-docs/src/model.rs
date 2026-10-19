@@ -13,7 +13,7 @@ use serde_json::Value as Json;
 pub struct Catalogue {
     #[serde(default)]
     pub types: Vec<Node>,
-    /// What the pages are, plural, for the index's title: "<app> <noun>". Default `nodes`.
+    /// What the pages are, plural, for the index's title: `<app> <noun>`. Default `nodes`.
     #[serde(default)]
     pub noun: Option<String>,
 }

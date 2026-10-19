@@ -15,7 +15,7 @@ use serde_json::Value as Json;
 
 use crate::{Catalogue, Control, Kind, Node};
 
-/// What a settings index calls its pages: "<app> settings".
+/// What a settings index calls its pages: `<app> settings`.
 pub const NOUN: &str = "settings";
 
 /// The page an unpaged schema's sections all go on.
