@@ -62,14 +62,15 @@ function Progress({
   )
 }
 
-// Decimal sizes, one place: bytes under a kilobyte, kilobytes under a megabyte, megabytes above.
-// 46_900_000 is "46.9 MB", 2_048 is "2.0 KB", 0 is "0 B".
+// Decimal sizes, one place: bytes under a kilobyte, then kilobytes, megabytes and gigabytes.
+// 46_900_000 is "46.9 MB", 1_200_000_000 is "1.2 GB", 2_048 is "2.0 KB", 0 is "0 B".
 function formatBytes(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "0 B"
   if (n < 1_000) return `${Math.round(n)} B`
-  // 999_950 bytes rounds to "1000.0 KB"; call that a megabyte.
+  // Each threshold sits where one place rounds up to 1000.0 of the smaller unit.
   if (n < 999_950) return `${(n / 1_000).toFixed(1)} KB`
-  return `${(n / 1_000_000).toFixed(1)} MB`
+  if (n < 999_950_000) return `${(n / 1_000_000).toFixed(1)} MB`
+  return `${(n / 1_000_000_000).toFixed(1)} GB`
 }
 
 export type { ProgressProps }
