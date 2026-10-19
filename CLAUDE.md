@@ -11,14 +11,14 @@ Versions released, pending and the apps behind: [`runbooks/pending-releases.md`]
 | `facets/` | npm `@preset.nz/facets` | 0.2 needs the host's NumberField, Slider and ColorField, so apps take it with ux-kit. preferences (peer). The facets Claude plugin's marketplace is at the monorepo root (`.claude-plugin/marketplace.json`), the plugin in `facets/plugins/facets` |
 | `preferences/` | npm `@preset.nz/preferences` + crates.io `preset-preferences`, lockstep | |
 | `rhizome/` | crates.io `rhizome-core`, `rhizome-pom`, `rhizome-pom-tauri`; npm `@preset.nz/pom` | knope versions the workspace together |
-| `preset-docs/` | none yet: crates.io `preset-docs`, public in the monorepo, unpublished | Oblique (`docs/gen`) and Shard take it by path, `rhizome` feature. Moved out of rhizome 2026-10-14 ([`projects/preset-docs`](../guidance/projects/preset-docs/README.md)) |
+| `preset-docs/` | crates.io `preset-docs` | Oblique (`docs/gen`) takes it from the registry, Shard still by path, `rhizome` feature. Moved out of rhizome 2026-10-14 ([`projects/preset-docs`](../guidance/projects/preset-docs/README.md)) |
 | `ux-kit/` | npm `@preset.nz/ux-kit` | its own `playground/` (Tauri, links its siblings; `just check` covers it) |
 | `app-kit/` | npm `@preset.nz/app-kit` + crate `preset-app-kit`, lockstep | ux-kit playground by path + link |
 | `math/` | npm `@preset.nz/math` + crate `preset-math`, lockstep | [`design/math.md`](../guidance/design/math.md) |
 | `paths/` | none yet: npm `@preset.nz/paths` + crate `preset-paths`, lockstep | Proposed 2026-10-06 ([`design/paths.md`](../guidance/design/paths.md)) |
 | `app-folders/` | none | Proposed 2026-09-27 ([`design/app-folders.md`](../guidance/design/app-folders.md)). Feeds app-kit's `documents_folder` hook from the app, not by dependency |
 
-**Every library package is public, MIT and published** (Georg, 2026-10-06, [`family-alignment.md`](../guidance/design/family-alignment.md#going-public)). Exception: preset-docs is public but not yet published (crates.io at its first release). Apps may commit a path dependency on a package (`link:` or `[patch]`) and take a registry version when one is cut (Georg, 2026-10-12, reversing registry-only). Stay on 0.x. Issues, projects and wiki off. The ux-kit playground is the one place that links siblings, as the workspace harness.
+**Every library package is public, MIT and published** (Georg, 2026-10-06, [`family-alignment.md`](../guidance/design/family-alignment.md#going-public)). Apps may commit a path dependency on a package (`link:` or `[patch]`) and take a registry version when one is cut (Georg, 2026-10-12, reversing registry-only). Stay on 0.x. Issues, projects and wiki off. The ux-kit playground is the one place that links siblings, as the workspace harness.
 
 **Publish when an app needs it** (Georg, 2026-10-06). A package changes freely in the playground, committed and pushed as often as you like (push needs no asking: [`~/.claude/CLAUDE.md`](~/.claude/CLAUDE.md)). A release happens when an app's work needs the change on the registry, and it takes everything that has built up since the last one. Pushing is cheap; a publish costs 2FA and npm's validation wait, so it isn't done per feature.
 
