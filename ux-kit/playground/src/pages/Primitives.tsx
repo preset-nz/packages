@@ -56,6 +56,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
+  formatBytes,
   Icons,
   Input,
   Label,
@@ -71,6 +72,7 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
+  Progress,
   Select,
   SelectContent,
   SelectItem,
@@ -476,6 +478,21 @@ function Feedback() {
         <div className="space-y-2">
           <Skeleton className="h-4 w-48" />
           <Skeleton className="h-4 w-32" />
+        </div>
+      </Demo>
+      <Demo name="Progress">
+        <div className="flex w-full max-w-sm flex-col gap-4">
+          <Progress value={0} label="Downloading model" showLabel detail="0%" />
+          <Progress
+            value={63}
+            label="Downloading model"
+            showLabel
+            detail={`${formatBytes(28_100_000)} / ${formatBytes(44_700_000)}`}
+          />
+          <Progress value={100} label="Downloading model" showLabel detail="100%" />
+          <Progress value={null} label="Preparing" showLabel />
+          <Progress value={63} label="Without a visible label" detail="63%" />
+          <Progress value={null} label="Indeterminate, no visible label" />
         </div>
       </Demo>
     </Group>

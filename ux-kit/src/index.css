@@ -15,6 +15,14 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Progress, indeterminate: the 40%-wide segment crosses the track left to right. */
+@theme inline {
+    @keyframes progress-slide {
+        from { transform: translateX(-100%); }
+        to { transform: translateX(250%); }
+    }
+}
+
 @theme inline {
     /* Headings use the interface face; hierarchy comes from size and weight. */
     --font-heading: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
