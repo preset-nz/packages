@@ -56,10 +56,13 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
+  EmptyState,
   formatBytes,
   Icons,
   Input,
   Label,
+  List,
+  ListRow,
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
@@ -499,6 +502,61 @@ function Feedback() {
   )
 }
 
+function ListDemos() {
+  const [selectedId, setSelectedId] = useState<string | null>("mobile_sam")
+  const rows = [
+    { id: "mobile_sam", title: "MobileSAM", detail: "Smart Select · Apache-2.0 · 44.7 MB" },
+    { id: "u2net", title: "U2-Net", detail: "Remove Background · Apache-2.0 · 175 MB" },
+    { id: "rmbg", title: "RMBG", detail: "Remove Background · MIT · 44 MB" },
+  ]
+  return (
+    <Group
+      title="List"
+      note="Plain: Tab walks the buttons. Selectable: Up, Down, Home, End move focus; Enter or Space selects."
+    >
+      <Demo name="Plain list with trailing buttons and a footer">
+        <List
+          aria-label="Models"
+          className="w-full max-w-md rounded-md border"
+          footer="Total 264 MB"
+        >
+          {rows.map((row) => (
+            <ListRow
+              key={row.id}
+              id={row.id}
+              title={row.title}
+              detail={row.detail}
+              trailing={
+                <Button size="sm" variant="outline">
+                  Remove
+                </Button>
+              }
+            />
+          ))}
+        </List>
+      </Demo>
+      <Demo name="Selectable list">
+        <List
+          aria-label="Choose a model"
+          className="w-full max-w-md rounded-md border"
+          selection={{ selectedId, onSelect: setSelectedId }}
+        >
+          {rows.map((row) => (
+            <ListRow key={row.id} id={row.id} title={row.title} detail={row.detail} />
+          ))}
+        </List>
+      </Demo>
+      <Demo name="Empty">
+        <List
+          aria-label="Empty models"
+          className="w-full max-w-md rounded-md border"
+          empty={<EmptyState title="No models" description="Downloaded models appear here." />}
+        />
+      </Demo>
+    </Group>
+  )
+}
+
 function Layout() {
   return (
     <Group title="Layout and navigation">
@@ -604,6 +662,7 @@ export function Primitives() {
       <Overlays />
       <Menus />
       <Feedback />
+      <ListDemos />
       <Layout />
     </section>
   )
