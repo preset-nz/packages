@@ -3,6 +3,9 @@ import type * as React from "react"
 
 import { cn } from "../lib/utils"
 
+// Popover: Base UI Popover. There is no `PopoverAnchor`: Base UI anchors through the
+// Positioner's `anchor` prop.
+
 function Popover({ ...props }: PopoverPrimitive.Root.Props) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
 }

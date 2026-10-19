@@ -14,6 +14,10 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Skeleton } from "./skeleton"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip"
 
+// Sidebar: shadcn's sidebar with `asChild` replaced by `render`, and `useIsMobile` kept in
+// the kit. Only the `collapsible="none"` form is exercised in the playground; the offcanvas
+// and icon forms are untested here.
+
 // Base UI's replacement for Radix's asChild: pass `render={<a href="..." />}`
 // to swap the element, props and ref are merged onto it.
 function Slotted({

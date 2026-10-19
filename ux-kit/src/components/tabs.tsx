@@ -44,6 +44,8 @@ function TabsList({
   )
 }
 
+// Orientation styles key on `data-[orientation=...]`.
+
 // Base UI calls the trigger `Tab` and the content `Panel`; the kit keeps the
 // shadcn names (TabsTrigger, TabsContent) so apps read the same.
 function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {

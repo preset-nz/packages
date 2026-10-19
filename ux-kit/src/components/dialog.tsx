@@ -5,6 +5,9 @@ import type * as React from "react"
 import { cn } from "../lib/utils"
 import { Button } from "./button"
 
+// Dialog: Base UI Dialog in the kit's theme. Triggers and closers take
+// `render={<Button />}` where Radix used `asChild`.
+
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }

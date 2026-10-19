@@ -7,6 +7,7 @@ import { cn } from "../lib/utils"
 // Base UI renders content through a shared Portal > Positioner > Popup >
 // Viewport. NavigationMenu bundles that, so `NavigationMenuContent` items
 // morph inside one popup like the shadcn viewport variant.
+// Always the shared-viewport form: the Radix indicator and viewport={false} mode are gone.
 function NavigationMenu({
   className,
   children,

@@ -4,6 +4,9 @@ import type * as React from "react"
 
 import { cn } from "../lib/utils"
 
+// Base UI: `ContextMenuLabel` is Base UI's `GroupLabel`, so it must sit inside a `ContextMenuGroup`.
+// Same shape as DropdownMenu.
+
 function ContextMenu({ ...props }: ContextMenuPrimitive.Root.Props) {
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />
 }

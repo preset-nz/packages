@@ -4,8 +4,9 @@ import type * as React from "react"
 
 import { cn } from "../lib/utils"
 
-// The kit's one toast: Strata's snackbar, on Base UI Toast.
-// One manager for the module, so `notify()` works outside React. Mount one provider per window.
+// The kit's one toast: Strata's snackbar, on Base UI Toast. Kinds: plain, success, warning, error.
+// One manager for the module, so `notify()` works outside React. Mount one `SnackbarProvider` per
+// window, with a `SnackbarViewport` inside it.
 const manager = Toast.createToastManager()
 
 export function SnackbarProvider({ children }: { children: React.ReactNode }) {
