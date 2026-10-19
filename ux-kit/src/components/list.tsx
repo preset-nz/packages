@@ -7,7 +7,12 @@ import { cn } from "../lib/utils"
 // `trailing` actions are the only interactive parts (Tab walks them). With
 // `selection` it is a `role="listbox"` with roving tabindex: Up, Down, Home
 // and End move focus, Enter or Space selects. Rows must be direct children of
-// the List (the List reads their ids). No virtualisation, reorder or sections.
+// the List (the List reads their ids). A selectable list takes no `trailing`
+// controls: a button inside an option is invalid ARIA, and its click would
+// select the row too. No virtualisation, reorder or sections.
+//
+// `className` and other props go on the List's outer element; the accessible
+// name (`aria-label`, `aria-labelledby`) goes on the element with the role.
 
 interface ListSelection {
   selectedId: string | null
@@ -36,7 +41,17 @@ interface ListProps extends Omit<React.ComponentProps<"div">, "role" | "children
   children?: React.ReactNode
 }
 
-function List({ selection, empty, footer, className, children, onKeyDown, ...props }: ListProps) {
+function List({
+  selection,
+  empty,
+  footer,
+  className,
+  children,
+  onKeyDown,
+  "aria-label": ariaLabel,
+  "aria-labelledby": ariaLabelledBy,
+  ...props
+}: ListProps) {
   const rows = React.Children.toArray(children)
   const ids = rows.flatMap((row) =>
     React.isValidElement<{ id?: string }>(row) && typeof row.props.id === "string"
@@ -87,19 +102,21 @@ function List({ selection, empty, footer, className, children, onKeyDown, ...pro
   )
 
   return (
-    <div data-slot="list" className={cn("flex flex-col", className)}>
+    <div data-slot="list" className={cn("flex flex-col", className)} {...props}>
       {rows.length === 0 ? (
         empty
       ) : (
         <ListContext.Provider value={context}>
           {/* biome-ignore lint/a11y/noStaticElementInteractions: arrow keys on the listbox are the roving-tabindex pattern, the options hold the focus */}
+          {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: the role is always list or listbox, and both take a name; Biome can't read the ternary */}
           <div
             ref={rowsRef}
             role={selection ? "listbox" : "list"}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
             data-slot="list-rows"
             className="flex flex-col divide-y divide-border"
             onKeyDown={handleKeyDown}
-            {...props}
           >
             {rows}
           </div>
@@ -129,7 +146,7 @@ interface ListRowProps
   title: React.ReactNode
   /** One muted line under the title. */
   detail?: React.ReactNode
-  /** After the text: a Button, a Badge. Clickable things go here, not on the row. */
+  /** After the text: a Button, a Badge. Clickable things go here, not on the row, and only in a plain list. */
   trailing?: React.ReactNode
 }
 
