@@ -2207,7 +2207,7 @@ dependencies = [
 
 [[package]]
 name = "preset-docs"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "rhizome-core",
  "serde",
