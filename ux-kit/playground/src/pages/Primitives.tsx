@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
   Checkbox,
+  ConfirmDialog,
   ContextMenu,
   ContextMenuCheckboxItem,
   ContextMenuContent,
@@ -233,6 +234,49 @@ function ToggleDemo() {
   )
 }
 
+function ConfirmDemo() {
+  const [plain, setPlain] = useState(false)
+  const [destructive, setDestructive] = useState(false)
+  const [count, setCount] = useState(0)
+  return (
+    <Demo name={`Confirm dialog: confirmed ${count}x`}>
+      <Button variant="outline" onClick={() => setPlain(true)}>
+        Plain confirm
+      </Button>
+      <Button variant="outline" onClick={() => setDestructive(true)}>
+        Destructive confirm
+      </Button>
+      <ConfirmDialog
+        open={plain}
+        onOpenChange={setPlain}
+        title="Discard changes?"
+        confirmLabel="Discard"
+        onConfirm={() => setCount((n) => n + 1)}
+      >
+        Your edits to this document haven't been saved.
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={destructive}
+        onOpenChange={setDestructive}
+        title="Remove 3 apps?"
+        confirmLabel="Remove"
+        destructive
+        onConfirm={async () => {
+          await new Promise((resolve) => setTimeout(resolve, 1500))
+          setCount((n) => n + 1)
+        }}
+      >
+        <ul className="list-disc pl-5">
+          <li>Oblique</li>
+          <li>Strata</li>
+          <li>Shard</li>
+        </ul>
+        <p className="mt-2">This frees 1.2 GB. It can't be undone. Confirm takes 1.5 s here.</p>
+      </ConfirmDialog>
+    </Demo>
+  )
+}
+
 function Overlays() {
   const [name, setName] = useState("")
   return (
@@ -252,6 +296,7 @@ function Overlays() {
           </DialogContent>
         </Dialog>
       </Demo>
+      <ConfirmDemo />
       <Demo name="Sheet">
         {(["left", "right", "top", "bottom"] as const).map((side) => (
           <Sheet key={side}>
