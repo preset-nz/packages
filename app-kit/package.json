@@ -13,7 +13,8 @@
   "sideEffects": false,
   "exports": {
     ".": "./src-ts/index.ts",
-    "./core": "./src-ts/core.ts"
+    "./core": "./src-ts/core.ts",
+    "./models": "./src-ts/models/index.ts"
   },
   "files": [
     "src-ts"
