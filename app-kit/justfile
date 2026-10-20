@@ -22,6 +22,9 @@ check-rust:
     cargo fmt --check
     cargo clippy --all-targets -- -D warnings
     cargo test
+    # The optional `models` feature (HTTP client, SHA-256) is off by default, so check it too.
+    cargo clippy --all-targets --features models -- -D warnings
+    cargo test --features models
 
 # TypeScript: typecheck, Biome (lint and format check).
 [group('quality')]

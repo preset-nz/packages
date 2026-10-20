@@ -41,6 +41,8 @@ mod document;
 mod guard;
 mod history;
 mod menu;
+#[cfg(feature = "models")]
+pub mod models;
 mod recent;
 mod restore;
 

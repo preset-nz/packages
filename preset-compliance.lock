@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "1fd9c2bcb1d856adf0050f60d7b77dc9a846a45f6a2c4d0b017ed598dbab775c"
+sha256 = "0d0169e13613f05165fdc333905632b7423c75f8b022898196f62f15977f7e18"
 
 [[inputs]]
 path = "Cargo.toml"
@@ -14,7 +14,7 @@ sha256 = "85319de54e0201d6d6f5977b4f909c4d3f7e844383694e67f2a4ed4209bd0744"
 
 [[inputs]]
 path = "app-kit/Cargo.toml"
-sha256 = "fa2762581caa89bb964cf5534f5a9074f3ef808fb3af33c8b85a0b8f49a8396d"
+sha256 = "ca74bba37a239595e67f8c894042fd9f96afc33f800032d9917b43c27ad62959"
 
 [[inputs]]
 path = "math/Cargo.toml"
@@ -156,6 +156,14 @@ name = "base64"
 version = "0.23.1"
 source = "registry"
 declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "base64ct"
+version = "1.8.3"
+source = "registry"
+declared = "Apache-2.0 OR MIT"
 scope = "shipped"
 
 [[packages]]
@@ -568,6 +576,14 @@ scope = "build"
 
 [[packages]]
 ecosystem = "cargo"
+name = "der"
+version = "0.8.2"
+source = "registry"
+declared = "Apache-2.0 OR MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
 name = "deranged"
 version = "0.5.8"
 source = "registry"
@@ -756,7 +772,7 @@ name = "errno"
 version = "0.3.14"
 source = "registry"
 declared = "MIT OR Apache-2.0"
-scope = "dev"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -765,6 +781,14 @@ version = "2.5.0"
 source = "registry"
 declared = "Apache-2.0 OR MIT"
 scope = "build"
+
+[[packages]]
+ecosystem = "cargo"
+name = "fastrand"
+version = "2.5.0"
+source = "registry"
+declared = "Apache-2.0 OR MIT"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -817,6 +841,14 @@ scope = "shipped"
 [[packages]]
 ecosystem = "cargo"
 name = "foreign-types"
+version = "0.3.2"
+source = "registry"
+declared = "MIT/Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "foreign-types"
 version = "0.5.0"
 source = "registry"
 declared = "MIT/Apache-2.0"
@@ -829,6 +861,14 @@ version = "0.2.4"
 source = "registry"
 declared = "MIT/Apache-2.0"
 scope = "build"
+
+[[packages]]
+ecosystem = "cargo"
+name = "foreign-types-shared"
+version = "0.1.1"
+source = "registry"
+declared = "MIT/Apache-2.0"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -1516,7 +1556,7 @@ name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry"
 declared = "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
-scope = "dev"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -1612,6 +1652,14 @@ name = "muda"
 version = "0.20.0"
 source = "registry"
 declared = "Apache-2.0 OR MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "native-tls"
+version = "0.2.18"
+source = "registry"
+declared = "MIT OR Apache-2.0"
 scope = "shipped"
 
 [[packages]]
@@ -1832,6 +1880,38 @@ scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
+name = "openssl"
+version = "0.10.81"
+source = "registry"
+declared = "Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "openssl-macros"
+version = "0.1.1"
+source = "registry"
+declared = "MIT/Apache-2.0"
+scope = "build"
+
+[[packages]]
+ecosystem = "cargo"
+name = "openssl-probe"
+version = "0.2.1"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "openssl-sys"
+version = "0.9.117"
+source = "registry"
+declared = "MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
 name = "option-ext"
 version = "0.2.0"
 source = "registry"
@@ -1868,6 +1948,14 @@ name = "parking_lot_core"
 version = "0.9.12"
 source = "registry"
 declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "pem-rfc7468"
+version = "1.0.0"
+source = "registry"
+declared = "Apache-2.0 OR MIT"
 scope = "shipped"
 
 [[packages]]
@@ -2244,7 +2332,15 @@ name = "rustix"
 version = "1.1.5"
 source = "registry"
 declared = "Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT"
-scope = "dev"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "rustls-pki-types"
+version = "1.15.1"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -2260,6 +2356,14 @@ name = "same-file"
 version = "1.0.6"
 source = "registry"
 declared = "Unlicense/MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "schannel"
+version = "0.1.29"
+source = "registry"
+declared = "MIT"
 scope = "shipped"
 
 [[packages]]
@@ -2306,6 +2410,22 @@ scope = "build"
 ecosystem = "cargo"
 name = "scopeguard"
 version = "1.2.0"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "security-framework"
+version = "3.7.0"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "security-framework-sys"
+version = "2.17.0"
 source = "registry"
 declared = "MIT OR Apache-2.0"
 scope = "shipped"
@@ -2860,7 +2980,7 @@ name = "tempfile"
 version = "3.27.0"
 source = "registry"
 declared = "MIT OR Apache-2.0"
-scope = "dev"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -3216,6 +3336,22 @@ scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
+name = "ureq"
+version = "3.4.2"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "ureq-proto"
+version = "0.6.5"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
 name = "url"
 version = "2.5.8"
 source = "registry"
@@ -3228,6 +3364,14 @@ name = "urlpattern"
 version = "0.6.0"
 source = "registry"
 declared = "MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "utf8-zero"
+version = "0.8.1"
+source = "registry"
+declared = "MIT OR Apache-2.0"
 scope = "shipped"
 
 [[packages]]
@@ -3253,6 +3397,14 @@ version = "1.28.0"
 source = "registry"
 declared = "Apache-2.0 OR MIT"
 scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "vcpkg"
+version = "0.2.15"
+source = "registry"
+declared = "MIT/Apache-2.0"
+scope = "build"
 
 [[packages]]
 ecosystem = "cargo"
@@ -3957,6 +4109,14 @@ version = "0.1.8"
 source = "registry"
 declared = "Unicode-3.0"
 scope = "build"
+
+[[packages]]
+ecosystem = "cargo"
+name = "zeroize"
+version = "1.9.1"
+source = "registry"
+declared = "Apache-2.0 OR MIT"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
