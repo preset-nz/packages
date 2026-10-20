@@ -49,7 +49,7 @@ tauri::Builder::default()
     ])
 ```
 
-- **Models (cargo feature `models`)**: `preset_app_kit::models::install(app.handle(), "nz.preset.myapp", "My App", REGISTRY)` in `setup` (separate from `AppKit::install`) manages the store, writes `.users/<bundle-id>.json`, sweeps stale `.part` files and emits `app-kit://models` (`{ id, status }`, at most four a second per download, plus every status change). It returns the `ModelStore`; `store.path("mobile_sam")` gives a sidecar its `model_dir`. Add the commands beside the others:
+- **Models (cargo feature `models`)**: `preset_app_kit::models::install(app.handle(), "nz.preset.myapp", "My App", REGISTRY)` in `setup` (separate from `AppKit::install`). Call it from the synchronous `setup`, never from async code: the downloader is reqwest's blocking client, which panics on a tokio worker thread. It manages the store, writes `.users/<bundle-id>.json`, sweeps stale `.part` files and emits `app-kit://models` (`{ id, status }`, at most four a second per download, plus every status change). It returns the `ModelStore`; `store.path("mobile_sam")` gives a sidecar its `model_dir`. Add the commands beside the others:
 
   ```rust
   preset_app_kit::models::app_kit_models_list,
