@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "0d0169e13613f05165fdc333905632b7423c75f8b022898196f62f15977f7e18"
+sha256 = "6b70e3b5f6b717ff5756407aef734e2809b23848854fa4785db0723c47bb3d2e"
 
 [[inputs]]
 path = "Cargo.toml"
@@ -14,7 +14,7 @@ sha256 = "85319de54e0201d6d6f5977b4f909c4d3f7e844383694e67f2a4ed4209bd0744"
 
 [[inputs]]
 path = "app-kit/Cargo.toml"
-sha256 = "ca74bba37a239595e67f8c894042fd9f96afc33f800032d9917b43c27ad62959"
+sha256 = "4faa2a89ff3edd691f0ff280fb83ba392c7ecc2bc3704b43b2aa15139ed786f8"
 
 [[inputs]]
 path = "math/Cargo.toml"
@@ -156,14 +156,6 @@ name = "base64"
 version = "0.23.1"
 source = "registry"
 declared = "MIT OR Apache-2.0"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "cargo"
-name = "base64ct"
-version = "1.8.3"
-source = "registry"
-declared = "Apache-2.0 OR MIT"
 scope = "shipped"
 
 [[packages]]
@@ -573,14 +565,6 @@ version = "1.1.0"
 source = "registry"
 declared = "MIT OR Apache-2.0"
 scope = "build"
-
-[[packages]]
-ecosystem = "cargo"
-name = "der"
-version = "0.8.2"
-source = "registry"
-declared = "Apache-2.0 OR MIT"
-scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
@@ -1204,6 +1188,14 @@ name = "hyper"
 version = "1.12.0"
 source = "registry"
 declared = "MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "hyper-tls"
+version = "0.6.0"
+source = "registry"
+declared = "MIT/Apache-2.0"
 scope = "shipped"
 
 [[packages]]
@@ -1948,14 +1940,6 @@ name = "parking_lot_core"
 version = "0.9.12"
 source = "registry"
 declared = "MIT OR Apache-2.0"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "cargo"
-name = "pem-rfc7468"
-version = "1.0.0"
-source = "registry"
-declared = "Apache-2.0 OR MIT"
 scope = "shipped"
 
 [[packages]]
@@ -3080,6 +3064,14 @@ scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
+name = "tokio-native-tls"
+version = "0.3.1"
+source = "registry"
+declared = "MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
 name = "tokio-util"
 version = "0.7.19"
 source = "registry"
@@ -3336,22 +3328,6 @@ scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
-name = "ureq"
-version = "3.4.2"
-source = "registry"
-declared = "MIT OR Apache-2.0"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "cargo"
-name = "ureq-proto"
-version = "0.6.5"
-source = "registry"
-declared = "MIT OR Apache-2.0"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "cargo"
 name = "url"
 version = "2.5.8"
 source = "registry"
@@ -3364,14 +3340,6 @@ name = "urlpattern"
 version = "0.6.0"
 source = "registry"
 declared = "MIT"
-scope = "shipped"
-
-[[packages]]
-ecosystem = "cargo"
-name = "utf8-zero"
-version = "0.8.1"
-source = "registry"
-declared = "MIT OR Apache-2.0"
 scope = "shipped"
 
 [[packages]]

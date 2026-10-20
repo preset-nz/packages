@@ -68,33 +68,27 @@ pub trait Downloader: Send + Sync {
     ) -> Result<(), DownloadError>;
 }
 
-/// The default [`Downloader`]: a blocking `ureq` client with rustls. No retry, no resume.
-pub struct UreqDownloader {
-    agent: ureq::Agent,
+/// The default [`Downloader`]: a blocking `reqwest` client on the OS TLS stack (native-tls).
+/// No retry, no resume.
+pub struct HttpDownloader {
+    client: reqwest::blocking::Client,
 }
 
-impl UreqDownloader {
+impl HttpDownloader {
     pub fn new() -> Self {
-        let config = ureq::Agent::config_builder()
-            // The OS's TLS stack and trust store, not a bundled root list.
-            .tls_config(
-                ureq::tls::TlsConfig::builder()
-                    .provider(ureq::tls::TlsProvider::NativeTls)
-                    .root_certs(ureq::tls::RootCerts::PlatformVerifier)
-                    .build(),
-            )
-            .timeout_resolve(Some(Duration::from_secs(15)))
-            .timeout_connect(Some(Duration::from_secs(15)))
-            // A stalled body ends as "Download interrupted" rather than hanging.
-            .timeout_recv_body(Some(Duration::from_secs(30)))
-            .build();
-        Self {
-            agent: ureq::Agent::new_with_config(config),
-        }
+        let client = reqwest::blocking::Client::builder()
+            .connect_timeout(Duration::from_secs(15))
+            // The blocking client applies this to the request and to each body read, not to the
+            // whole body: a stalled download ends as "Download interrupted" (and a cancel lands)
+            // within 30 s, while a large model can take as long as it needs.
+            .timeout(Duration::from_secs(30))
+            .build()
+            .expect("the TLS backend initialises");
+        Self { client }
     }
 }
 
-impl Default for UreqDownloader {
+impl Default for HttpDownloader {
     fn default() -> Self {
         Self::new()
     }
@@ -109,7 +103,7 @@ fn host_of(url: &str) -> String {
         .to_string()
 }
 
-impl Downloader for UreqDownloader {
+impl Downloader for HttpDownloader {
     fn fetch(
         &self,
         url: &str,
@@ -117,17 +111,17 @@ impl Downloader for UreqDownloader {
         progress: &mut dyn FnMut(u64),
         cancel: &AtomicBool,
     ) -> Result<(), DownloadError> {
-        let response = self.agent.get(url).call().map_err(|e| match e {
-            ureq::Error::StatusCode(code) => DownloadError::Status(code),
-            ureq::Error::HostNotFound | ureq::Error::ConnectionFailed => {
+        let mut response = self.client.get(url).send().map_err(|e| {
+            if e.is_connect() || e.is_timeout() || e.is_request() {
                 DownloadError::Unreachable(host_of(url))
+            } else {
+                DownloadError::Interrupted
             }
-            ureq::Error::Timeout(_) | ureq::Error::Io(_) => {
-                DownloadError::Unreachable(host_of(url))
-            }
-            _ => DownloadError::Interrupted,
         })?;
-        let mut body = response.into_body().into_reader();
+        let status = response.status();
+        if !status.is_success() {
+            return Err(DownloadError::Status(status.as_u16()));
+        }
         let mut out = File::create(dest)?;
         let mut buf = vec![0u8; CHUNK];
         let mut done = 0u64;
@@ -135,7 +129,7 @@ impl Downloader for UreqDownloader {
             if cancel.load(Ordering::Relaxed) {
                 return Err(DownloadError::Cancelled);
             }
-            let n = body
+            let n = response
                 .read(&mut buf)
                 .map_err(|_| DownloadError::Interrupted)?;
             if n == 0 {

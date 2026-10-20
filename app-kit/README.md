@@ -49,6 +49,17 @@ tauri::Builder::default()
     ])
 ```
 
+- **Models (cargo feature `models`)**: `preset_app_kit::models::install(app.handle(), "nz.preset.myapp", "My App", REGISTRY)` in `setup` (separate from `AppKit::install`) manages the store, writes `.users/<bundle-id>.json`, sweeps stale `.part` files and emits `app-kit://models` (`{ id, status }`, at most four a second per download, plus every status change). It returns the `ModelStore`; `store.path("mobile_sam")` gives a sidecar its `model_dir`. Add the commands beside the others:
+
+  ```rust
+  preset_app_kit::models::app_kit_models_list,
+  preset_app_kit::models::app_kit_models_download,
+  preset_app_kit::models::app_kit_models_cancel,
+  preset_app_kit::models::app_kit_models_remove,
+  preset_app_kit::models::app_kit_models_path,
+  ```
+
+  `status` is a tagged object (`{ "kind": "downloading", "done": 1, "total": 2 }`). The list includes models this app never declared (from their manifests), and any of them can be removed. The webview never receives a URL.
 - **`Command`**: id, menu label, optional toolbar label, Tauri accelerator, `MenuName` (App, File, Edit, View, Window, Help), `section` (items in a section sit together), item or toggle. Undo and Redo are built in; Settings is opt-in.
 - **File menu**: New, Open…, Open Recent ▸, Close, Save, Save As… and Revert to Saved… are built in, run against the app's `Document` behind the close guard. Revert is enabled only for an unsaved document with a file, and asks first, because reloading starts an empty history. Open Recent keeps ten documents, newest first, in `recent-documents.json` in the app's data directory; a file that has gone says so and leaves the list. `note_recent(app, path)` adds a document opened some other way (from the Finder), and `recent_documents(app)[0]` is the last document. `.documents_folder(|app| …)` names where the Open and Save panels start for an Untitled document (`~/preset-nz/<App>/…`); the app supplies the lookup, so app-kit doesn't depend on app-folders.
 - **Relaunch**: the app starts on a fresh Untitled document; it does not reopen the last one (that is File > Open Recent's first entry). `.plugin(preset_app_kit::window_state())` on the builder brings each window back at its size and position (`tauri-plugin-window-state`, not visibility). `on_run_event` opens a document the Finder hands over (double-click, `open some.x`, the Dock). For an app with documents, app-kit owns Finder opens, so don't add a second handler.

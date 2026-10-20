@@ -6,6 +6,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard};
+use std::time::{Duration, Instant};
+
+use serde::Serialize;
 
 use super::download::{sha256_file, DownloadError, Downloader};
 use super::folder::{self, Manifest, ManifestRead};
@@ -13,8 +16,13 @@ use super::registry::ModelSpec;
 
 const CHECKSUM_FAILED: &str = "Checksum didn't match, file deleted";
 
+/// The fewest milliseconds between two progress notices for one download.
+const PROGRESS_INTERVAL: Duration = Duration::from_millis(250);
+
 /// Where a model stands. `Downloading` and `Failed` live in memory; the rest is read from disk.
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Serialises as a tagged object (`{ "kind": "downloading", "done": 1, "total": 2 }`).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ModelStatus {
     NotInstalled,
     Downloading {
@@ -65,6 +73,29 @@ enum Entry {
     Failed(String),
 }
 
+/// One row of the models list: a declared or installed model as the webview sees it. It carries
+/// no URL and no path.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ModelInfo {
+    pub id: String,
+    pub label: String,
+    /// Which tool needs it; empty for a model this app didn't declare.
+    pub used_by: String,
+    pub licence: String,
+    pub host: String,
+    pub status: ModelStatus,
+    /// Bytes the model's folder holds now, partial downloads included.
+    pub bytes_on_disk: u64,
+    /// Bytes the finished model takes.
+    pub total_bytes: u64,
+    /// Names of the other apps that declare it.
+    pub other_apps: Vec<String>,
+}
+
+/// Told the id of a model whose status changed, or whose download moved.
+type Observer = Arc<dyn Fn(&str) + Send + Sync>;
+
 /// A model found in the shared folder, declared by this app or not, described by its manifest.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct InstalledModel {
@@ -83,9 +114,23 @@ struct Inner {
     registry: Vec<ModelSpec>,
     downloader: Arc<dyn Downloader>,
     state: Mutex<HashMap<&'static str, Entry>>,
+    observer: Mutex<Option<Observer>>,
 }
 
 impl Inner {
+    /// Tell the observer that `id` changed. Never call it with the state lock held: the observer
+    /// reads the status.
+    fn notify(&self, id: &str) {
+        let observer = self
+            .observer
+            .lock()
+            .unwrap_or_else(|p| p.into_inner())
+            .clone();
+        if let Some(f) = observer {
+            f(id);
+        }
+    }
+
     fn state(&self) -> MutexGuard<'_, HashMap<&'static str, Entry>> {
         // A panicking worker must not wedge every later call.
         self.state.lock().unwrap_or_else(|p| p.into_inner())
@@ -112,6 +157,7 @@ impl ModelStore {
                 registry: registry.into(),
                 downloader,
                 state: Mutex::new(HashMap::new()),
+                observer: Mutex::new(None),
             }),
         }
     }
@@ -133,6 +179,60 @@ impl ModelStore {
             registry,
             downloader,
         ))
+    }
+
+    /// Call `f(id)` whenever a model's status changes (a download starts, ends, fails or is
+    /// cancelled; a model is removed), and while a download runs at most four times a second.
+    /// Replaces any earlier observer. `f` may call back into the store.
+    pub fn on_change(&self, f: impl Fn(&str) + Send + Sync + 'static) {
+        *self
+            .inner
+            .observer
+            .lock()
+            .unwrap_or_else(|p| p.into_inner()) = Some(Arc::new(f));
+    }
+
+    /// Every declared model, then every installed model this app didn't declare (from its
+    /// manifest), each with its status, sizes and the other apps that use it.
+    pub fn list(&self) -> Vec<ModelInfo> {
+        let mut rows: Vec<ModelInfo> = self
+            .inner
+            .registry
+            .iter()
+            .map(|spec| ModelInfo {
+                id: spec.id.to_string(),
+                label: spec.label.to_string(),
+                used_by: spec.used_by.to_string(),
+                licence: spec.licence.to_string(),
+                host: spec.host.to_string(),
+                status: self.status(spec.id),
+                bytes_on_disk: folder::bytes_in(&self.inner.root.join(spec.id)),
+                total_bytes: spec.total_size(),
+                other_apps: self.used_by(spec.id),
+            })
+            .collect();
+        for m in folder::installed_manifests(&self.inner.root) {
+            if self.inner.registry.iter().any(|s| s.id == m.id) {
+                continue;
+            }
+            let dir = self.inner.root.join(&m.id);
+            rows.push(ModelInfo {
+                status: if m.sizes_match(&dir) {
+                    ModelStatus::Ready
+                } else {
+                    ModelStatus::Damaged
+                },
+                bytes_on_disk: folder::bytes_in(&dir),
+                total_bytes: m.total_size(),
+                other_apps: self.used_by(&m.id),
+                used_by: String::new(),
+                id: m.id,
+                label: m.label,
+                licence: m.licence,
+                host: m.host,
+            });
+        }
+        rows
     }
 
     /// The model's folder (it may not exist). See [`path`](Self::path) for the checked one.
@@ -291,6 +391,7 @@ impl ModelStore {
             self.inner.state().remove(spec.id);
             return Err(ModelError::Io(format!("Couldn't start the download: {e}")));
         }
+        self.inner.notify(spec.id);
         Ok(())
     }
 
@@ -303,26 +404,37 @@ impl ModelStore {
     }
 
     /// Delete the model's manifest, then its folder, and forget a failure. The manifest goes
-    /// first so an interrupted delete leaves the model "not installed". Refused while
-    /// downloading.
+    /// first so an interrupted delete leaves the model "not installed". Works for any model with
+    /// a manifest in the folder, declared by this app or not. Refused while this app is
+    /// downloading it.
     pub fn remove(&self, id: &str) -> Result<(), ModelError> {
-        let spec = self.spec(id)?;
-        let mut state = self.inner.state();
-        if matches!(state.get(spec.id), Some(Entry::Downloading { .. })) {
-            return Err(ModelError::Downloading(spec.id.to_string()));
+        // Only an id the registry or a manifest names reaches the file system.
+        let known = self.inner.registry.iter().any(|m| m.id == id)
+            || folder::installed_manifests(&self.inner.root)
+                .iter()
+                .any(|m| m.id == id);
+        if !known {
+            return Err(ModelError::Unknown(id.to_string()));
         }
-        state.remove(spec.id);
-        let dir = self.inner.root.join(spec.id);
+        let mut state = self.inner.state();
+        if matches!(state.get(id), Some(Entry::Downloading { .. })) {
+            return Err(ModelError::Downloading(id.to_string()));
+        }
+        state.remove(id);
+        drop(state);
+        let dir = self.inner.root.join(id);
         match fs::remove_file(dir.join(folder::MANIFEST)) {
             Ok(()) => {}
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-            Err(e) => return Err(ModelError::Io(format!("Couldn't remove {}: {e}", spec.id))),
+            Err(e) => return Err(ModelError::Io(format!("Couldn't remove {id}: {e}"))),
         }
         match fs::remove_dir_all(dir) {
-            Ok(()) => Ok(()),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(e) => Err(ModelError::Io(format!("Couldn't remove {}: {e}", spec.id))),
+            Ok(()) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => return Err(ModelError::Io(format!("Couldn't remove {id}: {e}"))),
         }
+        self.inner.notify(id);
+        Ok(())
     }
 
     fn spec(&self, id: &str) -> Result<&ModelSpec, ModelError> {
@@ -356,20 +468,23 @@ enum Outcome {
 fn run(inner: &Inner, spec: &ModelSpec, cancel: &AtomicBool) {
     let dir = inner.root.join(spec.id);
     let outcome = download_all(inner, spec, &dir, cancel);
-    let mut state = inner.state();
-    match outcome {
-        Outcome::Done => {
-            state.remove(spec.id);
-        }
-        Outcome::Cancelled => {
-            let _ = fs::remove_dir_all(&dir);
-            state.remove(spec.id);
-        }
-        Outcome::Failed(reason) => {
-            let _ = fs::remove_dir_all(&dir);
-            state.insert(spec.id, Entry::Failed(reason));
+    {
+        let mut state = inner.state();
+        match outcome {
+            Outcome::Done => {
+                state.remove(spec.id);
+            }
+            Outcome::Cancelled => {
+                let _ = fs::remove_dir_all(&dir);
+                state.remove(spec.id);
+            }
+            Outcome::Failed(reason) => {
+                let _ = fs::remove_dir_all(&dir);
+                state.insert(spec.id, Entry::Failed(reason));
+            }
         }
     }
+    inner.notify(spec.id);
 }
 
 fn download_all(inner: &Inner, spec: &ModelSpec, dir: &Path, cancel: &AtomicBool) -> Outcome {
@@ -379,6 +494,7 @@ fn download_all(inner: &Inner, spec: &ModelSpec, dir: &Path, cancel: &AtomicBool
     // Re-downloading a damaged model: until the new files pass, it isn't installed.
     let _ = fs::remove_file(dir.join(folder::MANIFEST));
     let mut finished = 0u64;
+    let mut last_notice = Instant::now();
     for file in spec.files {
         if cancel.load(Ordering::Relaxed) {
             return Outcome::Cancelled;
@@ -388,6 +504,12 @@ fn download_all(inner: &Inner, spec: &ModelSpec, dir: &Path, cancel: &AtomicBool
         let mut progress = |bytes: u64| {
             if let Some(Entry::Downloading { done, .. }) = inner.state().get_mut(spec.id) {
                 *done = base + bytes;
+            }
+            // The state lock is released here. Throttled by time, so a fast download doesn't
+            // flood the webview; the start and the end are notified separately.
+            if last_notice.elapsed() >= PROGRESS_INTERVAL {
+                last_notice = Instant::now();
+                inner.notify(spec.id);
             }
         };
         match inner

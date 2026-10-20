@@ -168,6 +168,19 @@ pub(crate) fn users_of(root: &Path, model_id: &str, own_bundle_id: Option<&str>)
     names
 }
 
+/// Bytes held by the files directly inside `dir` (0 when it doesn't exist).
+pub(crate) fn bytes_in(dir: &Path) -> u64 {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return 0;
+    };
+    entries
+        .filter_map(Result::ok)
+        .filter_map(|e| e.metadata().ok())
+        .filter(|m| m.is_file())
+        .map(|m| m.len())
+        .sum()
+}
+
 /// Every model folder under `root` with a valid manifest, sorted by id. Dot-folders
 /// (`.users`) and folders whose manifest names a different id are skipped.
 pub(crate) fn installed_manifests(root: &Path) -> Vec<Manifest> {

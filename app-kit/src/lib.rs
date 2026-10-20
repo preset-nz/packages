@@ -35,6 +35,14 @@
 //!     ])
 //! ```
 
+//! # Models (cargo feature `models`)
+//!
+//! [`models::install`] turns on the shared model downloads: it manages a [`models::ModelStore`],
+//! records which models the app uses, cleans up stale partial downloads and emits
+//! [`models::MODELS_EVENT`] as models change. The app lists `app_kit_models_list`,
+//! `app_kit_models_download`, `app_kit_models_cancel`, `app_kit_models_remove` and
+//! `app_kit_models_path` from [`models`] in its own `generate_handler!`.
+
 mod command;
 mod config;
 mod document;
