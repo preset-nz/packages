@@ -70,3 +70,10 @@ pub use menu::{
 };
 pub use recent::{labels as recent_labels, Recents};
 pub use restore::{app_kit_document_note, window_state, NOTE_EVENT};
+// At the root beside the other commands: `#[tauri::command]` exports its helper macros here, and
+// `generate_handler!` looks for them next to the path it is given.
+#[cfg(feature = "models")]
+pub use models::{
+    app_kit_models_cancel, app_kit_models_download, app_kit_models_list, app_kit_models_path,
+    app_kit_models_remove,
+};
