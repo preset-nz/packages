@@ -811,7 +811,7 @@
     "custom": {
       "type": "object",
       "description": "A custom kind. The host's renderer decides which extra props it reads.",
-      "required": ["kind", "id", "path"],
+      "required": ["kind", "id"],
       "properties": {
         "kind": {
           "type": "string"
@@ -830,7 +830,7 @@
         },
         "path": {
           "type": "string",
-          "description": "A key into the record the scope's read() returns. A flat lookup, not a nested traversal: \"transform.x\" is one key."
+          "description": "A key into the record the scope's read() returns. Leave it out for a field that holds no value. A flat lookup, not a nested traversal: \"transform.x\" is one key."
         },
         "disabledWhen": {
           "$ref": "#/definitions/disabledWhen"

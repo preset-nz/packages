@@ -69,7 +69,10 @@ export interface DisabledWhen {
 
 // A custom field is any BaseField whose `kind` is not one of the built-ins.
 // The host's registered renderer for that kind decides what extra props it reads.
-export type CustomFieldDef = BaseField & {
+// `path` is optional here: a custom field may hold no value (a host section the
+// renderer draws and owns), like the display-only kinds.
+export type CustomFieldDef = Omit<BaseField, "path"> & {
+  path?: string
   [extra: string]: unknown
 }
 

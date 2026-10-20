@@ -92,7 +92,9 @@ function hasChanged(groups: PropertyGroupDef[], changed: ReadonlySet<string>): b
   if (changed.size === 0) return false
   return groups.some((g) =>
     g.rows.some((row) =>
-      (Array.isArray(row) ? row : [row]).some((f) => "path" in f && changed.has(f.path)),
+      (Array.isArray(row) ? row : [row]).some(
+        (f) => "path" in f && f.path !== undefined && changed.has(f.path),
+      ),
     ),
   )
 }

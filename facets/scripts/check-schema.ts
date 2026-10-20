@@ -119,6 +119,8 @@ for (const [name, kinds] of sets) {
 
 function compare(label: string, typeName: string, def: any) {
   const props = propsOf(typeName)
+  // CustomFieldDef is BaseField with `path` optional: a custom field may hold no value.
+  if (label === "custom") props.set("path", { ...props.get("path")!, optional: true })
   const code = [...props].filter(([, v]) => v.code).map(([k]) => k)
   const data = [...props].filter(([, v]) => !v.code)
   const want = data.map(([k]) => k)
@@ -160,6 +162,7 @@ const wrap = (field: unknown) => ({ version: 1, groups: [{ id: "g", rows: [field
 const valid: Array<[string, unknown]> = [
   ...STARTERS.map((s): [string, unknown] => [`starter "${s.id}"`, s.schema]),
   ["a $schema key", { $schema: schema.$id, version: 1, groups: [] }],
+  ["a custom kind without a path", wrap({ kind: "palette-strip", id: "p" })],
   [
     "a custom kind with extra props",
     wrap({ kind: "palette-strip", id: "p", path: "p", colours: ["#000"] }),
@@ -244,7 +247,6 @@ const invalid: Array<[string, unknown]> = [
   ["an unknown promote view", wrap({ kind: "text", id: "t", path: "t", promote: ["toolbar"] })],
   ["promote as a bare string", wrap({ kind: "text", id: "t", path: "t", promote: "card" })],
   ["a view promoted twice", wrap({ kind: "text", id: "t", path: "t", promote: ["card", "card"] })],
-  ["a custom kind without path", wrap({ kind: "palette-strip", id: "p" })],
   ["a field without kind", wrap({ id: "x", path: "x" })],
   ["a group without rows", { version: 1, groups: [{ id: "g" }] }],
   ["an unknown top-level key", { version: 1, groups: [], name: "x" }],
