@@ -8,9 +8,11 @@
 //! and SHA-256.
 
 mod download;
+mod folder;
 mod registry;
 mod store;
 
 pub use download::{DownloadError, Downloader, UreqDownloader};
+pub use folder::default_root;
 pub use registry::{FileSpec, ModelSpec};
-pub use store::{ModelError, ModelStatus, ModelStore};
+pub use store::{InstalledModel, ModelError, ModelStatus, ModelStore};
