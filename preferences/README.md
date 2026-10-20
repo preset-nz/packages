@@ -297,6 +297,26 @@ Without `persistKey` the window opens on the first page with every
 disclosure closed. Icons are React nodes from your app's own icon set, so
 the schema carries no icon names.
 
+### Adding a section the crate doesn't own
+
+`extraGroups` appends facets groups after the crate's sections, each on the page it names (the first page by default). Their fields use a kind you register with facets' `registerFieldRenderer` and carry no `path`, so they read and write nothing in the store: they are not in the TOML file, not in `changedPaths` and not undone by Reset all. A host that passes nothing renders as before. Keep the array at module scope (or in `useMemo`) so the schema isn't rebuilt each render.
+
+```tsx
+import { registerFieldRenderer } from "@preset.nz/facets"
+import { ModelsSection } from "@preset.nz/app-kit/models"
+import { type ExtraGroup, SettingsWindow } from "@preset.nz/preferences"
+
+registerFieldRenderer("models", () => <ModelsSection />)
+
+const extraGroups: ExtraGroup[] = [
+  { page: "general", group: { id: "models", title: "Models", rows: [{ kind: "models", id: "models" }] } },
+]
+
+<SettingsWindow extraGroups={extraGroups} />
+```
+
+`page` is a page id from the crate's schema. The Models section also needs `ModelsProvider` only when you pass it a non-default `api`.
+
 ## TypeScript: UI ephemera
 
 ```ts

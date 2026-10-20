@@ -5,7 +5,7 @@
 // Changed values are marked by facets from `changedPaths`, so the default
 // state stays the visually quiet baseline.
 
-import type { FieldDef, PropertySchema } from "@preset.nz/facets"
+import type { FieldDef, PropertyGroupDef, PropertySchema } from "@preset.nz/facets"
 import { type PrefDef, type Snapshot, sectionOf } from "./api"
 
 export function isDefault(snap: Snapshot, id: string): boolean {
@@ -60,22 +60,39 @@ function toField(def: PrefDef): FieldDef {
 }
 
 /**
- * The facets schema for the whole window. A schema without pages maps to one
+ * A group the host adds to the window, beside the crate's sections: a facets
+ * group (its fields use a kind the host registered with `registerFieldRenderer`,
+ * with no `path`, so they read and write no preference) and the page it sits on.
+ */
+export type ExtraGroup = {
+  /** The id of a page the crate's schema declares. Defaults to the first page; ignored when the schema has no pages. */
+  page?: string
+  group: Omit<PropertyGroupDef, "page">
+}
+
+/**
+ * The facets schema for the whole window. `extraGroups` follow the crate's
+ * sections, in order. They touch nothing else: `changedPaths` and the store
+ * know only the crate's prefs. A schema without pages maps to one
  * without `pages` (one page, no tabs); facets' validation then holds because
  * the crate's own refuses the same bad declarations at load.
  */
-export function toPropertySchema(snap: Snapshot): PropertySchema {
+export function toPropertySchema(snap: Snapshot, extraGroups: ExtraGroup[] = []): PropertySchema {
   const { version, pages = [], sections, prefs } = snap.schema
   const paged = pages.length > 0
+  const groups: PropertyGroupDef[] = sections.map((s) => ({
+    id: s.id,
+    title: s.label,
+    rows: prefs.filter((p) => sectionOf(p.id) === s.id).map(toField),
+    ...(paged && s.page ? { page: s.page } : {}),
+    ...(s.advanced ? { advanced: true } : {}),
+  }))
+  for (const { page, group } of extraGroups) {
+    groups.push({ ...group, ...(paged ? { page: page ?? pages[0].id } : {}) })
+  }
   return {
     version,
     ...(paged ? { pages: pages.map(({ id, label }) => ({ id, label })) } : {}),
-    groups: sections.map((s) => ({
-      id: s.id,
-      title: s.label,
-      rows: prefs.filter((p) => sectionOf(p.id) === s.id).map(toField),
-      ...(paged && s.page ? { page: s.page } : {}),
-      ...(s.advanced ? { advanced: true } : {}),
-    })),
+    groups,
   }
 }

@@ -11,7 +11,7 @@
 import { PropertyPanel, registerBuiltinRenderers, registerScope } from "@preset.nz/facets"
 import { useEffect, useMemo } from "react"
 import type { PrefValue, Snapshot } from "./api"
-import { changedPaths, hasAnyChanges, toPropertySchema } from "./facets-bridge"
+import { changedPaths, type ExtraGroup, hasAnyChanges, toPropertySchema } from "./facets-bridge"
 import { registerPreferenceRenderers } from "./renderers"
 import { usePreferenceActions, usePreferences } from "./store"
 import { usePersistedState } from "./use-persisted-state"
@@ -28,9 +28,17 @@ type Props = {
    * the window.
    */
   persistKey?: string
+  /**
+   * Groups the app adds after the crate's sections, each on the page it names
+   * (the first page by default). Their fields use a kind the app registered with
+   * facets' `registerFieldRenderer` and carry no `path`, so they are never in the
+   * TOML file, `changedPaths` or Reset all. Keep the array stable (module scope
+   * or `useMemo`): a new one each render rebuilds the schema.
+   */
+  extraGroups?: ExtraGroup[]
 }
 
-export function SettingsWindow({ onClose, persistKey }: Props) {
+export function SettingsWindow({ onClose, persistKey, extraGroups }: Props) {
   const snap = usePreferences()
   const { set, reset } = usePreferenceActions()
 
@@ -54,7 +62,7 @@ export function SettingsWindow({ onClose, persistKey }: Props) {
   // else re-rendered. Registering is an idempotent write to facets' module map.
   useMemo(() => {
     registerScope<Snapshot, Record<string, PrefValue>>(SCOPE, {
-      schema: snap ? toPropertySchema(snap) : EMPTY,
+      schema: snap ? toPropertySchema(snap, extraGroups) : EMPTY,
       read: (s) => s.values,
       write: (path, value) => {
         void set(path, value as PrefValue).catch((e) =>
@@ -63,7 +71,7 @@ export function SettingsWindow({ onClose, persistKey }: Props) {
       },
       changed: (s) => changedPaths(s),
     })
-  }, [snap, set])
+  }, [snap, set, extraGroups])
 
   useEffect(() => {
     if (!onClose) return
