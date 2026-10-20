@@ -1,8 +1,6 @@
-import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
 import * as React from "react"
-import { cn } from "../lib/utils"
+import { AlertShell } from "./alert-shell"
 import { Button } from "./button"
-import { DialogFooter, DialogHeader, DialogOverlay } from "./dialog"
 
 // ConfirmDialog: ask before something that can't be taken back. Controlled
 // only; the caller owns `open`. It is answered, not dismissed: no close "x",
@@ -59,58 +57,35 @@ function ConfirmDialog({
   }
 
   return (
-    <AlertDialogPrimitive.Root
-      data-slot="confirm-dialog"
+    <AlertShell
       open={open}
-      onOpenChange={handleOpenChange}
+      onDismiss={() => handleOpenChange(false)}
+      title={title}
+      initialFocus={destructive ? cancelRef : confirmRef}
+      footer={
+        <>
+          <Button
+            ref={cancelRef}
+            variant="outline"
+            disabled={pending}
+            onClick={() => handleOpenChange(false)}
+          >
+            {cancelLabel}
+          </Button>
+          <Button
+            ref={confirmRef}
+            variant={destructive ? "destructive" : "default"}
+            disabled={pending}
+            focusableWhenDisabled
+            onClick={handleConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </>
+      }
     >
-      <AlertDialogPrimitive.Portal data-slot="confirm-dialog-portal">
-        <DialogOverlay />
-        <AlertDialogPrimitive.Popup
-          data-slot="confirm-dialog-content"
-          initialFocus={destructive ? cancelRef : confirmRef}
-          className={cn(
-            "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-xl bg-popover p-6 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          )}
-        >
-          <DialogHeader>
-            <AlertDialogPrimitive.Title
-              data-slot="dialog-title"
-              className="font-heading leading-none font-medium"
-            >
-              {title}
-            </AlertDialogPrimitive.Title>
-            {children ? (
-              <AlertDialogPrimitive.Description
-                render={<div />}
-                data-slot="dialog-description"
-                className="text-sm text-muted-foreground"
-              >
-                {children}
-              </AlertDialogPrimitive.Description>
-            ) : null}
-          </DialogHeader>
-          <DialogFooter>
-            <AlertDialogPrimitive.Close
-              ref={cancelRef}
-              disabled={pending}
-              render={<Button variant="outline" />}
-            >
-              {cancelLabel}
-            </AlertDialogPrimitive.Close>
-            <Button
-              ref={confirmRef}
-              variant={destructive ? "destructive" : "default"}
-              disabled={pending}
-              focusableWhenDisabled
-              onClick={handleConfirm}
-            >
-              {confirmLabel}
-            </Button>
-          </DialogFooter>
-        </AlertDialogPrimitive.Popup>
-      </AlertDialogPrimitive.Portal>
-    </AlertDialogPrimitive.Root>
+      {children}
+    </AlertShell>
   )
 }
 

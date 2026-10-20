@@ -42,6 +42,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DownloadPrompt,
+  type DownloadPromptProps,
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -117,7 +119,7 @@ import {
   TooltipTrigger,
   useSnackbar,
 } from "@preset.nz/ux-kit"
-import { type ReactNode, useState } from "react"
+import { type ReactNode, useEffect, useRef, useState } from "react"
 
 const VARIANTS = ["default", "outline", "secondary", "ghost", "destructive", "link"] as const
 
@@ -282,6 +284,109 @@ function ConfirmDemo() {
   )
 }
 
+const MODEL_BYTES = 44_700_000
+const MODEL_FACTS = { size: "44.7 MB", licence: "Apache-2.0", host: "huggingface.co" }
+
+function DownloadDemo() {
+  const [state, setState] = useState<"ask" | "downloading" | "failed" | null>(null)
+  const [facts, setFacts] = useState<DownloadPromptProps["facts"]>(MODEL_FACTS)
+  const [progress, setProgress] = useState<{ done: number; total: number } | undefined>()
+  const [reason, setReason] = useState<string | undefined>()
+  const [fake, setFake] = useState(false)
+  const [count, setCount] = useState(0)
+  const timer = useRef<number | undefined>(undefined)
+  const attempts = useRef(0)
+
+  const stop = () => {
+    window.clearInterval(timer.current)
+    timer.current = undefined
+  }
+  useEffect(() => () => window.clearInterval(timer.current), [])
+
+  // Fills the bar over about 3 s. The first attempt fails at 60%.
+  const run = () => {
+    stop()
+    attempts.current += 1
+    const failAt = attempts.current === 1 ? 0.6 : 2
+    let done = 0
+    setReason(undefined)
+    setProgress({ done: 0, total: MODEL_BYTES })
+    setState("downloading")
+    timer.current = window.setInterval(() => {
+      done = Math.min(MODEL_BYTES, done + MODEL_BYTES / 30)
+      setProgress({ done, total: MODEL_BYTES })
+      if (done >= MODEL_BYTES * failAt) {
+        stop()
+        if (failAt < 1) {
+          setReason("The connection dropped.")
+          setState("failed")
+        } else {
+          setCount((n) => n + 1)
+          setState(null)
+        }
+      }
+    }, 100)
+  }
+
+  const open = (
+    next: "ask" | "downloading" | "failed",
+    f: DownloadPromptProps["facts"] = MODEL_FACTS,
+  ) => {
+    stop()
+    setFake(false)
+    setFacts(f)
+    setProgress(next === "downloading" ? { done: 28_100_000, total: MODEL_BYTES } : undefined)
+    setReason(next === "failed" ? "The connection dropped." : undefined)
+    setState(next)
+  }
+  const close = () => {
+    stop()
+    setState(null)
+  }
+
+  return (
+    <Demo name={`Download prompt: ${count} completed`}>
+      <Button variant="outline" onClick={() => open("ask")}>
+        Ask
+      </Button>
+      <Button variant="outline" onClick={() => open("ask", { size: "44.7 MB" })}>
+        Ask, size only
+      </Button>
+      <Button variant="outline" onClick={() => open("downloading")}>
+        Downloading
+      </Button>
+      <Button variant="outline" onClick={() => open("failed")}>
+        Failed
+      </Button>
+      <Button
+        onClick={() => {
+          stop()
+          attempts.current = 0
+          setFake(true)
+          setFacts(MODEL_FACTS)
+          setProgress(undefined)
+          setReason(undefined)
+          setState("ask")
+        }}
+      >
+        Fake download
+      </Button>
+      <DownloadPrompt
+        state={state}
+        title="Smart Select needs a model"
+        name="MobileSAM"
+        facts={facts}
+        progress={progress}
+        reason={reason}
+        onDownload={() => (fake ? run() : open("downloading"))}
+        onDismiss={close}
+        onCancel={close}
+        onRetry={() => (fake ? run() : open("downloading"))}
+      />
+    </Demo>
+  )
+}
+
 function Overlays() {
   const [name, setName] = useState("")
   return (
@@ -302,6 +407,7 @@ function Overlays() {
         </Dialog>
       </Demo>
       <ConfirmDemo />
+      <DownloadDemo />
       <Demo name="Sheet">
         {(["left", "right", "top", "bottom"] as const).map((side) => (
           <Sheet key={side}>
