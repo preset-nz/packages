@@ -23,7 +23,8 @@ tag=$(git tag -l "$pkg/v*" --sort=-v:refname | head -1)
 [ -n "$tag" ] || { echo "publish: $pkg has no release tag; run just release $pkg" >&2; exit 1; }
 git merge-base --is-ancestor "$tag" HEAD \
   || { echo "publish: $tag isn't in this branch's history" >&2; exit 1; }
-git diff --quiet "$tag" HEAD -- "$pkg" \
+# The playground isn't published, and another package's release bumps its lockfile.
+git diff --quiet "$tag" HEAD -- "$pkg" ":(exclude)$pkg/playground" \
   || { echo "publish: $pkg/ changed since $tag; release it again (just release $pkg)" >&2; exit 1; }
 [ -z "$(git status --porcelain)" ] || { echo "publish: the working tree isn't clean" >&2; exit 1; }
 git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null \
