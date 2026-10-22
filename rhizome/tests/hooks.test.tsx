@@ -24,6 +24,7 @@ async function setup() {
 
 function probe<T>(use: () => T) {
   const seen: T[] = [];
+  // biome-ignore lint/correctness/noComponentHookFactories: one component per test, made once and rendered for that test only
   const Probe = () => {
     seen.push(use());
     return null;
