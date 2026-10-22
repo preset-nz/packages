@@ -66,6 +66,14 @@ licences:
 licences-scan:
     preset-compliance licences scan
 
+# Take every dependency update the version ranges allow into the lockfiles,
+# and rescan the licence lock. Run it before `release`.
+[group('build')]
+update:
+    pnpm update -r --no-save
+    cargo update
+    preset-compliance licences scan
+
 # Version, changelog, commit and a scoped tag (knope.toml): `just release facets`
 # for one package, `just release` for every package with releasable commits
 # since its last tag. Push and publish stay by hand.
