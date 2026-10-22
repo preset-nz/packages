@@ -309,12 +309,18 @@ impl<R: Runtime> AppKit<R> {
             let accel = c.accelerator.as_deref();
             let (kind, boxed): (MenuItemKind<R>, Item<R>) = match c.kind {
                 Kind::Item => {
-                    let i = MenuItem::with_id(app, &c.id, &c.label, c.enabled, accel)?;
+                    let i = MenuItem::with_id(app, &c.id, literal(&c.label), c.enabled, accel)?;
                     (MenuItemKind::MenuItem(i.clone()), Box::new(i))
                 }
                 Kind::Toggle => {
-                    let i =
-                        CheckMenuItem::with_id(app, &c.id, &c.label, c.enabled, c.checked, accel)?;
+                    let i = CheckMenuItem::with_id(
+                        app,
+                        &c.id,
+                        literal(&c.label),
+                        c.enabled,
+                        c.checked,
+                        accel,
+                    )?;
                     (MenuItemKind::Check(i.clone()), Box::new(i))
                 }
             };
@@ -378,7 +384,7 @@ impl<R: Runtime> AppKit<R> {
                 vec![Box::new(MenuItem::with_id(
                     app,
                     QUIT,
-                    format!("Quit {}", self.name),
+                    literal(&format!("Quit {}", self.name)),
                     true,
                     Some("CmdOrCtrl+Q"),
                 )?)],
@@ -513,6 +519,12 @@ enum Slot<R: Runtime> {
 }
 
 /// Add a command's item to its section, inside its submenu and category group when it has them.
+/// Menu text as written. muda reads `&` as a mnemonic marker and drops it on macOS, so
+/// "Quit Map & Territory" showed as "Quit Map  Territory"; `&&` is its literal ampersand.
+fn literal(text: &str) -> String {
+    text.replace('&', "&&")
+}
+
 fn place<R: Runtime>(slots: &mut Vec<Slot<R>>, c: &Command, item: Item<R>) {
     let Some(title) = &c.submenu else {
         slots.push(Slot::Item(item));
@@ -599,7 +611,7 @@ pub fn refresh_history<R: Runtime>(app: &AppHandle<R>) {
         (REDO, &titles.redo, titles.redo_enabled),
     ] {
         if let Some(item) = kit.item(id).as_ref().and_then(|i| i.as_menuitem()) {
-            let _ = item.set_text(text);
+            let _ = item.set_text(literal(text));
             let _ = item.set_enabled(enabled);
         }
     }
@@ -642,7 +654,7 @@ fn refresh_recents<R: Runtime>(app: &AppHandle<R>) {
     }
     for (n, label) in recent::labels(&paths).into_iter().enumerate() {
         let id = format!("{FILE_RECENT}{n}");
-        if let Ok(item) = MenuItem::with_id(app, id, label, true, None::<&str>) {
+        if let Ok(item) = MenuItem::with_id(app, id, literal(&label), true, None::<&str>) {
             let _ = menu.append(&item);
         }
     }
@@ -826,4 +838,15 @@ fn text_menu<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<Menu<R>> {
             &PredefinedMenuItem::select_all(app, None)?,
         ],
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::literal;
+
+    #[test]
+    fn an_ampersand_survives_the_menu() {
+        assert_eq!(literal("Quit Map & Territory"), "Quit Map && Territory");
+        assert_eq!(literal("Undo New Map"), "Undo New Map");
+    }
 }
