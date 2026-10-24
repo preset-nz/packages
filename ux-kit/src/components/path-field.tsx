@@ -18,6 +18,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 // written, relative or absolute; the field never rewrites one. Text commits on Return or blur,
 // never per keystroke; Esc reverts. A refused commit (status "invalid") keeps the typed draft.
 
+/**
+ * The DOM event a path field listens for on its root: a `CustomEvent` with `detail: { path }`,
+ * sent by whatever turns an OS file drop into DOM (app-kit's `installPathDrop`). The kit knows
+ * nothing of Tauri, only this name. app-kit/core cannot import it, so it repeats the string.
+ */
+const PATH_DROP_EVENT = "path-drop"
+/** Set on the field's root, by the same code, while a drag is over it; the field draws a ring. */
+const PATH_DROP_TARGET_ATTRIBUTE = "data-drop-target"
+
 type PathFieldStatus = "ok" | "missing" | "invalid"
 
 interface PathFieldProps extends Omit<React.ComponentProps<"div">, "onChange" | "defaultValue"> {
@@ -89,6 +98,7 @@ function PathField({
   disabled,
   id,
   className,
+  ref,
   ...props
 }: PathFieldProps) {
   const generatedId = React.useId()
@@ -135,6 +145,31 @@ function PathField({
     onCommit?.(path)
   }
 
+  // A file dropped on the field commits like a pick, unless the field is read-only or disabled.
+  // The listener is on the root, which the host owns, so it reads the latest `choose` from a ref.
+  const dropped = React.useRef<((path: string) => void) | null>(null)
+  dropped.current = inert ? null : choose
+  const rootRef = React.useCallback(
+    (el: HTMLDivElement | null) => {
+      const setRef = (value: HTMLDivElement | null) => {
+        if (typeof ref === "function") ref(value)
+        else if (ref) ref.current = value
+      }
+      setRef(el)
+      if (!el) return
+      const onDrop = (e: Event) => {
+        const path = (e as CustomEvent<{ path?: unknown }>).detail?.path
+        if (typeof path === "string" && path !== "") dropped.current?.(path)
+      }
+      el.addEventListener(PATH_DROP_EVENT, onDrop)
+      return () => {
+        el.removeEventListener(PATH_DROP_EVENT, onDrop)
+        setRef(null)
+      }
+    },
+    [ref],
+  )
+
   const browse = async () => {
     const picked = await onBrowse?.()
     if (picked != null) choose(picked)
@@ -146,14 +181,25 @@ function PathField({
   const hasRecent = !!recent?.length
 
   return (
-    <div data-slot="path-field" className={cn("flex flex-col gap-1", className)} {...props}>
+    <div
+      ref={rootRef}
+      data-slot="path-field"
+      className={cn("group/path-field flex flex-col gap-1", className)}
+      {...props}
+    >
       <div className={cn("flex items-center gap-1", disabled && "opacity-50")}>
         {label ? (
           <label htmlFor={inputId} className="mr-1 shrink-0 text-xs text-muted-foreground">
             {label}
           </label>
         ) : null}
-        <div className="relative min-w-0 flex-1">
+        <div
+          className={cn(
+            "relative min-w-0 flex-1",
+            !inert &&
+              "group-data-[drop-target]/path-field:ring-2 group-data-[drop-target]/path-field:ring-ring",
+          )}
+        >
           <Input
             ref={inputRef}
             id={inputId}
@@ -259,4 +305,4 @@ function PathField({
 }
 
 export type { PathFieldProps, PathFieldStatus }
-export { PathField, splitPath }
+export { PATH_DROP_EVENT, PATH_DROP_TARGET_ATTRIBUTE, PathField, splitPath }
