@@ -9,6 +9,7 @@ export {
   useCommandTable,
 } from "./commands"
 export { type DocumentState, useDocument, useDocumentNotes } from "./document"
+export { installPathDrop } from "./drop"
 export { type HistoryState, redo, undo, useHistory } from "./history"
 export { nativeContextMenu } from "./nativeContextMenu"
 export {
