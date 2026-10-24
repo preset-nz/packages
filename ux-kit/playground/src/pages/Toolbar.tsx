@@ -1,4 +1,10 @@
 import {
+  recentPaths as loadRecent,
+  pickFile,
+  rememberPath,
+  useMissingCheck,
+} from "@preset.nz/app-kit"
+import {
   ColorField,
   ColorSwatch,
   Icons,
@@ -11,7 +17,7 @@ import {
   ToolbarSeparator,
   TooltipProvider,
 } from "@preset.nz/ux-kit"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 const PRESETS = ["#ffffff", "#f8f5e7", "#efe7d3", "#cccccc", "#e5484d", "#3e63dd", "#000000"]
 
@@ -26,6 +32,8 @@ const fakeBrowse = () =>
   new Promise<string | null>((resolve) =>
     setTimeout(() => resolve("/Users/georg/Pictures/chosen-in-dialog.jpg"), 300),
   )
+
+const REAL_KEY = "playground-texture"
 
 type Tool = "move" | "marquee" | "pen"
 
@@ -52,6 +60,16 @@ export function ToolbarPage() {
     set(p)
     if (p) setRecentPaths((r) => [p, ...r.filter((x) => x !== p)].slice(0, 10))
   }
+
+  // Real dialog (app-kit): the recent list, Open dialog and Missing check are app-kit's commands.
+  const [realPath, setRealPath] = useState<string | null>(null)
+  const [realRecent, setRealRecent] = useState<string[]>([])
+  const refreshReal = () => loadRecent(REAL_KEY).then(setRealRecent, () => {})
+  // biome-ignore lint/correctness/useExhaustiveDependencies: loads once on mount
+  useEffect(() => {
+    void refreshReal()
+  }, [])
+  const [realMissing] = useMissingCheck(realPath ? [realPath] : [])
 
   // The item table: ids are command ids, the menu would read the same table.
   const tools: ToolbarItemSpec[] = [
@@ -284,6 +302,23 @@ export function ToolbarPage() {
               onCommit={setBadPath}
               recent={recentPaths}
               onBrowse={fakeBrowse}
+            />
+            <PathField
+              label="Real dialog (app-kit)"
+              placeholder="No file"
+              value={realPath}
+              status={realMissing ? "missing" : "ok"}
+              onCommit={(p) => {
+                setRealPath(p)
+                if (p) void rememberPath(REAL_KEY, p).then(refreshReal)
+              }}
+              recent={realRecent}
+              onBrowse={() =>
+                pickFile({
+                  title: "Choose a texture",
+                  filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "webp"] }],
+                })
+              }
             />
             <PathField
               label="Read-only"

@@ -43,6 +43,11 @@ pub fn run() {
             preset_app_kit::app_kit_redo,
             preset_app_kit::app_kit_text_menu,
             preset_app_kit::app_kit_document_note,
+            preset_app_kit::app_kit_recent_paths,
+            preset_app_kit::app_kit_remember_path,
+            preset_app_kit::app_kit_pick_file,
+            preset_app_kit::app_kit_reveal_path,
+            preset_app_kit::app_kit_paths_exist,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the ux-kit playground")

@@ -12,6 +12,16 @@ export { type DocumentState, useDocument, useDocumentNotes } from "./document"
 export { type HistoryState, redo, undo, useHistory } from "./history"
 export { nativeContextMenu } from "./nativeContextMenu"
 export {
+  type PickFileOptions,
+  type PickFilter,
+  pathsExist,
+  pickFile,
+  recentPaths,
+  rememberPath,
+  revealPath,
+  useMissingCheck,
+} from "./paths"
+export {
   createMultiSelection,
   createSelection,
   insertIndex,

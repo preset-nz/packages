@@ -32,6 +32,12 @@
 //!         preset_app_kit::app_kit_undo,
 //!         preset_app_kit::app_kit_redo,
 //!         preset_app_kit::app_kit_text_menu,
+//!         // Only for apps with a `PathField`: see the Recent paths section of the README.
+//!         preset_app_kit::app_kit_recent_paths,
+//!         preset_app_kit::app_kit_remember_path,
+//!         preset_app_kit::app_kit_pick_file,
+//!         preset_app_kit::app_kit_reveal_path,
+//!         preset_app_kit::app_kit_paths_exist,
 //!     ])
 //! ```
 
@@ -51,6 +57,7 @@ mod history;
 mod menu;
 #[cfg(feature = "models")]
 pub mod models;
+mod paths;
 mod recent;
 mod restore;
 
@@ -67,6 +74,10 @@ pub use menu::{
     app_kit_text_menu, app_kit_undo, forget_recent, note_recent, recent_documents,
     refresh_document, refresh_history, AppKit, CommandState, COMMAND_EVENT, DOCUMENT_EVENT,
     HISTORY_EVENT, TEXT_UNDO_EVENT,
+};
+pub use paths::{
+    app_kit_paths_exist, app_kit_pick_file, app_kit_recent_paths, app_kit_remember_path,
+    app_kit_reveal_path, PickFilter, RecentPaths,
 };
 pub use recent::{labels as recent_labels, Recents};
 pub use restore::{app_kit_document_note, window_state, NOTE_EVENT};
