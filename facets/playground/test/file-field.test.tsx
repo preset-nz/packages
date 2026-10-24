@@ -219,6 +219,35 @@ describe("file field with handlers", () => {
     expect(h.remember).toHaveBeenCalledWith("texture", "good.png")
   })
 
+  it("takes a dropped file like a pick, and remembers it once accepted", async () => {
+    const h = handlers()
+    registerFileHandlers(h)
+    const onWrite = vi.fn()
+    render(<Panel onWrite={onWrite} />)
+    await settle()
+    const field = document.querySelector('[data-slot="path-field"]') as Element
+    act(() => {
+      field.dispatchEvent(new CustomEvent("path-drop", { detail: { path: "/dropped/tex.png" } }))
+    })
+    expect(onWrite).toHaveBeenCalledWith("/dropped/tex.png")
+    await settle()
+    expect(h.remember).toHaveBeenCalledWith("texture", "/dropped/tex.png")
+  })
+
+  it("does not remember a dropped file the host refuses", async () => {
+    const h = handlers()
+    registerFileHandlers(h)
+    render(<Panel check={() => ({ error: "Not an image" })} />)
+    await settle()
+    const field = document.querySelector('[data-slot="path-field"]') as Element
+    act(() => {
+      field.dispatchEvent(new CustomEvent("path-drop", { detail: { path: "/dropped/notes.txt" } }))
+    })
+    await settle()
+    expect(screen.getByText("Not an image")).toBeTruthy()
+    expect(h.remember).not.toHaveBeenCalled()
+  })
+
   it("waits for an asynchronous host before remembering", async () => {
     const h = handlers()
     registerFileHandlers(h)

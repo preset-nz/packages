@@ -56,8 +56,27 @@ function PathField({
     onCommit?.(path)
   }
 
+  // Like ux-kit's: a `path-drop` event on the root (app-kit's file drop hookup) commits like a pick.
+  const root = React.useRef<HTMLDivElement>(null)
+  const dropped = React.useRef<((path: string) => void) | null>(null)
+  dropped.current = disabled || !onCommit ? null : choose
+  React.useEffect(() => {
+    const el = root.current
+    const onDrop = (e: Event) => {
+      const path = (e as CustomEvent<{ path?: unknown }>).detail?.path
+      if (typeof path === "string" && path !== "") dropped.current?.(path)
+    }
+    el?.addEventListener("path-drop", onDrop)
+    return () => el?.removeEventListener("path-drop", onDrop)
+  }, [])
+
   return (
-    <div className={cn("flex flex-col gap-1", className)} {...props}>
+    <div
+      ref={root}
+      data-slot="path-field"
+      className={cn("flex flex-col gap-1", className)}
+      {...props}
+    >
       <div className="flex items-center gap-1">
         <Input
           id={id}
