@@ -179,7 +179,7 @@ const everything: Starter = {
     width: 1024,
     height: 768,
     notes: "Traced from the 1:50k topo.",
-    source: { name: "harbour.jpg" },
+    source: "textures/harbour.jpg",
     palette: "#2b7c76",
     rating: 4,
   },

@@ -144,8 +144,34 @@ export interface VectorFieldDef extends BaseField {
   precision?: number
 }
 
+/** One file type in the host's Open dialog. Extensions have no dot: `["png", "jpg"]`. */
+export interface FileFilter {
+  name: string
+  extensions: string[]
+}
+
+/**
+ * A path to a file, edited on ux-kit's `PathField`. The value is the path string as written,
+ * relative or absolute, or `null`/`""` when empty. Typing commits on Return or blur through the
+ * scope's `write`; the host validates there (see `WriteResult`). The ▾ list, the browse icon, the
+ * Missing check and the context menu need the host's `registerFileHandlers`; without them the
+ * field is a plain editable text field.
+ *
+ * Before 0.3 the value was a read-only `{ name }`. That value still draws, read-only.
+ */
 export interface FileFieldDef extends BaseField {
   kind: "file"
+  /** Keys the recent paths: fields with the same key share one ▾ list, across documents (`"texture"`). */
+  recentKey?: string
+  /** File types in the Open dialog. */
+  filters?: FileFilter[]
+  /** The Open dialog's title. */
+  title?: string
+  placeholder?: string
+  /**
+   * @deprecated Use `filters`. File types as on `<input accept>`; the extensions in it (`.png,.jpg`)
+   * become one "Files" filter when `filters` is absent.
+   */
   accept?: string
   /** @deprecated Use `help`, which every field has. Drawn as `help` when that's absent. */
   helperText?: string
@@ -230,10 +256,20 @@ export interface PropertySchema {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ScopeContext = any
 
+/**
+ * What a scope's `write` may return. Nothing is the usual case: the write was taken. `{ error }`,
+ * or a promise that resolves to it or rejects, refuses the value: the panel hands the message to
+ * the field as `error` for as long as the field's value stays as it was, and a field that can
+ * show it (the `file` field marks itself invalid) does. An accepted write needs no signal: the
+ * host's `read` returns the new value.
+ */
+// biome-ignore lint/suspicious/noConfusingVoidType: an async write that returns nothing is a Promise<void>
+export type WriteResult = void | { error: string } | Promise<void | { error: string }>
+
 export interface Scope<S = unknown, V = Record<string, unknown>> {
   schema: PropertySchema
   read: (selection: S, ctx: ScopeContext) => V
-  write?: (path: string, value: unknown, selection: S, ctx: ScopeContext) => void
+  write?: (path: string, value: unknown, selection: S, ctx: ScopeContext) => WriteResult
   /**
    * One drag as one undo step. A drag is a scrubbed number, a dragged slider
    * thumb or an open colour picker; `begin` fires when it starts, every
@@ -272,6 +308,8 @@ export interface FieldRendererProps<F extends FieldDef = FieldDef> {
   onGestureBegin?: () => void
   onGestureEnd?: () => void
   onGestureCancel?: () => void
+  /** Why the host refused the field's last written value (see `WriteResult`). Absent once the value changes. */
+  error?: string
   ctx: ScopeContext
   /**
    * The view the field is drawn in. In `"collapsed"` it shares a line with

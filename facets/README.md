@@ -47,6 +47,7 @@ the conventional shadcn path, and your bundler's `@` alias resolves it:
 | `@/components/ui/number-field` | `NumberField` |
 | `@/components/ui/slider` | `Slider` |
 | `@/components/ui/color-field` | `ColorField` |
+| `@/components/ui/path-field` | `PathField` (only for `file` fields) |
 | `@/components/ui/tabs` | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` |
 
 The last three are what make a panel feel like the rest of your app: a number
@@ -69,12 +70,18 @@ reads (typed in `dev/ui/` in this repo):
   `presets`, `disabled`, `onPickStart` / `onPickEnd`. No `onChange` means
   read-only.
 
+- `PathField`: `value: string | null`, `onCommit(path | null)` (Return or blur;
+  no `onCommit` means read-only), `recent: string[]`, `onBrowse(): Promise<string | null>`,
+  `status` (`"ok"`, `"missing"`, `"invalid"`), `message`, `id`, `placeholder`,
+  `disabled`, and the props of a `div` (facets passes `onContextMenu` and
+  `onMouseDownCapture`). With ux-kit: `export { PathField } from "@preset.nz/ux-kit"`.
+
 `Tabs` draws a schema's pages. facets uses the shadcn API (`value`,
 `onValueChange` on `Tabs`; `value` on `TabsTrigger` and `TabsContent`) and the
 list's default variant, the segmented control. With ux-kit it is a one-liner:
 `export { Tabs, TabsContent, TabsList, TabsTrigger } from "@preset.nz/ux-kit"`.
 
-So you need an `@/*` alias pointing at your `src/`, those nine modules present,
+So you need an `@/*` alias pointing at your `src/`, those ten modules present,
 and Tailwind with shadcn's theme tokens (`muted-foreground`, `border` and
 friends are used throughout).
 
@@ -267,9 +274,59 @@ Eleven ship built in: nine that hold a value, and two that only show something.
 | `select` | string | `options`, or `optionsProvider(ctx)` for dynamic lists |
 | `color` | hex string | `presets`; the host's `ColorField` |
 | `vector` | number array | N scalars in one row — Houdini's `float3` / `int2`. `components` sets arity and per-slot label, suffix and range |
-| `file` | `{ name }` | display only |
+| `file` | path string, or `null` | `recentKey`, `filters`, `title`, `placeholder`; editable on the host's `PathField`, see [The `file` field](#the-file-field) |
 | `separator` | none | a horizontal rule, with `label` as an optional caption. No `path` |
 | `label` | none | static text: a hint or a sub-heading. The text is `label`. No `path` |
+
+### The `file` field
+
+`file` is a path to a file, on ux-kit's `PathField`: a text field, a ▾ list of
+recent paths and a browse icon. The value is the path **as written**, relative
+or absolute (facets never rewrites it), or `null`. Typing commits on Return or
+blur through the scope's `write`, never per keystroke; Esc reverts.
+
+```ts
+{ kind: "file", id: "texture", path: "texture", label: "Texture Path",
+  recentKey: "texture", filters: [{ name: "Images", extensions: ["png", "jpg", "webp"] }] }
+```
+
+`recentKey` names the field kind whose last paths the ▾ lists, across documents.
+`filters` and `title` go to the Open dialog. `accept` (as on `<input>`) is
+deprecated: its `.ext` entries become one "Files" filter when `filters` is absent.
+Before 0.3 the value was a read-only `{ name }`; that still draws, read-only.
+
+**Refusing a value.** The host's `write` is the validator. Return `{ error }`
+(or a promise that resolves to it or rejects with a message) and the field is
+marked invalid with the message under it, keeping the typed text. The message
+shows while the field's value stays as it was and clears on the next write. Any
+`write` can refuse this way; fields other than `file` receive the message as
+the `error` prop and ignore it.
+
+**The native parts come from the host.** facets depends on neither Tauri nor
+app-kit. Register the handlers once at startup; every `file` field then works
+the same way. Without them it is a plain editable text field.
+
+```ts
+import { registerFileHandlers } from "@preset.nz/facets"
+import { pathFieldMenu, pathsExist, pickFile, recentPaths, rememberPath, revealPath } from "@preset.nz/app-kit"
+
+registerFileHandlers({
+  recent: recentPaths,      // (key) => Promise<string[]>: the ▾ list
+  remember: rememberPath,   // (key, path): after the host accepted a commit
+  pick: pickFile,           // ({ filters, title }) => Promise<string | null>: the browse icon
+  exists: pathsExist,       // (paths, base?) => Promise<boolean[]>: Missing, and gone recents left out
+  reveal: revealPath,       // (path, base?)
+  contextMenu: pathFieldMenu, // ({ missing, canClear }) => "reveal" | "clear" | null: a native menu
+  base: () => currentDocumentFolder(), // relative paths resolve against it
+})
+```
+
+Every member is optional. A path is remembered when the field's value becomes
+the path that was committed, which is the first moment a host that validates
+asynchronously has accepted it; a refused commit is never remembered. Missing
+and the ▾ list are re-checked when the window regains focus. Right-click opens
+the native menu (Reveal in Finder, Clear) unless the text is being edited, when
+the native text menu stays.
 
 Every field that holds a value takes `help` (from 0.3.0): a sentence or two
 drawn under the control in the inspector, and left out of the card and the

@@ -129,14 +129,18 @@ export const CATALOGUE: KindEntry[] = [
   {
     kind: "file",
     blurb:
-      "Shows a file's name. Picking a file is the host's job, so this one is always read-only.",
+      "A path to a file, typed or pasted. With the host's file handlers it also has a recent list, a browse icon and a Missing check; without them it is a text field.",
     props: [
-      ["accept", "file types, as on <input>"],
+      ["recentKey", "fields with the same key share one recent list"],
+      ["filters", "file types in the Open dialog: { name, extensions }[]"],
+      ["title", "the Open dialog's title"],
+      ["placeholder", "shown while empty"],
+      ["accept", "deprecated: use filters"],
       ["helperText", "deprecated: use help, which every field has"],
     ],
     make: (n) => ({
       field: { kind: "file", id: id("file", n), path: id("file", n), label: "Source" },
-      value: { name: "harbour.jpg" },
+      value: "textures/harbour.jpg",
     }),
   },
   {

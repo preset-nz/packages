@@ -3,12 +3,13 @@
  * components plus a single `registerBuiltinRenderers` entry point. Splitting
  * each renderer into its own file would be over-organisation for code that
  * never hot-reloads in isolation. */
-import { useMemo, useRef } from "react"
+import { useEffect, useId, useMemo, useRef } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ColorField } from "@/components/ui/color-field"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { NumberField } from "@/components/ui/number-field"
+import { PathField } from "@/components/ui/path-field"
 import {
   Select,
   SelectContent,
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Slider } from "@/components/ui/slider"
+import { filtersOf, useFileHandlers, useMissing, useRecent } from "./file-handlers"
 import { COLUMN_ROW, NUMBER_WIDTH, NUMBER_WIDTH_INSIDE, useLabelLayout } from "./layout"
 import { registerFieldRenderer } from "./registry"
 import type {
@@ -59,10 +61,13 @@ export function FieldShell({
   view,
   top,
   above,
+  htmlFor,
   children,
 }: {
   label?: string
   view?: PanelView
+  /** The id of the control the label names, so clicking the label focuses it. */
+  htmlFor?: string
   /** In a label column: align the label to the top of a tall control. */
   top?: boolean
   /** The label sits above the control even in a label column (a wide control, like a vector of four). */
@@ -74,7 +79,10 @@ export function FieldShell({
   if (view === "collapsed") {
     return (
       <div className="grid grid-cols-[5.5rem_minmax(0,1fr)] items-center gap-2">
-        <Label className="truncate text-[11px] font-medium text-muted-foreground tracking-wide">
+        <Label
+          htmlFor={htmlFor}
+          className="truncate text-[11px] font-medium text-muted-foreground tracking-wide"
+        >
           {label}
         </Label>
         <div className="min-w-0">{children}</div>
@@ -86,6 +94,7 @@ export function FieldShell({
     return (
       <div className={top ? COLUMN_ROW.replace("items-center", "items-start") : COLUMN_ROW}>
         <Label
+          htmlFor={htmlFor}
           title={label}
           className={
             "block truncate text-[11px] font-medium text-muted-foreground tracking-wide" +
@@ -101,7 +110,10 @@ export function FieldShell({
   return (
     <div className="flex flex-col gap-1">
       {label && (
-        <Label className="text-[11px] font-medium text-muted-foreground tracking-wide">
+        <Label
+          htmlFor={htmlFor}
+          className="text-[11px] font-medium text-muted-foreground tracking-wide"
+        >
           {label}
         </Label>
       )}
@@ -411,11 +423,96 @@ const CheckboxRenderer: FieldRenderer<CheckboxFieldDef> = ({
   )
 }
 
-const FileRenderer: FieldRenderer<FileFieldDef> = ({ field, value, view }) => {
-  const asset = value as { name?: string } | null | undefined
+const FileRenderer: FieldRenderer<FileFieldDef> = ({
+  field,
+  value,
+  disabled,
+  onChange,
+  error,
+  view,
+}) => {
+  const label = field.label ?? field.id
+  const inputId = useId()
+  const h = useFileHandlers()
+  const path = typeof value === "string" && value !== "" ? value : null
+  const missing = useMissing(path, h)
+  const [recent, reloadRecent] = useRecent(field.recentKey, h, path)
+
+  // What was last committed and not yet seen come back as the value. The host's `write` is the
+  // validator and may be asynchronous, so the field cannot tell "accepted" from the call: it
+  // sees it when the value prop becomes the committed path. Only then is the path remembered. A
+  // refusal (`error`) or any other change of value drops the pending commit.
+  const pending = useRef<string | null | undefined>(undefined)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: settles when the value changes; the rest is read fresh
+  useEffect(() => {
+    const committed = pending.current
+    pending.current = undefined
+    if (committed !== undefined && committed === path && path !== null && field.recentKey) {
+      Promise.resolve(h?.remember?.(field.recentKey, path)).then(reloadRecent, () => {})
+    }
+  }, [path])
+  useEffect(() => {
+    if (error) pending.current = undefined
+  }, [error])
+
+  // The context menu stays native, and the text menu keeps the field while its text is being
+  // edited: whether the input had focus is read before the click that opens the menu moves it.
+  const editing = useRef(false)
+
+  // The old read-only `{ name }` value.
+  if (value != null && typeof value === "object") {
+    const name = (value as { name?: string }).name
+    return (
+      <FieldShell label={label} view={view}>
+        <ReadOnlyText>{name ? name : <Empty />}</ReadOnlyText>
+      </FieldShell>
+    )
+  }
+
+  const editable = !!onChange
+  const commit = (next: string | null) => {
+    pending.current = next
+    onChange?.(next)
+  }
+  const pick = h?.pick
+  const menu = h?.contextMenu
+  const act = async () => {
+    const choice = await menu?.({ missing: missing || path === null, canClear: editable && !!path })
+    if (choice === "reveal" && path) {
+      try {
+        await h?.reveal?.(path, h.base?.())
+      } catch {
+        // The file went between the check and the click; the next focus check says Missing.
+      }
+    } else if (choice === "clear" && editable && path) commit(null)
+  }
+
   return (
-    <FieldShell label={field.label ?? field.id} view={view}>
-      <ReadOnlyText>{asset?.name ? asset.name : <Empty />}</ReadOnlyText>
+    <FieldShell label={label} view={view} htmlFor={inputId}>
+      <PathField
+        id={inputId}
+        value={path}
+        placeholder={field.placeholder}
+        disabled={disabled}
+        status={error ? "invalid" : missing ? "missing" : "ok"}
+        message={error}
+        onCommit={editable ? commit : undefined}
+        recent={editable && recent.length > 0 ? recent : undefined}
+        onBrowse={
+          editable && pick
+            ? () => pick({ filters: filtersOf(field), title: field.title })
+            : undefined
+        }
+        onMouseDownCapture={(e) => {
+          const input = e.currentTarget.querySelector("input")
+          editing.current = input !== null && input === document.activeElement
+        }}
+        onContextMenu={(e) => {
+          if (!menu || disabled || editing.current) return
+          e.preventDefault()
+          void act()
+        }}
+      />
     </FieldShell>
   )
 }

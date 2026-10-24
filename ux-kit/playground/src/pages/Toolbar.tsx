@@ -19,6 +19,8 @@ import {
 } from "@preset.nz/ux-kit"
 import { useEffect, useState } from "react"
 
+import { FileFieldDemo, TEXTURE_KEY } from "./FileFieldDemo"
+
 const PRESETS = ["#ffffff", "#f8f5e7", "#efe7d3", "#cccccc", "#e5484d", "#3e63dd", "#000000"]
 
 const FAKE_RECENT = [
@@ -33,7 +35,7 @@ const fakeBrowse = () =>
     setTimeout(() => resolve("/Users/georg/Pictures/chosen-in-dialog.jpg"), 300),
   )
 
-const REAL_KEY = "playground-texture"
+const REAL_KEY = TEXTURE_KEY
 
 type Tool = "move" | "marquee" | "pen"
 
@@ -334,6 +336,8 @@ export function ToolbarPage() {
               disabled
             />
           </div>
+          <h2 className="text-sm font-medium">Path field in a facets panel</h2>
+          <FileFieldDemo />
         </div>
       </section>
     </TooltipProvider>

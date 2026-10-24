@@ -154,6 +154,24 @@
         }
       }
     },
+    "fileFilter": {
+      "type": "object",
+      "required": ["name", "extensions"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Shown in the Open dialog, e.g. \"Images\"."
+        },
+        "extensions": {
+          "type": "array",
+          "description": "Extensions without the dot, e.g. [\"png\", \"jpg\"].",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "vectorComponent": {
       "type": "object",
       "additionalProperties": false,
@@ -671,7 +689,7 @@
     },
     "file": {
       "type": "object",
-      "description": "Shows a file's name; always read-only. Value: { \"name\": string }.",
+      "description": "A path to a file, edited on a path field with a recent list, browse icon and Missing check when the host registers file handlers. Value: the path string as written, or null.",
       "required": ["kind", "id", "path"],
       "properties": {
         "kind": {
@@ -696,9 +714,28 @@
         "disabledWhen": {
           "$ref": "#/definitions/disabledWhen"
         },
+        "recentKey": {
+          "type": "string",
+          "description": "Keys the recent paths: fields with the same key share one list, across documents. Example: \"texture\"."
+        },
+        "filters": {
+          "type": "array",
+          "description": "File types in the Open dialog.",
+          "items": {
+            "$ref": "#/definitions/fileFilter"
+          }
+        },
+        "title": {
+          "type": "string",
+          "description": "The Open dialog's title."
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "Shown while the field is empty."
+        },
         "accept": {
           "type": "string",
-          "description": "File types, as on <input>. Declared in 0.1; the built-in renderer ignores it."
+          "description": "Deprecated: use filters. File types as on <input accept>; the extensions in it become one \"Files\" filter when filters is absent."
         },
         "helperText": {
           "type": "string",

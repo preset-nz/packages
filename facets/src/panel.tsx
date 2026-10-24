@@ -63,6 +63,19 @@ interface GestureHandlers {
 }
 const GestureContext = createContext<GestureHandlers | null>(null)
 
+/**
+ * The host's refusals by path (see `WriteResult`), each with the value the field held when it was
+ * refused: it shows while the field still holds that value, so any other change clears it.
+ */
+type Refusals = Readonly<Record<string, { message: string; at: unknown }>>
+const RefusalContext = createContext<Refusals>({})
+
+/** The message of a rejected write: an Error's message, or the string a Tauri command rejects with. */
+function messageOf(e: unknown): string {
+  if (e instanceof Error) return e.message
+  return typeof e === "string" && e !== "" ? e : "Refused"
+}
+
 type Row = Array<FieldDef | FieldDef[]>[number]
 
 /** One page of the inspector: its groups, and those behind its Advanced row. */
@@ -153,6 +166,7 @@ function PanelBody({
   ...pageProps
 }: PropertyPanelProps) {
   const scope = getScope(scopeKey)
+  const [refused, setRefused] = useState<Refusals>({})
 
   const values = useMemo(() => {
     if (!scope) return {} as Record<string, unknown>
@@ -175,10 +189,31 @@ function PanelBody({
 
   if (!scope) return <>{emptyState ?? null}</>
 
+  const refuse = (path: string, message: string, at: unknown) =>
+    setRefused((r) => ({ ...r, [path]: { message, at } }))
   const onChange =
     readOnly || !scope.write
       ? undefined
-      : (path: string, val: unknown) => scope.write?.(path, val, selection, ctx)
+      : (path: string, val: unknown) => {
+          const at = values[path]
+          setRefused((r) => {
+            if (!(path in r)) return r
+            const { [path]: _gone, ...rest } = r
+            return rest
+          })
+          const out = scope.write?.(path, val, selection, ctx)
+          if (out && typeof (out as Promise<unknown>).then === "function") {
+            ;(out as Promise<{ error: string } | undefined>).then(
+              (r) => r?.error && refuse(path, r.error, at),
+              (e) => refuse(path, messageOf(e), at),
+            )
+          } else if (out && typeof out === "object" && "error" in out) {
+            refuse(path, out.error, at)
+          }
+        }
+  const wrap = (node: React.ReactNode) => (
+    <RefusalContext.Provider value={refused}>{node}</RefusalContext.Provider>
+  )
 
   // Collapsed: what a folded scope still shows, one compact row per field.
   // The host draws the title bar that folds it. Nothing when nothing is
@@ -186,10 +221,10 @@ function PanelBody({
   if (view === "collapsed") {
     const fields = promotedFields(scope.schema, "collapsed")
     if (fields.length === 0) return null
-    return (
+    return wrap(
       <div className="px-3 py-2">
         <CompactRows fields={fields} values={values} ctx={ctx} onChange={onChange} />
-      </div>
+      </div>,
     )
   }
 
@@ -199,7 +234,7 @@ function PanelBody({
     const rows = scope.schema.groups.flatMap((g) => rowsIn(g.rows, "card"))
     const heading = title ?? scope.schema.title
     if (rows.length === 0 && !heading) return null
-    return (
+    return wrap(
       <LabelLayoutContext.Provider value={labelLayout}>
         <div className="flex flex-col" style={columnStyle(labelLayout, labelWidth, rows.flat())}>
           {heading && (
@@ -213,13 +248,13 @@ function PanelBody({
             </div>
           )}
         </div>
-      </LabelLayoutContext.Provider>
+      </LabelLayoutContext.Provider>,
     )
   }
 
   // One label column across every page, so it doesn't jump between tabs.
   const all = scope.schema.groups.flatMap((g) => rowsIn(g.rows, "inspector")).flat()
-  return (
+  return wrap(
     <LabelLayoutContext.Provider value={labelLayout}>
       <div className="flex flex-col" style={columnStyle(labelLayout, labelWidth, all)}>
         <Inspector
@@ -231,7 +266,7 @@ function PanelBody({
           {...pageProps}
         />
       </div>
-    </LabelLayoutContext.Provider>
+    </LabelLayoutContext.Provider>,
   )
 }
 
@@ -600,6 +635,7 @@ function FieldSlot({
   view: PanelView
 }) {
   const gesture = useContext(GestureContext)
+  const refusals = useContext(RefusalContext)
   const renderer = getFieldRenderer(field.kind)
   if (!renderer) {
     console.warn("[properties] no renderer for kind:", field.kind)
@@ -618,6 +654,7 @@ function FieldSlot({
 
   // Display-only kinds (separator, label) have no path: no value, no writes.
   const path = "path" in field ? field.path : undefined
+  const refusal = path === undefined ? undefined : refusals[path]
   const control = renderer({
     field,
     value: path === undefined ? undefined : values[path],
@@ -626,6 +663,7 @@ function FieldSlot({
     onGestureBegin: gesture && path !== undefined ? () => gesture.begin(path) : undefined,
     onGestureEnd: gesture && path !== undefined ? () => gesture.end(path) : undefined,
     onGestureCancel: gesture && path !== undefined ? () => gesture.cancel(path) : undefined,
+    error: refusal && Object.is(refusal.at, values[path as string]) ? refusal.message : undefined,
     ctx,
     view,
     // Renderers are synchronous; React's FC type allows a promise, which nothing returns.

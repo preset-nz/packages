@@ -151,6 +151,7 @@ compare("group", "PropertyGroupDef", defs.group)
 compare("page", "PropertyPageDef", defs.page)
 compare("disabledWhen", "DisabledWhen", defs.disabledWhen)
 compare("selectOption", "SelectOption", defs.selectOption)
+compare("fileFilter", "FileFilter", defs.fileFilter)
 compare("vectorComponent", "VectorComponentDef", defs.vectorComponent)
 compare("#root", "PropertySchema", schema)
 
