@@ -74,3 +74,23 @@ export function useMissingCheck(paths: string[], base?: string): boolean[] {
   }, [signature, base])
   return missing
 }
+
+export interface PathFieldMenuOptions {
+  /** The file is gone: "Reveal in Finder" is shown off. */
+  missing: boolean
+  /** False when there is nothing to clear (an empty or read-only field): "Clear" is shown off. Default true. */
+  canClear?: boolean
+}
+
+/**
+ * A native context menu at the pointer for a path field: Reveal in Finder (off when missing) and
+ * Clear. Resolves to what was chosen, or `null` when it was dismissed. The caller acts on it
+ * (`revealPath`, commit an empty value). Pop it from the field's `contextmenu` handler after
+ * `preventDefault()`, but not while the text is being edited: there the text menu belongs.
+ */
+export function pathFieldMenu(opts: PathFieldMenuOptions): Promise<"reveal" | "clear" | null> {
+  return invoke<"reveal" | "clear" | null>("app_kit_path_field_menu", {
+    missing: opts.missing,
+    canClear: opts.canClear,
+  })
+}

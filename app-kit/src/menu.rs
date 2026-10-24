@@ -496,6 +496,7 @@ impl<R: Runtime> AppKit<R> {
                         refresh_history(handle);
                     }
                 }
+                id if crate::paths::path_menu_chosen(id) => {}
                 id if guard::command(handle, id) => {}
                 id => {
                     let handled = kit.on_command.as_ref().is_some_and(|f| f(handle, id));

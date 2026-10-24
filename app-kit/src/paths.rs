@@ -13,10 +13,13 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::mpsc::{self, Sender};
 use std::sync::Mutex;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::menu::{ContextMenu, Menu, MenuItem, PredefinedMenuItem};
+use tauri::{AppHandle, Manager, Runtime, Window};
 use tauri_plugin_dialog::DialogExt;
 
 /// How many paths a key keeps.
@@ -203,6 +206,96 @@ pub fn app_kit_paths_exist(paths: Vec<String>, base: Option<String>) -> Vec<bool
         .collect()
 }
 
+/// Menu item id of "Reveal in Finder" in the path field's context menu.
+pub(crate) const PATH_MENU_REVEAL: &str = "app-kit.path-field.reveal";
+/// Menu item id of "Clear" in the path field's context menu.
+pub(crate) const PATH_MENU_CLEAR: &str = "app-kit.path-field.clear";
+
+/// How long to wait for the menu event once the popup has closed. The event is queued behind the
+/// popup's own tracking loop, so it arrives right after; a dismissed menu sends none.
+const PATH_MENU_EVENT_WAIT: Duration = Duration::from_millis(400);
+
+/// Where the open menu's choice goes. One menu is open at a time; a new one replaces the sender.
+static PATH_MENU: Mutex<Option<Sender<&'static str>>> = Mutex::new(None);
+
+#[cfg(target_os = "macos")]
+const REVEAL_LABEL: &str = "Reveal in Finder";
+#[cfg(target_os = "windows")]
+const REVEAL_LABEL: &str = "Show in Explorer";
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+const REVEAL_LABEL: &str = "Show in File Manager";
+
+/// The path field menu's items as `(id, label, enabled)`: Reveal is off when the file is
+/// missing, Clear when there is nothing to clear.
+fn path_menu_items(missing: bool, can_clear: bool) -> [(&'static str, &'static str, bool); 2] {
+    [
+        (PATH_MENU_REVEAL, REVEAL_LABEL, !missing),
+        (PATH_MENU_CLEAR, "Clear", can_clear),
+    ]
+}
+
+/// What a menu item id means to the webview: `"reveal"`, `"clear"`, or `None` for any other id.
+fn path_menu_choice(id: &str) -> Option<&'static str> {
+    match id {
+        PATH_MENU_REVEAL => Some("reveal"),
+        PATH_MENU_CLEAR => Some("clear"),
+        _ => None,
+    }
+}
+
+/// The app's menu-event handler offers every id here first. Returns true when the id is one of
+/// the path field menu's (so it is not forwarded as an app command) and passes the choice to
+/// the command waiting for it.
+pub(crate) fn path_menu_chosen(id: &str) -> bool {
+    let Some(choice) = path_menu_choice(id) else {
+        return false;
+    };
+    if let Some(tx) = PATH_MENU.lock().unwrap_or_else(|e| e.into_inner()).take() {
+        let _ = tx.send(choice);
+    }
+    true
+}
+
+/// Pop up the path field's native context menu at the pointer: Reveal in Finder (off when
+/// `missing`) and Clear (off when `can_clear` is false; default on). Resolves to `"reveal"`,
+/// `"clear"`, or `None` when the menu was dismissed. `PathField` hosts call it from their
+/// `contextmenu` handler, unless the text is being edited, where the text menu belongs.
+///
+/// The popup blocks until the menu closes and the chosen item arrives as a menu event after
+/// that, so the command waits on a blocking-pool thread and `app.on_menu_event` hands the
+/// choice over through a channel.
+#[tauri::command]
+pub async fn app_kit_path_field_menu<R: Runtime>(
+    window: Window<R>,
+    missing: bool,
+    can_clear: Option<bool>,
+) -> Result<Option<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let app = window.app_handle();
+        let [reveal, clear] = path_menu_items(missing, can_clear.unwrap_or(true));
+        let reveal = MenuItem::with_id(app, reveal.0, reveal.1, reveal.2, None::<&str>)
+            .map_err(|e| e.to_string())?;
+        let clear = MenuItem::with_id(app, clear.0, clear.1, clear.2, None::<&str>)
+            .map_err(|e| e.to_string())?;
+        let rule = PredefinedMenuItem::separator(app).map_err(|e| e.to_string())?;
+        let menu = Menu::with_items(app, &[&reveal, &rule, &clear]).map_err(|e| e.to_string())?;
+
+        let (tx, rx) = mpsc::channel();
+        *PATH_MENU.lock().unwrap_or_else(|e| e.into_inner()) = Some(tx);
+        let shown = menu.popup(window);
+        let choice = shown
+            .is_ok()
+            .then(|| rx.recv_timeout(PATH_MENU_EVENT_WAIT).ok())
+            .flatten();
+        // A dismissed menu leaves its sender behind; the next menu replaces it anyway.
+        PATH_MENU.lock().unwrap_or_else(|e| e.into_inner()).take();
+        shown.map_err(|e| e.to_string())?;
+        Ok(choice.map(str::to_string))
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -266,6 +359,31 @@ mod tests {
         assert_eq!(RecentPaths::read(&file).list("texture"), ["a.png"]);
         fs::write(&file, b"not json").unwrap();
         assert_eq!(RecentPaths::read(&file), RecentPaths::default());
+    }
+
+    #[test]
+    fn the_menu_items_follow_missing_and_empty() {
+        let [reveal, clear] = path_menu_items(false, true);
+        assert!(reveal.2 && clear.2);
+        let [reveal, clear] = path_menu_items(true, true);
+        assert!(!reveal.2 && clear.2);
+        let [reveal, clear] = path_menu_items(false, false);
+        assert!(reveal.2 && !clear.2);
+    }
+
+    #[test]
+    fn a_menu_choice_reaches_the_waiting_command_and_other_ids_pass() {
+        assert_eq!(path_menu_choice(PATH_MENU_REVEAL), Some("reveal"));
+        assert_eq!(path_menu_choice(PATH_MENU_CLEAR), Some("clear"));
+        assert_eq!(path_menu_choice("file.open"), None);
+        assert!(!path_menu_chosen("file.open"));
+
+        let (tx, rx) = mpsc::channel();
+        *PATH_MENU.lock().unwrap() = Some(tx);
+        assert!(path_menu_chosen(PATH_MENU_CLEAR));
+        assert_eq!(rx.try_recv(), Ok("clear"));
+        // With no menu waiting the id is still ours, and nothing panics.
+        assert!(path_menu_chosen(PATH_MENU_REVEAL));
     }
 
     #[test]

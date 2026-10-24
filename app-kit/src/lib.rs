@@ -38,6 +38,7 @@
 //!         preset_app_kit::app_kit_pick_file,
 //!         preset_app_kit::app_kit_reveal_path,
 //!         preset_app_kit::app_kit_paths_exist,
+//!         preset_app_kit::app_kit_path_field_menu,
 //!     ])
 //! ```
 
@@ -76,8 +77,8 @@ pub use menu::{
     HISTORY_EVENT, TEXT_UNDO_EVENT,
 };
 pub use paths::{
-    app_kit_paths_exist, app_kit_pick_file, app_kit_recent_paths, app_kit_remember_path,
-    app_kit_reveal_path, PickFilter, RecentPaths,
+    app_kit_path_field_menu, app_kit_paths_exist, app_kit_pick_file, app_kit_recent_paths,
+    app_kit_remember_path, app_kit_reveal_path, PickFilter, RecentPaths,
 };
 pub use recent::{labels as recent_labels, Recents};
 pub use restore::{app_kit_document_note, window_state, NOTE_EVENT};
