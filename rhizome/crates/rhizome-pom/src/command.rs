@@ -107,6 +107,16 @@ fn checked<M: ObjectModel>(
 }
 
 /// The kind a node's schema gives `key`, if it has one.
+/// What an undo step calls a value: its label, else its key.
+fn value_label<M: ObjectModel>(d: &Document<M>, at: &str, key: &str) -> String {
+    d.tree()
+        .at(at)
+        .and_then(|n| n.node_type())
+        .and_then(|t| t.values().iter().find(|s| s.key == key))
+        .and_then(|s| s.label.clone())
+        .unwrap_or_else(|| key.to_string())
+}
+
 fn value_kind<M: ObjectModel>(d: &Document<M>, at: &str, key: &str) -> Option<ValueKind> {
     let n = d.tree().at(at)?;
     let t = n.node_type()?;
@@ -288,7 +298,7 @@ impl<M: ObjectModel> Commands<M> {
             |d, p| {
                 let a: SetArgs = payload(p)?;
                 let [(at, key, v)]: [_; 1] = checked(d, vec![a])?.try_into().expect("one");
-                let label = format!("Set {key}");
+                let label = format!("Set {}", value_label(d, at.as_str(), &key));
                 Ok(d.edit(&label, |tx| tx.set_value(at.as_str(), &key, v))?
                     .1
                     .into())
@@ -312,7 +322,7 @@ impl<M: ObjectModel> Commands<M> {
                 keys.sort();
                 keys.dedup();
                 let label = match keys.as_slice() {
-                    [one] => format!("Set {one}"),
+                    [one] => format!("Set {}", value_label(d, sets[0].0.as_str(), one)),
                     _ => "Set Values".to_string(),
                 };
                 Ok(d.edit(&label, |tx| {

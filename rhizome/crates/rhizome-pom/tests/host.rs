@@ -24,7 +24,8 @@ impl ObjectModel for Loom {
             NodeType::new("thread")
                 .in_categories(&["threads"])
                 .float("thread.tension", 0.0..=1.0, 0.5)
-                .text("thread.colour", "white"),
+                .text("thread.colour", "white")
+                .described("Colour", "What the thread is dyed."),
         );
     }
 
@@ -396,4 +397,47 @@ fn several_values_in_one_step() {
             .iter()
             .any(|c| c.id == "values.set" && c.enabled)
     );
+}
+
+#[test]
+fn a_set_is_named_by_the_value_label_when_it_has_one() {
+    let (h, pom, _, _) = loom();
+    h.run(
+        "value.set",
+        &json!({"at": AT, "key": "thread.colour", "value": "red"}),
+        None,
+    )
+    .unwrap();
+    assert_eq!(pom.status().undo.as_deref(), Some("Set Colour"));
+    h.run(
+        "values.set",
+        &json!({"changes": [{"at": AT, "key": "thread.colour", "value": "blue"}]}),
+        None,
+    )
+    .unwrap();
+    assert_eq!(pom.status().undo.as_deref(), Some("Set Colour"));
+}
+
+#[test]
+fn the_status_hook_sees_a_gesture_begin_and_end() {
+    let seen = Arc::new(std::sync::Mutex::new(Vec::<Option<String>>::new()));
+    let s = seen.clone();
+    let pom = Arc::new(
+        Pom::<Loom>::new(|| Box::new(MemoryStore::default()), IdSource::sequential)
+            .unwrap()
+            .on_status(move |st| s.lock().unwrap().push(st.undo.clone())),
+    );
+    let h = host(pom.clone());
+    h.run(
+        "node.add",
+        &json!({"parent": "/threads", "type": "thread", "name": "warp"}),
+        None,
+    )
+    .unwrap();
+    let (token, _) = h.begin("Pull").unwrap();
+    h.run("value.set", &set(json!(0.9)), None).unwrap();
+    seen.lock().unwrap().clear();
+    h.end(token).unwrap();
+    // the commit inside the gesture reported Undo greyed; the end brings it back, named
+    assert_eq!(*seen.lock().unwrap(), [Some("Pull".to_string())]);
 }

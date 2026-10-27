@@ -136,6 +136,7 @@ pub trait Host: Send + Sync {
 type StoreFn = Box<dyn Fn() -> Box<dyn Store> + Send + Sync>;
 type IdsFn = Box<dyn Fn() -> IdSource + Send + Sync>;
 type ChangeFn<M> = Box<dyn Fn(&Document<M>) + Send + Sync>;
+type StatusFn = Box<dyn Fn(&Status) + Send + Sync>;
 
 struct Inner<M: ObjectModel> {
     doc: Document<M>,
@@ -154,6 +155,7 @@ pub struct Pom<M: ObjectModel> {
     store: StoreFn,
     ids: IdsFn,
     on_change: Vec<ChangeFn<M>>,
+    on_status: Vec<StatusFn>,
 }
 
 impl<M: ObjectModel> Pom<M> {
@@ -200,6 +202,7 @@ impl<M: ObjectModel> Pom<M> {
             store: Box::new(store),
             ids: Box::new(ids),
             on_change: Vec::new(),
+            on_status: Vec::new(),
         })
     }
 
@@ -208,6 +211,15 @@ impl<M: ObjectModel> Pom<M> {
     /// this `Pom` from it.
     pub fn on_change(mut self, f: impl Fn(&Document<M>) + Send + Sync + 'static) -> Self {
         self.on_change.push(Box::new(f));
+        self
+    }
+
+    /// Called with the status whenever it changes: after a commit or a whole-tree replacement,
+    /// on save, and when a gesture begins or ends, which `on_change` doesn't see (Undo greys
+    /// out while a gesture is open and comes back when it ends). For an app's menu and window
+    /// title. Runs with the document locked, like `on_change`: don't call back into this `Pom`.
+    pub fn on_status(mut self, f: impl Fn(&Status) + Send + Sync + 'static) -> Self {
+        self.on_status.push(Box::new(f));
         self
     }
 
@@ -249,6 +261,9 @@ impl<M: ObjectModel> Pom<M> {
         let now = status(inner);
         if inner.sent.as_ref() == Some(&now) {
             return None;
+        }
+        for f in &self.on_status {
+            f(&now);
         }
         inner.sent = Some(now.clone());
         Some(Event::Status(now))
