@@ -8,7 +8,7 @@ export {
 } from "./file-handlers"
 export { COLUMN_ROW, useLabelLayout } from "./layout"
 export { schemaProblems } from "./pages"
-export { PropertyPanel, promotedFields, showsIn } from "./panel"
+export { isDisabled, PropertyPanel, promotedFields, showsIn } from "./panel"
 export {
   getFieldRenderer,
   getScope,

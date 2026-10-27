@@ -10,6 +10,8 @@ import {
 } from "./layout"
 import { getFieldRenderer, getScope } from "./registry"
 import type {
+  DisabledWhen,
+  DisabledWhenAny,
   FieldDef,
   FileFieldDef,
   LabelLayout,
@@ -18,6 +20,22 @@ import type {
   PropertySchema,
   ScopeContext,
 } from "./types"
+
+/** Whether a field's `disabledWhen` holds for these values; a list holds when any entry does. */
+export function isDisabled(
+  cond: DisabledWhenAny | undefined,
+  values: Record<string, unknown>,
+): boolean {
+  if (!cond) return false
+  if (Array.isArray(cond)) return cond.some((c) => isDisabled(c, values))
+  const one = cond as DisabledWhen
+  const v = values[one.path]
+  if (Object.hasOwn(one, "equals")) return v === one.equals
+  if (Object.hasOwn(one, "notEquals")) return v !== one.notEquals
+  if (one.in) return one.in.includes(v)
+  if (one.notIn) return !one.notIn.includes(v)
+  return false
+}
 
 interface PropertyPanelProps {
   scopeKey: string
@@ -641,16 +659,7 @@ function FieldSlot({
     console.warn("[properties] no renderer for kind:", field.kind)
     return null
   }
-  const disabled = (() => {
-    const cond = field.disabledWhen
-    if (!cond) return false
-    const v = values[cond.path]
-    if (Object.hasOwn(cond, "equals")) return v === cond.equals
-    if (Object.hasOwn(cond, "notEquals")) return v !== cond.notEquals
-    if (cond.in) return cond.in.includes(v)
-    if (cond.notIn) return !cond.notIn.includes(v)
-    return false
-  })()
+  const disabled = isDisabled(field.disabledWhen, values)
 
   // Display-only kinds (separator, label) have no path: no value, no writes.
   const path = "path" in field ? field.path : undefined

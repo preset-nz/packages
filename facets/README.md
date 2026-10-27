@@ -518,6 +518,16 @@ The condition reads one other field's value. Set one operator:
 
 If several are set, the first in that order wins.
 
+A list of conditions disables the field when any of them holds, e.g. a width
+that a hairline or a non-solid line both make moot:
+
+```ts
+disabledWhen: [
+  { path: "hairline", equals: true },
+  { path: "lineStyle", notEquals: "solid" },
+]
+```
+
 ---
 
 ## Custom field kinds

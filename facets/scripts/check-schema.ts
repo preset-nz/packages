@@ -149,7 +149,7 @@ for (const typeName of unions.get("BuiltinFieldDef") ?? []) {
 compare("custom", "BaseField", defs.custom)
 compare("group", "PropertyGroupDef", defs.group)
 compare("page", "PropertyPageDef", defs.page)
-compare("disabledWhen", "DisabledWhen", defs.disabledWhen)
+compare("disabledWhen", "DisabledWhen", defs.disabledWhenOne)
 compare("selectOption", "SelectOption", defs.selectOption)
 compare("fileFilter", "FileFilter", defs.fileFilter)
 compare("vectorComponent", "VectorComponentDef", defs.vectorComponent)
@@ -164,6 +164,18 @@ const valid: Array<[string, unknown]> = [
   ...STARTERS.map((s): [string, unknown] => [`starter "${s.id}"`, s.schema]),
   ["a $schema key", { $schema: schema.$id, version: 1, groups: [] }],
   ["a custom kind without a path", wrap({ kind: "palette-strip", id: "p" })],
+  [
+    "a list of disabledWhen conditions",
+    wrap({
+      kind: "number",
+      id: "w",
+      path: "w",
+      disabledWhen: [
+        { path: "hairline", equals: true },
+        { path: "lineStyle", notEquals: "solid" },
+      ],
+    }),
+  ],
   [
     "a custom kind with extra props",
     wrap({ kind: "palette-strip", id: "p", path: "p", colours: ["#000"] }),
@@ -244,6 +256,11 @@ const invalid: Array<[string, unknown]> = [
   [
     "an unknown disabledWhen operator",
     wrap({ kind: "text", id: "t", path: "t", disabledWhen: { path: "x", equal: 1 } }),
+  ],
+  ["an empty disabledWhen list", wrap({ kind: "text", id: "t", path: "t", disabledWhen: [] })],
+  [
+    "an unknown operator in a disabledWhen list",
+    wrap({ kind: "text", id: "t", path: "t", disabledWhen: [{ path: "x", equal: 1 }] }),
   ],
   ["an unknown promote view", wrap({ kind: "text", id: "t", path: "t", promote: ["toolbar"] })],
   ["promote as a bare string", wrap({ kind: "text", id: "t", path: "t", promote: "card" })],

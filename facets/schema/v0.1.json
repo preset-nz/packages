@@ -106,8 +106,19 @@
       }
     },
     "disabledWhen": {
+      "description": "Greys the field out depending on other fields' values: one condition, or a list that disables the field when any of them holds.",
+      "oneOf": [
+        { "$ref": "#/definitions/disabledWhenOne" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/disabledWhenOne" }
+        }
+      ]
+    },
+    "disabledWhenOne": {
       "type": "object",
-      "description": "Greys the field out depending on another field's value. Set one operator; if several are set, the first of equals, notEquals, in, notIn wins.",
+      "description": "One condition on another field's value. Set one operator; if several are set, the first of equals, notEquals, in, notIn wins.",
       "required": ["path"],
       "additionalProperties": false,
       "properties": {

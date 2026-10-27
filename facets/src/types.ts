@@ -23,7 +23,7 @@ export interface BaseField {
    * inspector view. The card and collapsed views leave it out.
    */
   help?: string
-  disabledWhen?: DisabledWhen
+  disabledWhen?: DisabledWhenAny
   promote?: PromoteView[]
 }
 
@@ -54,10 +54,10 @@ export type LabelLayout = "auto" | "column" | "stacked"
 
 /**
  * Disables a field based on one other field's value. Exactly one operator is
- * meant to be set; if several are, the first present in the order
+ * meant to be set; if several are set, the first present in the order
  * `equals`, `notEquals`, `in`, `notIn` wins. `in`/`notIn` match a list of
- * values (e.g. "only these enum choices use this param") and are still a
- * single-path condition — composable AND/OR belongs in a later DSL.
+ * values (e.g. "only these enum choices use this param"). A field takes a list
+ * of these to be disabled when any of them holds (`DisabledWhenAny`).
  */
 export interface DisabledWhen {
   path: string
@@ -66,6 +66,9 @@ export interface DisabledWhen {
   in?: readonly unknown[]
   notIn?: readonly unknown[]
 }
+
+/** One condition, or a list: disabled when any of them holds. */
+export type DisabledWhenAny = DisabledWhen | readonly DisabledWhen[]
 
 // A custom field is any BaseField whose `kind` is not one of the built-ins.
 // The host's registered renderer for that kind decides what extra props it reads.
@@ -188,7 +191,7 @@ export interface SeparatorFieldDef {
   kind: "separator"
   id: string
   label?: string
-  disabledWhen?: DisabledWhen
+  disabledWhen?: DisabledWhenAny
   promote?: PromoteView[]
 }
 
@@ -197,7 +200,7 @@ export interface LabelFieldDef {
   kind: "label"
   id: string
   label: string
-  disabledWhen?: DisabledWhen
+  disabledWhen?: DisabledWhenAny
   promote?: PromoteView[]
 }
 
