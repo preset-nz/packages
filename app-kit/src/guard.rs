@@ -309,11 +309,30 @@ fn revert<R: Runtime>(app: &AppHandle<R>) {
 }
 
 /// Quit, after the guard. With one document it asks once.
+/// Documents the Finder handed over before the kit existed (a cold launch by a document).
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+static HELD: std::sync::Mutex<Vec<tauri::Url>> = std::sync::Mutex::new(Vec::new());
+
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+fn hold(urls: &[tauri::Url]) {
+    HELD.lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .extend_from_slice(urls);
+}
+
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+fn take_held() -> Vec<tauri::Url> {
+    std::mem::take(&mut *HELD.lock().unwrap_or_else(|e| e.into_inner()))
+}
+
 /// A document the Finder handed over: a double-click, `open some.x`, a file dropped on the Dock
 /// icon. It goes through the guard like Open….
 #[cfg(any(target_os = "macos", target_os = "ios"))]
 fn open_from_finder<R: Runtime>(app: &AppHandle<R>, urls: &[tauri::Url]) {
     let Some(kit) = app.try_state::<Kit<R>>() else {
+        // A cold launch by a document: macOS hands it over before `setup` has run and the kit
+        // exists, so it waits for `Ready`.
+        hold(urls);
         return;
     };
     if !kit.has_document {
@@ -380,6 +399,13 @@ pub fn on_run_event<R: Runtime>(app: &AppHandle<R>, event: &RunEvent) {
     match event {
         #[cfg(any(target_os = "macos", target_os = "ios"))]
         RunEvent::Opened { urls } => open_from_finder(app, urls),
+        #[cfg(any(target_os = "macos", target_os = "ios"))]
+        RunEvent::Ready => {
+            let urls = take_held();
+            if !urls.is_empty() {
+                open_from_finder(app, &urls);
+            }
+        }
         _ => {}
     }
     let RunEvent::ExitRequested {
@@ -398,4 +424,17 @@ pub fn on_run_event<R: Runtime>(app: &AppHandle<R>, event: &RunEvent) {
     }
     api.prevent_exit();
     quit(app);
+}
+
+#[cfg(all(test, any(target_os = "macos", target_os = "ios")))]
+mod held_tests {
+    use super::{hold, take_held};
+
+    #[test]
+    fn a_document_handed_over_before_the_kit_waits_once() {
+        let url: tauri::Url = "file:///tmp/a.campaign".parse().unwrap();
+        hold(std::slice::from_ref(&url));
+        assert_eq!(take_held(), vec![url]);
+        assert!(take_held().is_empty());
+    }
 }
