@@ -520,3 +520,16 @@ fn a_reconnect_sends_the_projection_again_with_the_next_commit() {
     let (_, events) = h.run("value.set", &set(json!(0.8)), None).unwrap();
     assert_eq!(sent(&events), vec![Some(json!({"threads": 1}))]);
 }
+
+#[test]
+fn a_coalesced_run_sends_the_projection_as_any_commit_does() {
+    let (h, _, _, _) = loom();
+    // a drag's steps share a key; each one that changes the count sends it
+    let add = |name: &str| json!({"parent": "/threads", "type": "thread", "name": name});
+    let (_, events) = h.run("node.add", &add("weft"), Some("comb")).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 2}))]);
+    let (_, events) = h.run("node.add", &add("selvedge"), Some("comb")).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 3}))]);
+    let (_, events) = h.run("value.set", &set(json!(0.4)), Some("comb")).unwrap();
+    assert_eq!(sent(&events), vec![None]);
+}

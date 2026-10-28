@@ -284,13 +284,25 @@ describe('mirror projection', () => {
     expect(mirror.projection).toBe(held);
   });
 
-  it('does not take the projection of a stale or gapped update', async () => {
+  it('does not take the projection of a stale update', async () => {
     const backend = new FakeBackend();
     backend.doc = view([A], { seq: 1, projection: { n: 1 } });
     const mirror = createMirror(backend);
     await mirror.start();
     backend.emitUpdate(update(1, { projection: { n: 9 } }));
     expect(mirror.projection).toEqual({ n: 1 });
+  });
+
+  it('takes the projection from the re-read view after a gap, not from the gapped update', async () => {
+    const backend = new FakeBackend();
+    backend.doc = view([A], { seq: 1, projection: { n: 1 } });
+    const mirror = createMirror(backend);
+    await mirror.start();
+    backend.doc = view([A], { seq: 3, projection: { n: 3 } });
+    // seq 2 never arrived
+    backend.emitUpdate(update(3, { projection: { n: 2 } }));
+    await flush();
+    expect(mirror.projection).toEqual({ n: 3 });
   });
 
   it('is replaced by the re-read view when the tree is replaced', async () => {

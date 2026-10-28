@@ -250,9 +250,14 @@ impl<M: ObjectModel> Pom<M> {
         }
         let generation = status(inner).generation;
         let mirrored = M::mirrored(inner.doc.projection());
+        // absent on an update means unchanged, so a model can't stop mirroring halfway
+        debug_assert!(
+            mirrored.is_some() || inner.sent_projection.is_none(),
+            "ObjectModel::mirrored returned None after Some"
+        );
         // A replaced tree sends no update: the mirror sees the generation move and re-reads
         // the view, which carries the projection. So just note what that view holds.
-        let projection = match &commit {
+        let mut projection = match &commit {
             Some(_) if mirrored.is_some() && mirrored != inner.sent_projection => mirrored.clone(),
             _ => None,
         };
@@ -268,7 +273,8 @@ impl<M: ObjectModel> Pom<M> {
                     rows: patch.rows,
                     removed: patch.removed,
                     generation,
-                    projection: projection.clone(),
+                    // a commit makes one update at most
+                    projection: projection.take(),
                 })
             })
             .collect();

@@ -49,6 +49,9 @@ pub trait ObjectModel: Sized + 'static {
     /// puts it in the [`View`](crate::View) and in an [`Update`](crate::Update) whenever it
     /// changes, so the webview reads a derived value in step with the rows it came from
     /// instead of working it out again. Opt-in: `Projection` needn't be `Serialize`.
+    ///
+    /// Return `Some` on every call or `None` on every call: an update without a projection
+    /// means it is unchanged, so `None` after `Some` would leave the webview's copy stale.
     fn mirrored(_projection: &Self::Projection) -> Option<serde_json::Value> {
         None
     }
