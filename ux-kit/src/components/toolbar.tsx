@@ -33,6 +33,10 @@ interface ToolbarMenuEntry {
   shortcut?: string
   /** Default true. */
   enabled?: boolean
+  /** Drawn before the label: a tool flyout's entries are tools with icons. */
+  icon?: React.ReactNode
+  /** The active one of a tool flyout's entries. */
+  pressed?: boolean
 }
 
 /** One toolbar item. `id` is the command id shared with the menu. */
@@ -48,7 +52,11 @@ interface ToolbarItemSpec {
   disabledReason?: string
   /** Present (true or false) makes the item a toggle. Absent means a plain button. */
   pressed?: boolean
-  /** Present makes the item a dropdown; picking an entry calls `onCommand(entry.id)`. */
+  /**
+   * Present makes the item a dropdown; picking an entry calls `onCommand(entry.id)`. With
+   * `pressed` too it is a tool flyout: several tools behind one button, pressed while one of
+   * them is active.
+   */
   menu?: ToolbarMenuEntry[]
 }
 
@@ -167,7 +175,7 @@ function ToolbarButton({
   )
 }
 
-interface ToolbarDropdownProps extends Omit<ToolbarItemSpec, "id" | "menu" | "pressed"> {
+interface ToolbarDropdownProps extends Omit<ToolbarItemSpec, "id" | "menu"> {
   entries: ToolbarMenuEntry[]
   onCommand?: (id: string) => void
 }
@@ -179,6 +187,7 @@ function ToolbarDropdown({
   shortcut,
   enabled = true,
   disabledReason,
+  pressed,
   entries,
   onCommand,
 }: ToolbarDropdownProps) {
@@ -192,8 +201,9 @@ function ToolbarDropdown({
                 <ToolbarPrimitive.Button
                   data-slot="toolbar-dropdown"
                   aria-label={label}
+                  aria-pressed={pressed}
                   disabled={!enabled}
-                  className={buttonClass()}
+                  className={buttonClass(pressed)}
                 />
               }
             />
@@ -215,7 +225,9 @@ function ToolbarDropdown({
             key={e.id}
             disabled={e.enabled === false}
             onClick={() => onCommand?.(e.id)}
+            className={cn(e.pressed && "bg-muted")}
           >
+            {e.icon}
             {e.label}
             {e.shortcut ? <DropdownMenuShortcut>{e.shortcut}</DropdownMenuShortcut> : null}
           </DropdownMenuItem>
