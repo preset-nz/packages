@@ -3,4 +3,4 @@
 
 export { CommandToolbar } from "./CommandToolbar"
 export * from "./core"
-export { type ToolbarLayout, toItems } from "./toolbar"
+export { type ToolbarFlyout, type ToolbarLayout, toItems } from "./toolbar"
