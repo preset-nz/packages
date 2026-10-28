@@ -5,7 +5,7 @@
  * hooks.
  */
 import type { PomBackend, Unlisten } from './backend.ts';
-import type { NodeId, Row, Schema, Status, Update, View } from './wire.ts';
+import type { Json, NodeId, Row, Schema, Status, Update, View } from './wire.ts';
 
 export interface MirrorOptions {
   /** A re-read that failed after the mirror started. The mirror keeps what it had. */
@@ -24,6 +24,8 @@ export class Rows {
   schema: Schema = { categories: [], types: [] };
   seq = 0;
   generation = 0;
+  /** The app's mirrored projection, from the view and from the updates that changed it. */
+  projection: Json | undefined = undefined;
 
   get size(): number {
     return this.byId.size;
@@ -49,6 +51,7 @@ export class Rows {
     this.schema = view.schema;
     this.seq = view.seq;
     this.generation = view.generation;
+    this.projection = view.projection;
   }
 
   /**
@@ -64,6 +67,8 @@ export class Rows {
     this.seq = u.seq;
     for (const id of u.removed) this.drop(id);
     for (const r of u.rows) this.put(r);
+    // an update without one keeps what we have: Rust sends it only when it changed
+    if (u.projection !== undefined) this.projection = u.projection;
     return 'applied';
   }
 
@@ -123,6 +128,15 @@ export class Mirror {
 
   get size(): number {
     return this.rows.size;
+  }
+
+  /**
+   * What the app's object model mirrors of its projection (`ObjectModel::mirrored`), as of
+   * the same commit as the rows. `undefined` before the first view, and for a model that
+   * mirrors none. Immutable: a change is a new object.
+   */
+  get projection(): Json | undefined {
+    return this.rows.projection;
   }
 
   /** The row for `id`. A row is immutable; a changed node is a new object. */

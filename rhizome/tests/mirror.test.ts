@@ -251,3 +251,56 @@ describe('mirror paths', () => {
     expect(mirror.nodeAt('/things/a')?.id).toBe('a2');
   });
 });
+
+describe('mirror projection', () => {
+  it("holds the view's projection, and is undefined when the model mirrors none", async () => {
+    const none = await started();
+    expect(none.mirror.projection).toBeUndefined();
+    const backend = new FakeBackend();
+    backend.doc = view([A], { seq: 1, projection: { n: 1 } });
+    const mirror = createMirror(backend);
+    expect(mirror.projection).toBeUndefined(); // before the first view
+    await mirror.start();
+    expect(mirror.projection).toEqual({ n: 1 });
+  });
+
+  it("takes an update's projection with its rows, before subscribers hear", async () => {
+    const { backend, mirror } = await started();
+    const seen: unknown[] = [];
+    mirror.subscribe(() => seen.push([mirror.projection, mirror.node('a')?.name]));
+    backend.emitUpdate(
+      update(4, { rows: [row('a', '/things/a', { name: 'x' })], projection: { n: 2 } }),
+    );
+    expect(seen).toEqual([[{ n: 2 }, 'x']]);
+  });
+
+  it('keeps the projection through an update that carries none', async () => {
+    const backend = new FakeBackend();
+    backend.doc = view([A], { seq: 1, projection: { n: 1 } });
+    const mirror = createMirror(backend);
+    await mirror.start();
+    const held = mirror.projection;
+    backend.emitUpdate(update(2, { rows: [row('a', '/things/a', { name: 'y' })] }));
+    expect(mirror.projection).toBe(held);
+  });
+
+  it('does not take the projection of a stale or gapped update', async () => {
+    const backend = new FakeBackend();
+    backend.doc = view([A], { seq: 1, projection: { n: 1 } });
+    const mirror = createMirror(backend);
+    await mirror.start();
+    backend.emitUpdate(update(1, { projection: { n: 9 } }));
+    expect(mirror.projection).toEqual({ n: 1 });
+  });
+
+  it('is replaced by the re-read view when the tree is replaced', async () => {
+    const backend = new FakeBackend();
+    backend.doc = view([A], { seq: 1, projection: { n: 1 } });
+    const mirror = createMirror(backend);
+    await mirror.start();
+    backend.doc = view([B], { seq: 0, generation: 1, projection: { n: 0 } });
+    backend.emitStatus(status({ generation: 1 }));
+    await flush();
+    expect(mirror.projection).toEqual({ n: 0 });
+  });
+});

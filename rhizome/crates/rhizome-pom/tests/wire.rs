@@ -33,6 +33,32 @@ impl ObjectModel for Loom {
     fn project(_: &Tree, _: &mut (), _: Option<&rhizome_core::Changeset>) {}
 }
 
+/// As Loom, and it mirrors how many threads there are.
+struct Counted;
+
+impl ObjectModel for Counted {
+    const NAME: &'static str = "Counted";
+    const EXTENSION: &'static str = "counted";
+    type Projection = usize;
+    type Context = ();
+
+    fn kinds(k: &mut Kinds, cx: &()) {
+        Loom::kinds(k, cx);
+    }
+
+    fn project(tree: &Tree, into: &mut usize, _: Option<&rhizome_core::Changeset>) {
+        *into = tree
+            .nodes()
+            .iter()
+            .filter(|n| n.type_name() == "thread")
+            .count();
+    }
+
+    fn mirrored(threads: &usize) -> Option<Json> {
+        Some(json!({ "threads": threads }))
+    }
+}
+
 fn golden(name: &str, actual: &Json) {
     let file = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests/golden")
@@ -129,4 +155,43 @@ fn every_wire_shape_of_the_host() {
             "commands": serde_json::to_value(h.commands(&json!({}))).unwrap(),
         }),
     );
+}
+
+#[test]
+fn a_model_that_mirrors_its_projection_puts_it_on_the_wire() {
+    let store = MemoryStore::default();
+    let pom = Arc::new(
+        Pom::<Counted>::new(move || Box::new(store.clone()), IdSource::sequential).unwrap(),
+    );
+    let h = host(pom);
+    let added = add(&h, "warp");
+    let set = h
+        .run(
+            "value.set",
+            &json!({"at": "/threads/warp", "key": "thread.tension", "value": 0.8}),
+            None,
+        )
+        .unwrap()
+        .1;
+    golden(
+        "projection.json",
+        &json!({
+            "view": serde_json::to_value(h.view()).unwrap(),
+            "added": serde_json::to_value(update(&added)).unwrap(),
+            "set": serde_json::to_value(update(&set)).unwrap(),
+        }),
+    );
+}
+
+#[test]
+fn a_model_that_does_not_mirror_has_no_projection_key() {
+    let store = MemoryStore::default();
+    let pom =
+        Arc::new(Pom::<Loom>::new(move || Box::new(store.clone()), IdSource::sequential).unwrap());
+    let h = host(pom);
+    let events = add(&h, "warp");
+    let view = serde_json::to_value(h.view()).unwrap();
+    let up = serde_json::to_value(update(&events)).unwrap();
+    assert!(view.get("projection").is_none());
+    assert!(up.get("projection").is_none());
 }

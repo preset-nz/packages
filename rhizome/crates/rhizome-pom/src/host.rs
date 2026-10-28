@@ -82,6 +82,9 @@ pub struct View {
     pub generation: u64,
     pub schema: Schema,
     pub rows: Vec<Row>,
+    /// [`ObjectModel::mirrored`] of the projection now. Absent when the model has none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub projection: Option<Json>,
 }
 
 /// A commit as a mirror takes it: what changed, and the fresh rows of every node it touched.
@@ -95,6 +98,10 @@ pub struct Update {
     pub removed: Vec<NodeId>,
     /// The tree this belongs to; an update from another generation is stale.
     pub generation: u64,
+    /// The mirrored projection after this commit, only when it differs from the one last
+    /// sent. A mirror keeps what it has otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub projection: Option<Json>,
 }
 
 /// What a call caused, for the shell to emit after the lock is released.
@@ -146,6 +153,9 @@ struct Inner<M: ObjectModel> {
     /// to the current document's own generation.
     replaced: u64,
     sent: Option<Status>,
+    /// The mirrored projection last sent in an update, or read at a replacement (the view
+    /// the mirror re-reads then carries it). `None` sends the next one whatever it is.
+    sent_projection: Option<Json>,
 }
 
 /// One open document of `M`, shared between the transport and the app's own Rust.
@@ -197,6 +207,7 @@ impl<M: ObjectModel> Pom<M> {
                 tokens: 0,
                 replaced: 0,
                 sent: None,
+                sent_projection: None,
             }),
             cx,
             store: Box::new(store),
@@ -238,6 +249,14 @@ impl<M: ObjectModel> Pom<M> {
             f(&inner.doc);
         }
         let generation = status(inner).generation;
+        let mirrored = M::mirrored(inner.doc.projection());
+        // A replaced tree sends no update: the mirror sees the generation move and re-reads
+        // the view, which carries the projection. So just note what that view holds.
+        let projection = match &commit {
+            Some(_) if mirrored.is_some() && mirrored != inner.sent_projection => mirrored.clone(),
+            _ => None,
+        };
+        inner.sent_projection = mirrored;
         let mut events: Vec<Event> = commit
             .into_iter()
             .map(|c| {
@@ -249,6 +268,7 @@ impl<M: ObjectModel> Pom<M> {
                     rows: patch.rows,
                     removed: patch.removed,
                     generation,
+                    projection: projection.clone(),
                 })
             })
             .collect();
@@ -326,6 +346,7 @@ impl<M: ObjectModel> Host for Pom<M> {
             generation: status(&inner).generation,
             schema: t.registry().schema(),
             rows: t.rows(),
+            projection: M::mirrored(inner.doc.projection()),
         }
     }
 
@@ -393,6 +414,7 @@ impl<M: ObjectModel> Host for Pom<M> {
             let _ = inner.doc.end(g);
         }
         inner.sent = None;
+        inner.sent_projection = None;
         self.status_event(&mut inner).into_iter().collect()
     }
 

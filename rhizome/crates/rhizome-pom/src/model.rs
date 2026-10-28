@@ -44,6 +44,14 @@ pub trait ObjectModel: Sized + 'static {
     /// Called after every commit, undo, redo and cancel with what changed, and after open
     /// with `None` for a full rebuild. Nothing made here goes back into the tree.
     fn project(_tree: &Tree, _into: &mut Self::Projection, _changes: Option<&Changeset>) {}
+
+    /// What of the projection the webview sees, as JSON; `None` when it sees none. A host
+    /// puts it in the [`View`](crate::View) and in an [`Update`](crate::Update) whenever it
+    /// changes, so the webview reads a derived value in step with the rows it came from
+    /// instead of working it out again. Opt-in: `Projection` needn't be `Serialize`.
+    fn mirrored(_projection: &Self::Projection) -> Option<serde_json::Value> {
+        None
+    }
 }
 
 /// Where a pinned kind must sit in its parent's named order.

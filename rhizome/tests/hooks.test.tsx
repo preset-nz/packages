@@ -3,7 +3,14 @@ import { act, cleanup, render } from '@testing-library/react';
 import { StrictMode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createMirror } from '../src-ts/mirror.ts';
-import { PomProvider, useChildren, useNode, useNodeAt, useStatus } from '../src-ts/react.ts';
+import {
+  PomProvider,
+  useChildren,
+  useNode,
+  useNodeAt,
+  useProjection,
+  useStatus,
+} from '../src-ts/react.ts';
 import { FakeBackend, row, status, update, view } from './fake.ts';
 
 afterEach(cleanup);
@@ -147,5 +154,25 @@ describe('hooks', () => {
     } finally {
       console.error = quiet;
     }
+  });
+
+  it('useProjection re-renders when the projection changes, not otherwise', async () => {
+    const backend = new FakeBackend();
+    backend.doc = view([A, B, C], { seq: 1, projection: { n: 1 } });
+    const loaded = createMirror(backend);
+    await loaded.start();
+    const { Probe, seen } = probe(() => useProjection<{ n: number }>());
+    render(
+      <PomProvider mirror={loaded}>
+        <Probe />
+      </PomProvider>,
+    );
+    expect(seen).toEqual([{ n: 1 }]);
+    await act(() =>
+      backend.emitUpdate(update(2, { rows: [row('b', '/layers/b', { name: 'q' })] })),
+    );
+    expect(seen).toHaveLength(1);
+    await act(() => backend.emitUpdate(update(3, { projection: { n: 2 } })));
+    expect(seen.at(-1)).toEqual({ n: 2 });
   });
 });

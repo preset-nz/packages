@@ -12,7 +12,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 import type { Mirror } from './mirror.ts';
-import type { NodeId, Row, Status } from './wire.ts';
+import type { Json, NodeId, Row, Status } from './wire.ts';
 
 const MirrorContext = createContext<Mirror | null>(null);
 
@@ -69,5 +69,19 @@ export function useStatus(): Status | null {
     mirror.subscribe,
     () => mirror.status,
     () => null,
+  );
+}
+
+/**
+ * The app's mirrored projection, typed by the caller (the wire carries plain JSON, so `T` is
+ * a claim about the app's own Rust). `undefined` before the first view or when the model
+ * mirrors none. The same object until the projection changes.
+ */
+export function useProjection<T = Json>(): T | undefined {
+  const mirror = useMirror();
+  return useSyncExternalStore(
+    mirror.subscribe,
+    () => mirror.projection as T | undefined,
+    () => undefined,
   );
 }

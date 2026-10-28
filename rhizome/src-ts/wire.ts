@@ -168,6 +168,8 @@ export interface View {
   generation: number;
   schema: Schema;
   rows: Row[];
+  /** What the app's object model mirrors of its projection. Absent when it mirrors none. */
+  projection?: Json;
 }
 
 /** A commit as a mirror takes it, on `pom://commit` (rhizome-pom `Update`). */
@@ -180,6 +182,8 @@ export interface Update {
   removed: NodeId[];
   /** The tree this belongs to. */
   generation: number;
+  /** The mirrored projection after this commit; present only when it changed. */
+  projection?: Json;
 }
 
 /** The document as a window shows it, on `pom://status` (rhizome-pom `Status`). */

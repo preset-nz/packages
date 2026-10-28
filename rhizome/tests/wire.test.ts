@@ -86,8 +86,18 @@ const TYPE_SCHEMA = keys<TypeSchema>()([
   'bindable',
 ]);
 const SCHEMA = keys<Schema>()(['categories', 'types']);
-const VIEW = keys<View>()(['seq', 'generation', 'schema', 'rows']);
-const UPDATE = keys<Update>()(['seq', 'label', 'changes', 'rows', 'removed', 'generation']);
+const VIEW = keys<View>()(['seq', 'generation', 'schema', 'rows', 'projection']);
+const VIEW_REQUIRED = ['seq', 'generation', 'schema', 'rows'];
+const UPDATE = keys<Update>()([
+  'seq',
+  'label',
+  'changes',
+  'rows',
+  'removed',
+  'generation',
+  'projection',
+]);
+const UPDATE_REQUIRED = ['seq', 'label', 'changes', 'rows', 'removed', 'generation'];
 const STATUS = keys<Status>()([
   'title',
   'path',
@@ -179,13 +189,13 @@ function checkSchema(s: Schema, at: string) {
 }
 
 function checkView(v: View, at: string) {
-  shape(v, VIEW, VIEW as string[], at);
+  shape(v, VIEW, VIEW_REQUIRED, at);
   checkSchema(v.schema, `${at}.schema`);
   for (const r of v.rows) checkRow(r, `${at}.${r.path}`);
 }
 
 function checkUpdate(u: Update, at: string) {
-  shape(u, UPDATE, UPDATE as string[], at);
+  shape(u, UPDATE, UPDATE_REQUIRED, at);
   for (const c of u.changes) checkChange(c, `${at}.change`);
   for (const r of u.rows) checkRow(r, `${at}.${r.path}`);
 }
@@ -342,5 +352,29 @@ describe('rhizome-pom goldens', () => {
     backend.emitUpdate(g.delete);
     expect(mirror.nodeAt('/threads/weft')).toBeUndefined();
     expect(mirror.seq).toBe(g.delete.seq);
+  });
+
+  it('projection.json: a mirrored projection is in the View and in an Update, set by one that changed it', async () => {
+    const g = golden('rhizome-pom', 'projection.json') as {
+      view: View;
+      added: Update;
+      set: Update;
+    };
+    checkView(g.view, 'view');
+    checkUpdate(g.added, 'added');
+    checkUpdate(g.set, 'set');
+    expect(g.view.projection).toEqual({ threads: 1 });
+    expect(g.added.projection).toEqual({ threads: 1 });
+    expect(g.set.projection).toBeUndefined();
+    // a mirror started on the golden View and fed the golden Updates holds the projection
+    const backend = new FakeBackend();
+    backend.doc = { ...g.view, seq: g.added.seq - 1, projection: { threads: 0 } };
+    const mirror = createMirror(backend);
+    await mirror.start();
+    expect(mirror.projection).toEqual({ threads: 0 });
+    backend.emitUpdate(g.added);
+    expect(mirror.projection).toEqual({ threads: 1 });
+    backend.emitUpdate(g.set);
+    expect(mirror.projection).toEqual({ threads: 1 });
   });
 });

@@ -36,6 +36,10 @@ impl ObjectModel for Loom {
             .filter(|n| n.type_name() == "thread")
             .count();
     }
+
+    fn mirrored(threads: &usize) -> Option<serde_json::Value> {
+        Some(json!({ "threads": threads }))
+    }
 }
 
 const AT: &str = "/threads/warp";
@@ -274,6 +278,7 @@ struct Mirror {
     seq: u64,
     generation: u64,
     rows: std::collections::BTreeMap<rhizome_core::NodeId, rhizome_core::Row>,
+    projection: Option<serde_json::Value>,
 }
 
 impl Mirror {
@@ -283,6 +288,7 @@ impl Mirror {
             seq: v.seq,
             generation: v.generation,
             rows: v.rows.into_iter().map(|r| (r.id, r)).collect(),
+            projection: v.projection,
         }
     }
 
@@ -299,6 +305,9 @@ impl Mirror {
                     for r in &u.rows {
                         self.rows.insert(r.id, r.clone());
                     }
+                    if u.projection.is_some() {
+                        self.projection = u.projection.clone();
+                    }
                 }
                 Event::Status(s) if s.generation != self.generation => *self = Mirror::of(h),
                 _ => {}
@@ -310,6 +319,7 @@ impl Mirror {
         let fresh = Mirror::of(h);
         assert_eq!(self.rows, fresh.rows);
         assert_eq!(self.seq, fresh.seq);
+        assert_eq!(self.projection, fresh.projection);
     }
 }
 
@@ -440,4 +450,73 @@ fn the_status_hook_sees_a_gesture_begin_and_end() {
     h.end(token).unwrap();
     // the commit inside the gesture reported Undo greyed; the end brings it back, named
     assert_eq!(*seen.lock().unwrap(), [Some("Pull".to_string())]);
+}
+
+fn sent(events: &[Event]) -> Vec<Option<serde_json::Value>> {
+    events
+        .iter()
+        .filter_map(|e| match e {
+            Event::Commit(u) => Some(u.projection.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+#[test]
+fn the_projection_is_in_the_view_and_in_an_update_only_when_it_changed() {
+    let (h, _, _, _) = loom();
+    assert_eq!(h.view().projection, Some(json!({"threads": 1})));
+
+    // a value edit leaves the thread count alone: nothing to send
+    let (_, events) = h.run("value.set", &set(json!(0.8)), None).unwrap();
+    assert_eq!(sent(&events), vec![None]);
+
+    let add = json!({"parent": "/threads", "type": "thread", "name": "weft"});
+    let (_, events) = h.run("node.add", &add, None).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 2}))]);
+
+    // undo carries the value it went back to; redo the one it came forward to
+    let (_, events) = h.run("edit.undo", &json!({}), None).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 1}))]);
+    let (_, events) = h.run("edit.redo", &json!({}), None).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 2}))]);
+}
+
+#[test]
+fn a_cancelled_gesture_sends_the_projection_it_went_back_to() {
+    let (h, _, _, _) = loom();
+    let (token, _) = h.begin("Comb").unwrap();
+    let add = json!({"parent": "/threads", "type": "thread", "name": "weft"});
+    let (_, events) = h.run("node.add", &add, None).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 2}))]);
+    let events = h.cancel(token).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 1}))]);
+}
+
+#[test]
+fn a_replaced_tree_is_read_from_the_view_and_the_next_update_compares_with_it() {
+    let (h, _, _, _) = loom();
+    let mut m = Mirror::of(&*h);
+    let add = json!({"parent": "/threads", "type": "thread", "name": "weft"});
+    let take = |m: &mut Mirror, events: Vec<Event>| {
+        m.take(&*h, &events);
+        m.matches(&*h);
+        events
+    };
+    take(&mut m, h.run("node.add", &add, None).unwrap().1);
+    // new: no update, the generation moves and the view carries the projection
+    let events = take(&mut m, h.new_document().unwrap());
+    assert!(sent(&events).is_empty());
+    assert_eq!(m.projection, Some(json!({"threads": 0})));
+    // the first commit after compares with the new document's, not the old one's
+    let events = take(&mut m, h.run("node.add", &add, None).unwrap().1);
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 1}))]);
+}
+
+#[test]
+fn a_reconnect_sends_the_projection_again_with_the_next_commit() {
+    let (h, _, _, _) = loom();
+    h.reset();
+    let (_, events) = h.run("value.set", &set(json!(0.8)), None).unwrap();
+    assert_eq!(sent(&events), vec![Some(json!({"threads": 1}))]);
 }
