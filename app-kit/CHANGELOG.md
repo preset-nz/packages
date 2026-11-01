@@ -1,6 +1,21 @@
 # Changelog
 
 Releases up to 0.1.2 are described by their tags and commit messages.
+## 0.1.5 (2026-11-01)
+
+### Features
+
+- add pick, recent paths, reveal and exists for path fields
+- add a native Reveal in Finder and Clear menu for paths
+- route Finder file drops to the path field under them
+- ToolbarFlyout puts several tools behind one button
+
+### Fixes
+
+- keep ampersands in menu text
+- a document opened by launching the app opens
+- peer on ux-kit 0.1.3, which has the tool flyout's fields
+
 ## 0.1.4 (2026-10-21)
 
 ### Features

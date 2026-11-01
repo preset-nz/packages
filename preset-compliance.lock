@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "089946cd269c4eb49d31248ce43a938a990dee3edf1a251c8cb2887352e69183"
+sha256 = "b88b39148583fc76ef3149106190881edd9927186a498a284c659076fffc9466"
 
 [[inputs]]
 path = "Cargo.toml"
@@ -14,7 +14,7 @@ sha256 = "85319de54e0201d6d6f5977b4f909c4d3f7e844383694e67f2a4ed4209bd0744"
 
 [[inputs]]
 path = "app-kit/Cargo.toml"
-sha256 = "f4ddd08c06cdab695deab9ab083847e7eaa7aad630028da9bda8ee96e4a62a85"
+sha256 = "927b074d8985f248696b9166b98c0a0cd993772b5ebb8a5f8f8fd6972717fa8a"
 
 [[inputs]]
 path = "math/Cargo.toml"
@@ -48,7 +48,7 @@ sha256 = "d22639c154aa2a5bc6ab4244a173edc502b5e6588e527c21db902347e86ec83e"
 [[inputs]]
 path = "ux-kit/playground/src-tauri/Cargo.lock"
 ecosystem = "cargo"
-sha256 = "e65ff0c475f7bcb8b9e7574bbf96a386d3f076f8f2153abab5cf154d018db925"
+sha256 = "6a1c8bf4ba3dfe429d96468188ef8b461848e256d70d914d2e65db88aa84c99f"
 
 [[inputs]]
 path = "ux-kit/playground/src-tauri/Cargo.toml"
@@ -2185,7 +2185,7 @@ scope = "shipped"
 [[packages]]
 ecosystem = "cargo"
 name = "preset-app-kit"
-version = "0.1.4"
+version = "0.1.5"
 source = "path"
 declared = "MIT"
 scope = "shipped"
