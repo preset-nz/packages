@@ -20,7 +20,7 @@
     "src-ts"
   ],
   "peerDependencies": {
-    "@preset.nz/ux-kit": "^0.1.2",
+    "@preset.nz/ux-kit": "^0.1.3",
     "@tauri-apps/api": "^2",
     "react": "^19"
   },
