@@ -1,3 +1,15 @@
+## 0.1.3 (2026-11-01)
+
+### Features
+
+- add PathField, a file path field with recents and browse
+- accept dropped files on PathField, with a drop highlight
+- a toolbar dropdown can be a pressed tool flyout
+
+### Fixes
+
+- tooltips without the arrow, set clear of the control
+
 ## 0.1.2 (2026-10-21)
 
 ### Features
