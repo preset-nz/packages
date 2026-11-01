@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0 (2026-11-01)
+
+### Breaking Changes
+
+- the panel imports `@/components/ui/tabs`. Hosts must provide `Tabs`, `TabsList`, `TabsTrigger` and `TabsContent` there. With ux-kit: `export { Tabs, TabsContent, TabsList, TabsTrigger } from "@preset.nz/ux-kit"`. Until then the build fails on the missing import.
+
+### Features
+
+- schema — declare pages and advanced groups
+- panel — draw pages as tabs and advanced groups behind a fold
+- panel — tabs sit left, at their own width
+- help on every field, drawn under it in the inspector
+- a custom field may have no path
+- make the file field an editable path field
+- disabledWhen takes a list; any condition disables
+
 ## 0.2.0 (2026-10-06)
 
 Breaking: the `number`, `vector`, `slider` and `color` renderers now draw with
