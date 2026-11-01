@@ -1,3 +1,14 @@
+## 0.1.8 (2026-11-01)
+
+### Features
+
+- pom on_status hook; value sets named by their label
+- the object model's projection reaches the mirror
+
+### Fixes
+
+- hold mirrored's contract; test gap and coalesced paths
+
 ## 0.1.7 (2026-10-17)
 
 ### Fixes

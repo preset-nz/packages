@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "f0c0a8fb7557189233e054d0ea75bb67d7bf1e7522df766b1927198413dcc23e"
+sha256 = "089946cd269c4eb49d31248ce43a938a990dee3edf1a251c8cb2887352e69183"
 
 [[inputs]]
 path = "Cargo.toml"
@@ -35,20 +35,20 @@ sha256 = "b362ab21fa903ad17b5e090ad576e30eb41640f683374a826237f7f82aa65a39"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-core/Cargo.toml"
-sha256 = "81b41fd00bbed72fc8a39a3558b674841d798261479f526b0c42830114b7ead1"
+sha256 = "379243983fbf3b4bb9d61bc17a55aa61e15ec245763a29aa65d3be1384b64b6d"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-pom/Cargo.toml"
-sha256 = "816a84747eea187486ed3b420e2a0aee2ebc027ccdbc4ee36a29e83535b09c9c"
+sha256 = "33b24eb8bdaf342035b5ef7e2eb655ee4ba92defac46d272d418e07b6216ef62"
 
 [[inputs]]
 path = "rhizome/crates/rhizome-pom-tauri/Cargo.toml"
-sha256 = "48abc8e36e18e79d8def4a7e26fdf300b3a262d5a4973c449582b59bae316597"
+sha256 = "d22639c154aa2a5bc6ab4244a173edc502b5e6588e527c21db902347e86ec83e"
 
 [[inputs]]
 path = "ux-kit/playground/src-tauri/Cargo.lock"
 ecosystem = "cargo"
-sha256 = "ee2da2d5b7308ef02fffa5e56365ee04dc5ff819a5576442179440598e5618f9"
+sha256 = "e65ff0c475f7bcb8b9e7574bbf96a386d3f076f8f2153abab5cf154d018db925"
 
 [[inputs]]
 path = "ux-kit/playground/src-tauri/Cargo.toml"
@@ -2393,7 +2393,7 @@ scope = "shipped"
 [[packages]]
 ecosystem = "cargo"
 name = "rhizome-core"
-version = "0.1.7"
+version = "0.1.8"
 source = "path"
 declared = "MIT"
 scope = "shipped"
