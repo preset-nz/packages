@@ -1,5 +1,6 @@
 // ui move x y | click x y | dclick x y | drag x1 y1 x2 y2 [ms] | type "text" | key <code> [cmd|shift|opt...]
-// | hold <code> <ms> (a key held down for a while) | pos
+// | hold <code> <ms> (a key held down for a while) | scroll x y dy [steps] (the wheel at x y,
+// dy points down in total, in steps; a panel scrolls under the pointer) | pos
 import Foundation
 import CoreGraphics
 
@@ -58,5 +59,13 @@ case "hold":
     post(CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: true))
     usleep(useconds_t(Double(a[3])! * 1000))
     post(CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false))
+case "scroll":
+    let p = pt(2); glide(from: here(), to: p, ms: 400, type: .mouseMoved)
+    let total = Double(a[4])!, steps = a.count > 5 ? Int(a[5])! : 12
+    for _ in 0..<steps {
+        let e = CGEvent(scrollWheelEvent2Source: src, units: .pixel, wheelCount: 1,
+                        wheel1: Int32(-(total / Double(steps)).rounded()), wheel2: 0, wheel3: 0)
+        e?.location = p; post(e); usleep(16000)
+    }
 default: print("unknown")
 }

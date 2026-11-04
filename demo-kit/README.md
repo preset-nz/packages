@@ -7,7 +7,7 @@ Swift tools in `swift/`, built to `../target/demo/`:
 | Tool | Usage |
 |---|---|
 | `ax` | `ax dump [filter]`, `ax find <name> [n]`, `ax next <name> <role> [n]`, `ax slider <label> [n]`, `ax window [x y w h]`. Finds the app from `DEMO_BUNDLE_ID` or `DEMO_APP_NAME` (either matching); exits with a message when neither is set |
-| `ui` | `ui move x y`, `click`, `dclick`, `drag x1 y1 x2 y2 [ms]`, `type "text"`, `key <code> [cmd\|shift\|opt\|ctrl…]`, `hold <code> <ms>`, `pos` |
+| `ui` | `ui move x y`, `click`, `dclick`, `drag x1 y1 x2 y2 [ms]`, `type "text"`, `key <code> [cmd\|shift\|opt\|ctrl…]`, `hold <code> <ms>`, `scroll x y dy [steps]`, `pos` |
 | `rec` | `rec <out.mov> <seconds> [x y w h] [--no-audio]`: ScreenCaptureKit, 2×, 60 fps, with system audio unless `--no-audio` |
 | `display` | `display` prints the mode; `display <w> <h>` switches to that 2× mode, for this login |
 | `label` | `label <text> <out.png> <height px> [background hex\|-] [text hex] [font]`: a caption plate as a PNG |
@@ -41,7 +41,7 @@ with tools.display_restored():
 edit(out, title="…", description="…")
 ```
 
-Launching the app (its command and readiness probe), canvas mapping and file dialogs stay in the app.
+Launching the app (its command and readiness probe) and canvas mapping stay in the app. A Save panel is a remote service window: `ui key` never reaches it, so `Tools.save_panel(path)` drives it through System Events (`keystroke`, `key_code`).
 
 `edit(..., end_still=("end.png", 3))` holds an image after the last frame (letterboxed on #1a1a1a, the mark over it, silence under it with audio). `python3 -m demokit.edit <take.mov> [--plate hex] [--title …] [--end-still PATH --end-seconds N]` recuts from the `.json`.
 

@@ -107,6 +107,34 @@ class Tools:
     def frontmost(self) -> None:
         self._osa(f'tell application "System Events" to tell process {_osa_quote(self.process)} to set frontmost to true')
 
+    def keystroke(self, text: str) -> None:
+        """Types `text` through System Events. Unlike `ui type`/`ui key`, these reach a
+        Save panel: it is a remote service window, and `ui key`'s Return and Cmd chords
+        never arrive there (found on Map & Territory, 2026-11-04)."""
+        self._osa(f'tell application "System Events" to keystroke {_osa_quote(text)}', check=True)
+
+    def key_code(self, code: int, *mods: str) -> None:
+        """A key by code through System Events, with modifiers ("command", "shift",
+        "option", "control"): Return is 36, Escape 53."""
+        using = f' using {{{", ".join(m + " down" for m in mods)}}}' if mods else ""
+        self._osa(f'tell application "System Events" to key code {code}{using}', check=True)
+
+    def save_panel(self, path: pathlib.Path | str, settle: float = 1.0) -> None:
+        """Saves through the open Save panel to `path`: the folder typed into Go to Folder
+        (a leading "/" opens it), then the name over the selected one. The folder must
+        exist; Go to Folder ignores Return on a path that doesn't. Wait for the app's own
+        sign of the save afterwards, never a fixed time."""
+        path = pathlib.Path(path)
+        time.sleep(settle)  # the panel slides in
+        self.keystroke(f"{path.parent}/")
+        time.sleep(settle)  # Go to Folder suggests before it takes Return
+        self.key_code(36)
+        time.sleep(settle)
+        self.key_code(0, "command")  # "a": the whole name, extension too
+        self.keystroke(path.name)
+        time.sleep(0.4)
+        self.key_code(36)
+
     def window(self, x: int, y: int, w: int, h: int) -> list[int]:
         """Moves and sizes the main window (leaving full screen): x y w h in points."""
         return self.ax("window", x, y, w, h)
