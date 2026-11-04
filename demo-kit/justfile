@@ -1,0 +1,24 @@
+# Dev tooling, not a library: the Swift tools that drive and record an app's
+# window, and the Python that cuts a take. Nothing publishes. `build` makes the
+# tools in ../target/demo/; an app's own script imports `demokit` by path.
+
+default:
+    @just --list
+
+# swiftc -O each tool into ../target/demo/ when it is older than its source
+[group('build')]
+build:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p ../target/demo
+    for t in rec ui ax display label; do
+      [ ../target/demo/$t -nt swift/$t.swift ] || swiftc -O swift/$t.swift -o ../target/demo/$t
+    done
+
+# Typecheck every Swift tool, then the Python tests (no ffmpeg needed)
+[group('quality')]
+check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    for t in rec ui ax display label; do swiftc -typecheck swift/$t.swift; done
+    python3 -m unittest discover -s tests

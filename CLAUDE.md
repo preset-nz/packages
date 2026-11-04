@@ -8,6 +8,7 @@ Versions released, pending and the apps behind: [`runbooks/pending-releases.md`]
 
 | Package | Registries | Notes |
 |---|---|---|
+| `demo-kit/` | none | Dev tooling, like `app-folders/`: apps call it by path from `scripts/demo/` ([`projects/demo-kit`](../guidance/projects/demo-kit/README.md)) |
 | `facets/` | npm `@preset.nz/facets` | 0.2 needs the host's NumberField, Slider and ColorField, so apps take it with ux-kit. preferences (peer). The facets Claude plugin's marketplace is at the monorepo root (`.claude-plugin/marketplace.json`), the plugin in `facets/plugins/facets` |
 | `preferences/` | npm `@preset.nz/preferences` + crates.io `preset-preferences`, lockstep | |
 | `rhizome/` | crates.io `rhizome-core`, `rhizome-pom`, `rhizome-pom-tauri`; npm `@preset.nz/pom` | knope versions the workspace together |

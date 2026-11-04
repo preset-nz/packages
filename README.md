@@ -5,6 +5,7 @@ The libraries behind the preset.nz desktop apps, in one repo. Each package keeps
 | Package | What it is | Published as |
 |---|---|---|
 | [`app-kit`](app-kit) | The behaviour of a desktop app: commands, the native menu, undo and redo, window restore | npm `@preset.nz/app-kit`, crate `preset-app-kit` |
+| [`demo-kit`](demo-kit) | Dev tooling: drives, records and cuts an app's demo video (Swift tools, a Python edit) | not published |
 | [`facets`](facets) | Inspector panels for React, defined as data | npm `@preset.nz/facets` |
 | [`math`](math) | Value shaping in TypeScript and Rust, with the same results from both | npm `@preset.nz/math`, crate `preset-math` |
 | [`preferences`](preferences) | Typed, versioned TOML preferences and a Cmd+, Settings window for Tauri apps | npm `@preset.nz/preferences`, crate `preset-preferences` |

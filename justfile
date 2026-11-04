@@ -3,6 +3,7 @@
 # or `just <recipe>` inside its folder. Libraries have no `run` or `build`.
 
 mod app-kit
+mod demo-kit
 mod facets
 mod math
 mod preferences
