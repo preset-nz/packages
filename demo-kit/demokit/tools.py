@@ -138,6 +138,19 @@ class Tools:
         time.sleep(0.4)
         self.key_code(36)
 
+    def open_panel(self, path: pathlib.Path | str, settle: float = 1.0) -> None:
+        """Opens `path` through the open Open panel: the whole path typed into Go to Folder,
+        which selects the file, then Return to open it. As `save_panel`, the "/" goes first."""
+        path = pathlib.Path(path)
+        time.sleep(settle)
+        self.keystroke("/")
+        time.sleep(settle)
+        self.keystroke(str(path).lstrip("/"))
+        time.sleep(settle)
+        self.key_code(36)  # Go to: selects the file
+        time.sleep(settle)
+        self.key_code(36)  # Open
+
     def window(self, x: int, y: int, w: int, h: int) -> list[int]:
         """Moves and sizes the main window (leaving full screen): x y w h in points."""
         return self.ax("window", x, y, w, h)

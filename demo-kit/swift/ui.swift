@@ -7,6 +7,11 @@ import Foundation
 import CoreGraphics
 
 let a = CommandLine.arguments
+// The pace of a take: DEMO_GLIDE_MS for the pointer's move to where it acts (default 400),
+// DEMO_TYPE_MS between typed characters (default 45).
+let env = ProcessInfo.processInfo.environment
+let GLIDE = Double(env["DEMO_GLIDE_MS"] ?? "") ?? 400
+let TYPE_MS = Double(env["DEMO_TYPE_MS"] ?? "") ?? 45
 let src = CGEventSource(stateID: .hidSystemState)
 func post(_ e: CGEvent?) { e?.post(tap: .cghidEventTap) }
 func mouse(_ t: CGEventType, _ p: CGPoint, clicks: Int64 = 1) {
@@ -27,14 +32,14 @@ func here() -> CGPoint { CGEvent(source: nil)?.location ?? .zero }
 func pt(_ i: Int) -> CGPoint { CGPoint(x: Double(a[i])!, y: Double(a[i + 1])!) }
 switch a[1] {
 case "pos": let p = here(); print(Int(p.x), Int(p.y))
-case "move": glide(from: here(), to: pt(2), ms: 400, type: .mouseMoved)
+case "move": glide(from: here(), to: pt(2), ms: GLIDE, type: .mouseMoved)
 case "click", "dclick":
-    let p = pt(2); glide(from: here(), to: p, ms: 400, type: .mouseMoved)
+    let p = pt(2); glide(from: here(), to: p, ms: GLIDE, type: .mouseMoved)
     let n: Int64 = a[1] == "dclick" ? 2 : 1
     for c in 1...n { mouse(.leftMouseDown, p, clicks: c); usleep(30000); mouse(.leftMouseUp, p, clicks: c); usleep(60000) }
 case "drag":
     let p = pt(2), q = pt(4); let ms = a.count > 6 ? Double(a[6])! : 900
-    glide(from: here(), to: p, ms: 400, type: .mouseMoved)
+    glide(from: here(), to: p, ms: GLIDE, type: .mouseMoved)
     mouse(.leftMouseDown, p); usleep(80000)
     glide(from: p, to: q, ms: ms, type: .leftMouseDragged)
     usleep(80000); mouse(.leftMouseUp, q)
@@ -63,7 +68,7 @@ case "stroke":
     var lens: [Double] = [0]
     for k in 1..<curve.count { lens.append(lens[k - 1] + hypot(curve[k].x - curve[k - 1].x, curve[k].y - curve[k - 1].y)) }
     let total = max(lens.last!, 1)
-    glide(from: here(), to: first, ms: 350, type: .mouseMoved)
+    glide(from: here(), to: first, ms: GLIDE, type: .mouseMoved)
     mouse(.leftMouseDown, first); usleep(60000)
     let steps = max(2, Int(ms / 8))
     var j = 0
@@ -84,7 +89,7 @@ case "type":
         d?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &c); post(d)
         let u = CGEvent(keyboardEventSource: src, virtualKey: 0, keyDown: false)
         u?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &c); post(u)
-        usleep(45000)
+        usleep(useconds_t(TYPE_MS * 1000))
     }
 case "key":
     var flags: CGEventFlags = []
@@ -101,7 +106,7 @@ case "hold":
     usleep(useconds_t(Double(a[3])! * 1000))
     post(CGEvent(keyboardEventSource: src, virtualKey: code, keyDown: false))
 case "scroll":
-    let p = pt(2); glide(from: here(), to: p, ms: 400, type: .mouseMoved)
+    let p = pt(2); glide(from: here(), to: p, ms: GLIDE, type: .mouseMoved)
     let total = Double(a[4])!, steps = a.count > 5 ? Int(a[5])! : 12
     for _ in 0..<steps {
         let e = CGEvent(scrollWheelEvent2Source: src, units: .pixel, wheelCount: 1,
