@@ -697,11 +697,12 @@ function helpOf(field: FieldDef): string | undefined {
 
 /**
  * The help under a field: in a label column it starts at the control's edge,
- * otherwise under the label. Quieter than the label, and selectable.
+ * otherwise under the label. Quieter than the label. Not selectable: it is interface
+ * chrome (native-apps.md), and Select All in a panel would otherwise light it all up.
  */
 function FieldHelp({ text }: { text: string }) {
   const layout = useLabelLayout()
-  const p = <p className="select-text text-[11px] leading-snug text-muted-foreground">{text}</p>
+  const p = <p className="text-[11px] leading-snug text-muted-foreground">{text}</p>
   if (layout === "column") {
     return (
       <div className={HELP_ROW}>
