@@ -126,7 +126,10 @@ class Tools:
         sign of the save afterwards, never a fixed time."""
         path = pathlib.Path(path)
         time.sleep(settle)  # the panel slides in
-        self.keystroke(f"{path.parent}/")
+        # "/" opens Go to Folder, and what is typed while its sheet comes up is lost
+        self.keystroke("/")
+        time.sleep(settle)
+        self.keystroke(f"{path.parent}/".lstrip("/"))
         time.sleep(settle)  # Go to Folder suggests before it takes Return
         self.key_code(36)
         time.sleep(settle)
