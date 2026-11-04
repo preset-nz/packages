@@ -80,15 +80,18 @@ class Graph(unittest.TestCase):
     def test_end_still(self):
         shown = e.plates(ONE, [], 6)
         plain = e.filter_graph(ONE, 6, True, shown)
-        g = e.filter_graph(ONE, 6, True, shown, ("end.png", 3), (3840, 2400))
+        g = e.filter_graph(ONE, 6, True, shown, [("end.png", 3)], (3840, 2400))
         self.assertIn("concat=n=4:v=1:a=1", g)  # three segments and the still
         self.assertIn("concat=n=3:v=1:a=1", plain)
-        self.assertIn("[v2][a2][vS][aS]concat", g)
-        self.assertIn("[3:v]scale=3840:2400", g)  # one plate, the mark, then the still
+        self.assertIn("[v2][a2][vS0][aS0]concat", g)
+        self.assertIn("[3:v]scale=2688:1680", g)  # one plate, the mark, then the still at 70%
         self.assertIn("anullsrc", g)
-        silent = e.filter_graph(ONE, 6, False, shown, ("end.png", 3), (3840, 2400))
+        silent = e.filter_graph(ONE, 6, False, shown, [("end.png", 3)], (3840, 2400))
         self.assertNotIn("anullsrc", silent)
-        self.assertIn("[v2][vS]concat=n=4:v=1:a=0", silent)
+        self.assertIn("[v2][vS0]concat=n=4:v=1:a=0", silent)
+        two = e.filter_graph(ONE, 6, False, shown, [("map.png", 3), ("key.png", 3)], (3840, 2400))
+        self.assertIn("[4:v]scale=", two)
+        self.assertIn("[v2][vS0][vS1]concat=n=5:v=1:a=0", two)
 
     def test_plate_inputs(self):
         shown = e.plates(ONE, [(3.0, "cap", 1.0), (4.0, "cap", 1.0)], 6)

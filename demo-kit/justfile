@@ -11,7 +11,7 @@ build:
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p ../target/demo
-    for t in rec ui ax display label; do
+    for t in rec ui ax display label pdfpage; do
       [ ../target/demo/$t -nt swift/$t.swift ] || swiftc -O swift/$t.swift -o ../target/demo/$t
     done
 
@@ -20,5 +20,5 @@ build:
 check:
     #!/usr/bin/env bash
     set -euo pipefail
-    for t in rec ui ax display label; do swiftc -typecheck swift/$t.swift; done
+    for t in rec ui ax display label pdfpage; do swiftc -typecheck swift/$t.swift; done
     python3 -m unittest discover -s tests

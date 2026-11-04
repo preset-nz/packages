@@ -21,6 +21,8 @@ PLATE = "49a8b3"  # ux-kit's dark primary: the captions' plate
 MARK = ("preset.nz", "ffffff80", "DINAlternate-Bold")
 
 Wait = tuple[float, float, str]
+# The share of the frame an end still fills (see filter_graph).
+STILL_FILL = 0.7
 
 
 def removed(waits: list[Wait], speed: float, upto: float = float("inf")) -> float:
@@ -72,12 +74,12 @@ def plate_texts(shown) -> list[str]:
 
 
 def filter_graph(waits: list[Wait], speed: float, audio: bool, shown,
-                 end_still: tuple | None = None, size: tuple[int, int] | None = None) -> str:
+                 end_stills=(), size: tuple[int, int] | None = None) -> str:
     """The -filter_complex string. Inputs: 0 the take, 1..n the plates (in
-    `plate_texts` order), n+1 the mark, n+2 the end still when given (a
-    looped image of `seconds`, `end_still` = (path, seconds), `size` the
+    `plate_texts` order), n+1 the mark, then the end stills in order (each a
+    looped image of its seconds, `end_stills` = [(path, seconds)], `size` the
     take's frame in pixels). Outputs [v], and [a] with audio. 2N+1 segments
-    for N waits (an empty one is left out), plus one for the still, which is
+    for N waits (an empty one is left out), plus one per still, each
     letterboxed on #1a1a1a and given silence of its length."""
     segs = []  # (start, end or None, fast)
     pos = 0.0
@@ -99,18 +101,21 @@ def filter_graph(waits: list[Wait], speed: float, audio: bool, shown,
             parts.append(f"[0:a]atrim={span},asetpts=PTS-STARTPTS{tempo}[a{i}]")
             joined += f"[a{i}]"
     count = len(segs)
-    if end_still:
-        if size is None:
-            raise ValueError("an end still needs the take's size")
-        (_, secs), (w, h) = end_still, size
-        still = len(plate_texts(shown)) + 2
-        parts.append(f"[{still}:v]scale={w}:{h}:force_original_aspect_ratio=decrease,"
+    if end_stills and size is None:
+        raise ValueError("an end still needs the take's size")
+    for k, (_, secs) in enumerate(end_stills):
+        w, h = size
+        still = len(plate_texts(shown)) + 2 + k
+        # 70% of the frame, centred: the mark in the lower left then sits on the plain
+        # background, not half across the page's edge
+        bw, bh = round(w * STILL_FILL) // 2 * 2, round(h * STILL_FILL) // 2 * 2
+        parts.append(f"[{still}:v]scale={bw}:{bh}:force_original_aspect_ratio=decrease,"
                      f"pad={w}:{h}:(ow-iw)/2:(oh-ih)/2:color=0x1a1a1a,setsar=1,fps=60,"
-                     f"trim=duration={secs:g},setpts=PTS-STARTPTS[vS]")
-        joined += "[vS]"
+                     f"trim=duration={secs:g},setpts=PTS-STARTPTS[vS{k}]")
+        joined += f"[vS{k}]"
         if audio:
-            parts.append(f"anullsrc=r=48000:cl=stereo,atrim=duration={secs:g},asetpts=PTS-STARTPTS[aS]")
-            joined += "[aS]"
+            parts.append(f"anullsrc=r=48000:cl=stereo,atrim=duration={secs:g},asetpts=PTS-STARTPTS[aS{k}]")
+            joined += f"[aS{k}]"
         count += 1
     out = "[vc][a]" if audio else "[vc]"
     parts.append(f"{joined}concat=n={count}:v=1:a={1 if audio else 0}{out}")
@@ -139,13 +144,13 @@ def frame_size(video: pathlib.Path) -> tuple[int, int]:
 
 
 def edit(raw, take: dict | None = None, *, plate: str = PLATE, speed: float = 6, title: str,
-         description: str, poster_at: float | None = None, end_still: tuple | None = None,
+         description: str, poster_at: float | None = None, end_stills=(),
          bin_dir: pathlib.Path | str = BIN) -> pathlib.Path:
     """Cuts `raw` (a .mov) by its take (default: the `.json` beside it) into
     `<raw>-edit.mp4` and `<raw>-poster.jpg`. `poster_at` is a time in the
-    take; by default 4 s past the last chapter's start. `end_still` is
-    (png path, seconds): the image, scaled to the take's frame and letterboxed
-    on #1a1a1a, held after the last frame with the mark over it."""
+    take; by default 4 s past the last chapter's start. `end_stills` is
+    [(png path, seconds)]: each image, scaled into the take's frame on #1a1a1a,
+    held in turn after the last frame with the mark over it."""
     raw = pathlib.Path(raw)
     bin_dir = pathlib.Path(bin_dir)
     if take is None:
@@ -170,17 +175,17 @@ def edit(raw, take: dict | None = None, *, plate: str = PLATE, speed: float = 6,
     # 154 px at the take's 2x: 77 px high in the edit, 40 px in from the corner.
     subprocess.run([bin_dir / "label", MARK[0], mark, "154", "-", MARK[1], MARK[2]], check=True)
     inputs += ["-i", mark]
-    if end_still:
-        inputs += ["-loop", "1", "-framerate", "60", "-t", f"{end_still[1]:g}", "-i", end_still[0]]
-    graph = filter_graph(waits, speed, audio, shown, end_still, frame_size(raw) if end_still else None)
+    for path, secs in end_stills:
+        inputs += ["-loop", "1", "-framerate", "60", "-t", f"{secs:g}", "-i", str(path)]
+    graph = filter_graph(waits, speed, audio, shown, end_stills, frame_size(raw) if end_stills else None)
 
-    length = duration(raw) - removed(waits, speed) + (end_still[1] if end_still else 0)
+    length = duration(raw) - removed(waits, speed) + sum(secs for _, secs in end_stills)
     marks = chapter_marks(waits, take.get("chapters", []), speed)
     chapter_args = []
     if marks:
         chapter_file = bin_dir / "chapters.txt"
         chapter_file.write_text(chapters_text(marks, length))
-        idx = len(plate_texts(shown)) + 2 + (1 if end_still else 0)
+        idx = len(plate_texts(shown)) + 2 + len(end_stills)
         inputs += ["-i", chapter_file]
         chapter_args = ["-map_metadata", str(idx), "-map_chapters", str(idx)]
 
@@ -239,8 +244,9 @@ def main(argv=None) -> None:
     ap.add_argument("--speed", type=float, default=6)
     ap.add_argument("--title")
     ap.add_argument("--description")
-    ap.add_argument("--end-still", type=pathlib.Path, help="a PNG held after the last frame")
-    ap.add_argument("--end-seconds", type=float, default=3, help="how long the still is held (default %(default)s)")
+    ap.add_argument("--end-still", type=pathlib.Path, action="append", default=[],
+                    help="a PNG held after the last frame; repeat for several, shown in turn")
+    ap.add_argument("--end-seconds", type=float, default=3, help="how long each still is held (default %(default)s)")
     ap.add_argument("--poster-at", type=float, help="a time in the take, in seconds")
     a = ap.parse_args(argv)
     meta = json.loads(a.take.with_suffix(".json").read_text()).get("meta", {})
@@ -248,7 +254,7 @@ def main(argv=None) -> None:
     edit(a.take, plate=a.plate, speed=a.speed, title=a.title or f"{product}: a demo",
          description=a.description or meta.get("description", f"{product} {meta.get('version', '')}".strip()),
          poster_at=a.poster_at,
-         end_still=(str(a.end_still), a.end_seconds) if a.end_still else None)
+         end_stills=[(str(p), a.end_seconds) for p in a.end_still])
 
 
 if __name__ == "__main__":
