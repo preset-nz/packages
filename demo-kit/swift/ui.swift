@@ -1,6 +1,8 @@
 // ui move x y | click x y | dclick x y | drag x1 y1 x2 y2 [ms] | type "text" | key <code> [cmd|shift|opt...]
 // | hold <code> <ms> (a key held down for a while) | scroll x y dy [steps] (the wheel at x y,
-// dy points down in total, in steps; a panel scrolls under the pointer) | pos
+// dy points down in total, in steps; a panel scrolls under the pointer) | stroke <ms> x1 y1 x2 y2 …
+// (one drag through every point on a smooth curve, at an even speed that eases in and out:
+// a hand's stroke, not a plotter's) | pos
 import Foundation
 import CoreGraphics
 
@@ -36,6 +38,45 @@ case "drag":
     mouse(.leftMouseDown, p); usleep(80000)
     glide(from: p, to: q, ms: ms, type: .leftMouseDragged)
     usleep(80000); mouse(.leftMouseUp, q)
+case "stroke":
+    // Catmull-Rom through the points, sampled densely, then walked at an even speed along its
+    // length with the whole stroke eased in and out.
+    let ms = Double(a[2])!
+    var ps: [CGPoint] = []
+    var i = 3
+    while i + 1 < a.count { ps.append(CGPoint(x: Double(a[i])!, y: Double(a[i + 1])!)); i += 2 }
+    guard let first = ps.first else { break }
+    var curve: [CGPoint] = [first]
+    if ps.count > 1 {
+        for k in 0..<(ps.count - 1) {
+            let p0 = ps[max(k - 1, 0)], p1 = ps[k], p2 = ps[k + 1], p3 = ps[min(k + 2, ps.count - 1)]
+            for s in 1...16 {
+                let t = Double(s) / 16, t2 = t * t, t3 = t2 * t
+                func c(_ a: Double, _ b: Double, _ c: Double, _ d: Double) -> Double {
+                    0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (3 * b - a - 3 * c + d) * t3)
+                }
+                curve.append(CGPoint(x: c(p0.x, p1.x, p2.x, p3.x), y: c(p0.y, p1.y, p2.y, p3.y)))
+            }
+        }
+    }
+    if curve.count < 2 { curve.append(first) }
+    var lens: [Double] = [0]
+    for k in 1..<curve.count { lens.append(lens[k - 1] + hypot(curve[k].x - curve[k - 1].x, curve[k].y - curve[k - 1].y)) }
+    let total = max(lens.last!, 1)
+    glide(from: here(), to: first, ms: 350, type: .mouseMoved)
+    mouse(.leftMouseDown, first); usleep(60000)
+    let steps = max(2, Int(ms / 8))
+    var j = 0
+    for n in 1...steps {
+        let f = Double(n) / Double(steps)
+        let d = f * f * (3 - 2 * f) * total
+        while j < lens.count - 2 && lens[j + 1] < d { j += 1 }
+        let span = max(lens[j + 1] - lens[j], 0.0001), u = min(max((d - lens[j]) / span, 0), 1)
+        let q = CGPoint(x: curve[j].x + (curve[j + 1].x - curve[j].x) * u, y: curve[j].y + (curve[j + 1].y - curve[j].y) * u)
+        mouse(.leftMouseDragged, q)
+        usleep(useconds_t(ms * 1000 / Double(steps)))
+    }
+    usleep(60000); mouse(.leftMouseUp, curve.last!)
 case "type":
     for ch in a[2].utf16 {
         var c = ch
