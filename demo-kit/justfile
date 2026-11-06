@@ -15,10 +15,17 @@ build:
       [ ../target/demo/$t -nt swift/$t.swift ] || swiftc -O swift/$t.swift -o ../target/demo/$t
     done
 
-# Typecheck every Swift tool, then the Python tests (no ffmpeg needed)
+# Typecheck every Swift tool (on macOS), then the Python tests (no ffmpeg needed)
 [group('quality')]
 check:
     #!/usr/bin/env bash
     set -euo pipefail
-    for t in rec ui ax display label pdfpage; do swiftc -typecheck swift/$t.swift; done
+    # The tools are macOS-only (ScreenCaptureKit, AppKit, Quartz): a Linux
+    # runner's swiftc has none of those frameworks, so CI checks the Python
+    # and the pre-push gate on a Mac checks the Swift.
+    if [ "$(uname)" = Darwin ]; then
+      for t in rec ui ax display label pdfpage; do swiftc -typecheck swift/$t.swift; done
+    else
+      echo "demo-kit: Swift typecheck skipped, not macOS"
+    fi
     python3 -m unittest discover -s tests
