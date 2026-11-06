@@ -94,6 +94,20 @@ impl Log {
                 Event::Stopped { reason } => out.push_str(&format!("stopped: {reason:?}\n")),
                 Event::Note { text } => out.push_str(&format!("note: {text}\n")),
                 Event::Error { message } => out.push_str(&format!("error: {message}\n")),
+                Event::Phase {
+                    phase,
+                    model,
+                    seconds,
+                } => {
+                    out.push_str(&format!("phase: {phase:?}"));
+                    if let Some(m) = model {
+                        out.push_str(&format!(", {m}"));
+                    }
+                    if let Some(s) = seconds {
+                        out.push_str(&format!(", about {s:.0} s"));
+                    }
+                    out.push('\n');
+                }
                 Event::Done { applied, label } => {
                     out.push_str(&format!("done, applied {applied}, undo step {label:?}\n\n"))
                 }

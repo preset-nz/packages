@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 use serde::Serialize;
 use serde_json::{json, Value as Json};
 
-use crate::client::{self, Delta, Failure, Model, Sampling};
+use crate::client::{self, Delta, Failure, Load, Model, Sampling};
 use crate::tools::{self, Toolbox};
 
 /// What one reply may spend.
@@ -55,6 +55,22 @@ pub enum Reason {
     Looping,
 }
 
+/// What a reply is doing right now, as far as the person watching can tell.
+/// The loop reports it so no app has to work it out from the deltas.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Phase {
+    /// The server is loading the model before it can answer.
+    Loading,
+    /// A request is sent and nothing has come back. After idle, LM Studio
+    /// stalls here while it wakes the model.
+    Waiting,
+    /// The model is reasoning.
+    Thinking,
+    /// Text or a tool call is arriving.
+    Answering,
+}
+
 /// What the app's UI hears, as the caller forwards it (Tauri apps use `agent://event`). Every reply starts with
 /// `start` and ends with exactly one `done`; `stopped` or `error` come just
 /// before it when the reply didn't finish on its own.
@@ -90,6 +106,15 @@ pub enum Event {
     Error {
         message: String,
     },
+    /// The reply changed phase. `model` and `seconds` are filled only for
+    /// `loading`: which model, and about how long the server says it takes.
+    Phase {
+        phase: Phase,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        model: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        seconds: Option<f32>,
+    },
     /// Whether the reply's writes reached the document, as one undo step
     /// named `label`.
     Done {
@@ -116,6 +141,32 @@ pub struct Ask<'a> {
     pub quick: bool,
     pub limits: Limits,
     pub sampling: Sampling,
+    /// The load the server has to finish before `model` answers, from
+    /// `Model::resolve`. The reply opens with it and its budget grows to fit.
+    pub load: Option<Load>,
+}
+
+/// What a load adds to a reply's wall-clock budget: twice the server's
+/// estimate and 10 s, since an estimate from other models' loads can be
+/// short; 60 s when it has none. A quick reply keeps its own time to think
+/// however long the model takes to load.
+fn load_allowance(load: &Load) -> Duration {
+    match load.seconds {
+        Some(s) if s.is_finite() && s >= 0.0 => Duration::from_secs_f32(2.0 * s + 10.0),
+        _ => Duration::from_secs(60),
+    }
+}
+
+/// Moves to `next`, telling `emit` only when it is a change.
+fn enter(now: &mut Option<Phase>, next: Phase, emit: &mut dyn FnMut(Event)) {
+    if *now != Some(next) {
+        *now = Some(next);
+        emit(Event::Phase {
+            phase: next,
+            model: None,
+            seconds: None,
+        });
+    }
 }
 
 /// Said when a considered turn is asked again without thinking.
@@ -132,7 +183,17 @@ pub fn reply(
     emit: &mut dyn FnMut(Event),
 ) -> End {
     let started = Instant::now();
-    let deadline = started + ask.limits.budget;
+    let deadline =
+        started + ask.limits.budget + ask.load.as_ref().map_or(Duration::ZERO, load_allowance);
+    let mut phase: Option<Phase> = None;
+    if let Some(load) = &ask.load {
+        phase = Some(Phase::Loading);
+        emit(Event::Phase {
+            phase: Phase::Loading,
+            model: Some(ask.model.to_string()),
+            seconds: load.seconds,
+        });
+    }
     // Built once, so every request carries the same bytes before the
     // conversation: the server's prompt cache keeps them.
     let tools = toolbox.tools().openai();
@@ -159,12 +220,33 @@ pub fn reply(
             ask.limits.max_tokens,
             ask.sampling.for_mode(quick),
         );
+        // The first request is the one the server loads the model for, so a
+        // load stays on screen until the model speaks; `waiting` would hide it.
+        if phase != Some(Phase::Loading) {
+            enter(&mut phase, Phase::Waiting, emit);
+        }
         let mut thinking = String::new();
+        // Per turn: its first reasoning delta is `thinking`, its first text
+        // or tool call is `answering`.
+        let (mut thought, mut answered) = (false, false);
         let mut on = |d: Delta| match d {
-            Delta::Text(delta) => emit(Event::Text { delta }),
+            Delta::Text(delta) => {
+                if !std::mem::replace(&mut answered, true) {
+                    enter(&mut phase, Phase::Answering, emit);
+                }
+                emit(Event::Text { delta })
+            }
             Delta::Reasoning(delta) => {
+                if !std::mem::replace(&mut thought, true) {
+                    enter(&mut phase, Phase::Thinking, emit);
+                }
                 thinking.push_str(&delta);
                 emit(Event::Reasoning { delta })
+            }
+            Delta::Calling => {
+                if !std::mem::replace(&mut answered, true) {
+                    enter(&mut phase, Phase::Answering, emit);
+                }
             }
         };
         let turn = match model.turn(&body, deadline, cancel, &mut on) {
@@ -324,6 +406,187 @@ pub fn label(prompt: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::client::{Call, Turn};
+    use crate::tools::{Tool, Tools};
+
+    /// Plays back scripted turns, each a list of deltas and the turn they
+    /// end in.
+    struct Script(Vec<(Vec<Delta>, Turn)>, Vec<Instant>);
+
+    impl Model for Script {
+        fn turn(
+            &mut self,
+            _: &Json,
+            deadline: Instant,
+            _: &AtomicBool,
+            on: &mut dyn FnMut(Delta),
+        ) -> Result<Turn, Failure> {
+            self.1.push(deadline);
+            let (deltas, turn) = self.0.remove(0);
+            deltas.into_iter().for_each(&mut *on);
+            Ok(turn)
+        }
+    }
+
+    struct Bare(Tools);
+
+    impl Toolbox for Bare {
+        fn tools(&self) -> &Tools {
+            &self.0
+        }
+        fn call(&mut self, _: &Tool, _: &Json) -> Result<String, String> {
+            Ok("ok".into())
+        }
+    }
+
+    fn phases(model: &mut Script, load: Option<Load>) -> Vec<Event> {
+        let mut toolbox = Bare(Tools::new(Vec::new()));
+        let ask = Ask {
+            model: "m",
+            system: "s",
+            user: "u".into(),
+            quick: true,
+            limits: Limits::quick(),
+            sampling: Sampling::default(),
+            load,
+        };
+        let mut seen = Vec::new();
+        reply(
+            model,
+            &mut toolbox,
+            &ask,
+            &AtomicBool::new(false),
+            &mut |e| seen.push(e),
+        );
+        seen.into_iter()
+            .filter(|e| matches!(e, Event::Phase { .. }))
+            .collect()
+    }
+
+    fn phase(p: Phase) -> Event {
+        Event::Phase {
+            phase: p,
+            model: None,
+            seconds: None,
+        }
+    }
+
+    fn turn(text: &str, calls: Vec<Call>) -> Turn {
+        Turn {
+            text: text.into(),
+            calls,
+            finish: Some("stop".into()),
+        }
+    }
+
+    #[test]
+    fn a_load_holds_until_the_model_speaks_then_thinking_and_answering_once_each() {
+        let mut m = Script(
+            vec![(
+                vec![
+                    Delta::Reasoning("a".into()),
+                    Delta::Reasoning("b".into()),
+                    Delta::Text("c".into()),
+                    Delta::Text("d".into()),
+                ],
+                turn("cd", vec![]),
+            )],
+            vec![],
+        );
+        let got = phases(&mut m, Some(Load { seconds: Some(7.0) }));
+        assert_eq!(
+            got,
+            vec![
+                Event::Phase {
+                    phase: Phase::Loading,
+                    model: Some("m".into()),
+                    seconds: Some(7.0),
+                },
+                phase(Phase::Thinking),
+                phase(Phase::Answering),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_turn_of_only_tool_calls_goes_from_waiting_to_answering() {
+        let call = Call {
+            id: "a".into(),
+            name: "nope".into(),
+            arguments: "{}".into(),
+        };
+        let mut m = Script(
+            vec![
+                (
+                    vec![Delta::Calling],
+                    Turn {
+                        text: String::new(),
+                        calls: vec![call],
+                        finish: Some("tool_calls".into()),
+                    },
+                ),
+                (vec![Delta::Text("done".into())], turn("done", vec![])),
+            ],
+            vec![],
+        );
+        // No load: it starts at waiting. The second turn waits again after
+        // the first answered, but never repeats a phase back to back.
+        assert_eq!(
+            phases(&mut m, None),
+            vec![
+                phase(Phase::Waiting),
+                phase(Phase::Answering),
+                phase(Phase::Waiting),
+                phase(Phase::Answering),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_phase_crosses_as_tagged_json_with_its_extras_only_when_set() {
+        let e = serde_json::to_value(Event::Phase {
+            phase: Phase::Loading,
+            model: Some("m".into()),
+            seconds: Some(2.5),
+        })
+        .unwrap();
+        assert_eq!(
+            e,
+            json!({ "kind": "phase", "phase": "loading", "model": "m", "seconds": 2.5 })
+        );
+        assert_eq!(
+            serde_json::to_value(phase(Phase::Waiting)).unwrap(),
+            json!({ "kind": "phase", "phase": "waiting" })
+        );
+    }
+
+    #[test]
+    fn the_deadline_the_model_is_given_includes_the_load() {
+        let deadline = |load| {
+            let mut m = Script(vec![(vec![], turn("", vec![]))], vec![]);
+            let before = Instant::now();
+            phases(&mut m, load);
+            m.1[0].duration_since(before)
+        };
+        let plain = deadline(None);
+        let loading = deadline(Some(Load { seconds: Some(7.0) }));
+        let (lo, hi) = (Duration::from_secs(60), Duration::from_secs(61));
+        assert!(plain >= lo && plain < hi, "{plain:?}");
+        let (lo, hi) = (Duration::from_secs(84), Duration::from_secs(85));
+        assert!(loading >= lo && loading < hi, "{loading:?}");
+    }
+
+    #[test]
+    fn a_load_adds_twice_its_estimate_and_ten_seconds_or_a_minute_without_one() {
+        assert_eq!(
+            load_allowance(&Load { seconds: Some(7.0) }),
+            Duration::from_secs(24)
+        );
+        assert_eq!(
+            load_allowance(&Load { seconds: None }),
+            Duration::from_secs(60)
+        );
+    }
 
     #[test]
     fn a_label_is_the_prompts_first_words() {
