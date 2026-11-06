@@ -1,6 +1,7 @@
 import { cn, Icons } from "@preset.nz/ux-kit"
 import { useState } from "react"
 import { ChatPage } from "./pages/Chat"
+import { LibraryPage } from "./pages/Library"
 import { ModelsPage } from "./pages/Models"
 import { Primitives } from "./pages/Primitives"
 import { Tokens } from "./pages/Tokens"
@@ -12,6 +13,7 @@ const SECTIONS = [
   { id: "primitives", label: "Primitives", Icon: Icons.CubeIcon },
   { id: "chat", label: "Chat", Icon: Icons.ChatsIcon },
   { id: "toolbar", label: "Toolbar and colour", Icon: Icons.ToolboxIcon },
+  { id: "library", label: "Library shell", Icon: Icons.SquaresFourIcon },
   { id: "models", label: "Models", Icon: Icons.DownloadSimpleIcon },
 ] as const
 
@@ -47,6 +49,7 @@ export function Gallery() {
         {section === "primitives" && <Primitives />}
         {section === "chat" && <ChatPage />}
         {section === "toolbar" && <ToolbarPage />}
+        {section === "library" && <LibraryPage />}
         {section === "models" && <ModelsPage />}
       </main>
     </div>

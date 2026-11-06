@@ -11,11 +11,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
 // reopens it. The drag uses pointer capture, so the edge never drifts from
 // the cursor; arrow keys on the focused edge resize too.
 
-/** Keeps a width inside [min, max]; a corrupt stored value falls back to `min`. */
+/** Keeps a width inside [min, max], in whole pixels; a corrupt stored value falls back to `min`. */
 function clampWidth(width: number, min: number, max: number): number {
   if (!Number.isFinite(width)) return min
-  return Math.min(max, Math.max(min, width))
+  return Math.min(max, Math.max(min, Math.round(width)))
 }
+
+/** Width of a collapsed panel's spine (`spine` prop). */
+const SPINE_WIDTH = 28
 
 interface SidePanelProps extends Omit<React.ComponentProps<"aside">, "title"> {
   /** Which window edge the panel docks to. The resize handle sits on the inner edge. */
@@ -33,6 +36,15 @@ interface SidePanelProps extends Omit<React.ComponentProps<"aside">, "title"> {
   icon: React.ReactNode
   /** Shown in the rail tooltip, in platform notation ("⌥⌘S"). */
   shortcut?: string
+  /**
+   * Collapsed, leave a full-height spine that reads `title` sideways, and
+   * reopens on a click anywhere on it, instead of the icon rail. `icon` is not
+   * drawn then. For a library's filter and properties panels, which have no
+   * natural icon.
+   */
+  spine?: boolean
+  /** Double-clicking the resize edge restores this width. No reset without it. */
+  defaultWidth?: number
 }
 
 function SidePanel({
@@ -46,11 +58,43 @@ function SidePanel({
   title,
   icon,
   shortcut,
+  spine = false,
+  defaultWidth,
   className,
   children,
   ...props
 }: SidePanelProps) {
   const border = side === "left" ? "border-r" : "border-l"
+
+  if (!open && spine) {
+    return (
+      <aside
+        data-slot="side-panel"
+        data-state="closed"
+        aria-label={title}
+        className={cn(
+          "flex shrink-0 text-sidebar-foreground",
+          border,
+          "border-sidebar-border",
+          className,
+        )}
+        style={{ width: SPINE_WIDTH }}
+        {...props}
+      >
+        <button
+          type="button"
+          onClick={() => onOpenChange(true)}
+          aria-label={`Show ${title}`}
+          title={shortcut ? `Show ${title}  ${shortcut}` : `Show ${title}`}
+          className="flex h-full w-full cursor-pointer items-center justify-center text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <span className="rotate-180 font-semibold text-[10px] uppercase tracking-wider [writing-mode:vertical-rl]">
+            {title}
+          </span>
+        </button>
+      </aside>
+    )
+  }
 
   if (!open) {
     return (
@@ -96,6 +140,7 @@ function SidePanel({
   }
 
   const startDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return
     e.preventDefault()
     const el = e.currentTarget
     el.setPointerCapture(e.pointerId)
@@ -149,6 +194,11 @@ function SidePanel({
         tabIndex={0}
         onPointerDown={startDrag}
         onKeyDown={onKey}
+        onDoubleClick={
+          defaultWidth === undefined
+            ? undefined
+            : () => onWidthChange(clampWidth(defaultWidth, minWidth, maxWidth))
+        }
         className={cn(
           "absolute inset-y-0 z-10 w-1 cursor-col-resize touch-none hover:bg-primary/30 focus-visible:bg-primary/40 focus-visible:outline-none",
           side === "left" ? "right-0" : "left-0",
@@ -186,4 +236,4 @@ function SidePanelContent({ className, ...props }: React.ComponentProps<"div">) 
 }
 
 export type { SidePanelProps }
-export { clampWidth, SidePanel, SidePanelContent, SidePanelHeader }
+export { clampWidth, SidePanel, SidePanelContent, SidePanelHeader, SPINE_WIDTH }

@@ -27,7 +27,7 @@ sha256 = "5e4d6376b631466069efe415bad8052d5fa534033a3edf42cbeb168c26465ee7"
 [[inputs]]
 path = "pnpm-lock.yaml"
 ecosystem = "pnpm"
-sha256 = "8ca4538fdef07c2f9fb6fb5f07ff13e367ca42ff1619b18c80bea6dadca17301"
+sha256 = "f23180ff0d4f1402c9c8dc07d6755853cb7c40df760f82e62ddfffeb16f76c5e"
 
 [[inputs]]
 path = "preferences/Cargo.toml"
@@ -5441,6 +5441,22 @@ version = "4.3.3"
 source = "registry"
 declared = "MIT"
 scope = "dev"
+
+[[packages]]
+ecosystem = "pnpm"
+name = "@tanstack/react-virtual"
+version = "3.14.26"
+source = "registry"
+declared = "MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "pnpm"
+name = "@tanstack/virtual-core"
+version = "3.19.11"
+source = "registry"
+declared = "MIT"
+scope = "shipped"
 
 [[packages]]
 ecosystem = "pnpm"
