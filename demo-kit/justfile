@@ -21,8 +21,8 @@ check:
     #!/usr/bin/env bash
     set -euo pipefail
     # The tools are macOS-only (ScreenCaptureKit, AppKit, Quartz): a Linux
-    # runner's swiftc has none of those frameworks, so CI checks the Python
-    # and the pre-push gate on a Mac checks the Swift.
+    # runner's swiftc has none of those frameworks, so the shared CI checks
+    # the Python and the macOS workflow `demo-kit-swift.yml` the Swift.
     if [ "$(uname)" = Darwin ]; then
       for t in rec ui ax display label pdfpage; do swiftc -typecheck swift/$t.swift; done
     else

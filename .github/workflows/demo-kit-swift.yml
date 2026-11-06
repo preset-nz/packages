@@ -1,0 +1,25 @@
+# demo-kit's Swift tools use ScreenCaptureKit, AppKit and Quartz, which only a
+# macOS runner has; the shared check runs on Linux and checks demo-kit's Python.
+# This typechecks the Swift. The repo is public, so macOS minutes cost nothing.
+name: demo-kit Swift
+
+on:
+  push:
+    branches: [main]
+    paths: ["demo-kit/swift/**", ".github/workflows/demo-kit-swift.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["demo-kit/swift/**", ".github/workflows/demo-kit-swift.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Typecheck every tool
+        working-directory: demo-kit
+        run: for t in swift/*.swift; do echo "$t"; swiftc -typecheck "$t"; done
