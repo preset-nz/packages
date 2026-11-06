@@ -14,6 +14,7 @@ Versions released, pending and the apps behind: [`runbooks/pending-releases.md`]
 | `rhizome/` | crates.io `rhizome-core`, `rhizome-pom`, `rhizome-pom-tauri`; npm `@preset.nz/pom` | knope versions the workspace together |
 | `preset-docs/` | crates.io `preset-docs` | Oblique (`docs/gen`) takes it from the registry, Shard still by path, `rhizome` feature. Moved out of rhizome 2026-10-14 ([`projects/preset-docs`](../guidance/projects/preset-docs/README.md)) |
 | `ux-kit/` | npm `@preset.nz/ux-kit` | its own `playground/` (Tauri, links its siblings; `just check` covers it) |
+| `agent-kit/` | none yet: crate `preset-agent-kit` | The Rust half of [`projects/agent-kit`](../guidance/projects/agent-kit/README.md): the local-model client, tool loop and run log lifted from Shard, which is on it by path |
 | `app-kit/` | npm `@preset.nz/app-kit` + crate `preset-app-kit`, lockstep | ux-kit playground by path + link |
 | `math/` | npm `@preset.nz/math` + crate `preset-math`, lockstep | [`design/math.md`](../guidance/design/math.md) |
 | `paths/` | none yet: npm `@preset.nz/paths` + crate `preset-paths`, lockstep | Proposed 2026-10-06 ([`design/paths.md`](../guidance/design/paths.md)) |

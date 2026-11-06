@@ -1,0 +1,27 @@
+# Standard verbs: prep, install, check. A Rust library with no runtime of its own,
+# so `run` and `build` are absent.
+
+default:
+    @just --list
+
+[group('setup')]
+prep:
+    @echo "cargo:             $(cargo --version 2>/dev/null || echo MISSING)"
+    @echo "preset-compliance: $(preset-compliance --version 2>/dev/null || echo 'MISSING (cargo binstall preset-compliance)')"
+    @echo "knope:             $(knope --version 2>/dev/null || echo 'MISSING (cargo binstall knope)')"
+
+[group('setup')]
+install:
+    cargo fetch
+
+# Rust: format, lint, test.
+[group('quality')]
+check:
+    cargo fmt --check
+    cargo clippy --all-targets -- -D warnings
+    cargo test
+
+# Writes the formatter's fixes.
+[group('quality')]
+fmt:
+    cargo fmt

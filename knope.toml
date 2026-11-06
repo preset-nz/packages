@@ -10,6 +10,14 @@
 # the root's and the ux-kit playground's (outside the workspace, its own lock).
 # Pushing and publishing stay manual (guidance runbooks/publish-npm-package.md).
 
+[packages.agent-kit]
+versioned_files = [
+    "agent-kit/Cargo.toml",
+    { path = "Cargo.lock", dependency = "preset-agent-kit" },
+]
+changelog = "agent-kit/CHANGELOG.md"
+scopes = ["agent-kit"]
+
 [packages.app-kit]
 versioned_files = [
     "app-kit/Cargo.toml",

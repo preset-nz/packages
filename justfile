@@ -2,6 +2,7 @@
 # has its own justfile: `just <pkg>::<recipe>` from here (`just facets::playground`),
 # or `just <recipe>` inside its folder. Libraries have no `run` or `build`.
 
+mod agent-kit
 mod app-kit
 mod demo-kit
 mod facets

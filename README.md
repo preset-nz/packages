@@ -4,6 +4,7 @@ The libraries behind the preset.nz desktop apps, in one repo. Each package keeps
 
 | Package | What it is | Published as |
 |---|---|---|
+| [`agent-kit`](agent-kit) | A local-first agent for an app: a streaming client for local models, the tool loop, commands as tools, a run log | crate `preset-agent-kit` (not yet published) |
 | [`app-kit`](app-kit) | The behaviour of a desktop app: commands, the native menu, undo and redo, window restore | npm `@preset.nz/app-kit`, crate `preset-app-kit` |
 | [`demo-kit`](demo-kit) | Dev tooling: drives, records and cuts an app's demo video (Swift tools, a Python edit) | not published |
 | [`facets`](facets) | Inspector panels for React, defined as data | npm `@preset.nz/facets` |

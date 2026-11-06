@@ -4,6 +4,7 @@
 [workspace]
 resolver = "3"
 members = [
+    "agent-kit",
     "app-kit",
     "math",
     "preferences",

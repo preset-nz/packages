@@ -30,6 +30,10 @@ pre-commit:
       root: "ux-kit/"
       glob: "*.{ts,tsx,json}"
       run: ./node_modules/.bin/biome check --no-errors-on-unmatched {staged_files}
+    rustfmt-agent-kit:
+      root: "agent-kit/"
+      glob: "*.rs"
+      run: rustfmt --edition 2021 --check {staged_files}
     rustfmt-app-kit:
       root: "app-kit/"
       glob: "*.rs"

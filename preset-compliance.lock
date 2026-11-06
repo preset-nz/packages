@@ -6,11 +6,15 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "b88b39148583fc76ef3149106190881edd9927186a498a284c659076fffc9466"
+sha256 = "b3e8e30098ed5d4e745cd1b254a84894763b3a03a66a4bbbcd6548f0de14751e"
 
 [[inputs]]
 path = "Cargo.toml"
-sha256 = "85319de54e0201d6d6f5977b4f909c4d3f7e844383694e67f2a4ed4209bd0744"
+sha256 = "07387cd362c89f540c3a1a6874ef21d46c19166144401e93d73e32b23c2eece4"
+
+[[inputs]]
+path = "agent-kit/Cargo.toml"
+sha256 = "fc8b5f7cccd9fd745fc1dda9f8e728b657d1b9c2cdc4e3e76b9fc9a345de6dca"
 
 [[inputs]]
 path = "app-kit/Cargo.toml"
@@ -3448,6 +3452,22 @@ scope = "shipped"
 
 [[packages]]
 ecosystem = "cargo"
+name = "ureq"
+version = "3.5.1"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "ureq-proto"
+version = "0.7.1"
+source = "registry"
+declared = "MIT OR Apache-2.0"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
 name = "url"
 version = "2.5.8"
 source = "registry"
@@ -3460,6 +3480,14 @@ name = "urlpattern"
 version = "0.6.0"
 source = "registry"
 declared = "MIT"
+scope = "shipped"
+
+[[packages]]
+ecosystem = "cargo"
+name = "utf8-zero"
+version = "0.8.1"
+source = "registry"
+declared = "MIT OR Apache-2.0"
 scope = "shipped"
 
 [[packages]]
