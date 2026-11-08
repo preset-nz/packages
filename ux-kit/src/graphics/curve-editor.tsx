@@ -62,8 +62,8 @@ export interface CurveEditorProps {
   formatX?: (x: number) => string
   formatY?: (y: number) => string
   /**
-   * The line to draw, when the points stand for a function a spline can't be: a gamma's
-   * `x^(1/g)` (`gammaLine`). It gets the curve being drawn, which during a drag is the
+   * The line to draw, when the points stand for a function a spline can't be: a levels
+   * remap's power curve (`levelsLine`). It gets the curve being drawn, which during a drag is the
    * editor's own, so the line never lags the point. Without it the line is math's `evaluate`.
    */
   line?: (x: number, curve: Curve) => number

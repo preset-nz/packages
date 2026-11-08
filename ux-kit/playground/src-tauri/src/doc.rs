@@ -6,7 +6,7 @@
 //! made up for the playground, not an app's object model, except the three op types: their keys,
 //! ranges, defaults and choices are Oblique's (`sidecar/ops/{cmyk_halftone,film_stock,levels}.py`). `tokens`, `fonts`, `messages`, `inspectors` and `histograms` hold no
 //! values (the webview draws them from the kit's CSS); `primitives` and `card` hold values
-//! of every kind the documents edit, and `curves` holds three curves as shaped values and a gamma. Edits are labelled; undo and redo are
+//! of every kind the documents edit, and `curves` holds three curves as shaped values and a levels remap. Edits are labelled; undo and redo are
 //! `Tree::undo` / `Tree::redo`. A drag is a gesture (`Tree::begin` / `apply` / `end` / `cancel`):
 //! live edits, one undo step. Every change emits `rhizome://commit` (the `Commit`) and
 //! refreshes the Edit menu (app-kit's `refresh_history`). Undo and redo run through app-kit,
@@ -75,6 +75,8 @@ fn sample_tree() -> Tree {
                     .shaped("transfer", curve_shape())
                     .shaped("envelope", curve_shape())
                     .shaped("adsr", curve_shape())
+                    .float("black", 0.0..=1.0, 0.0)
+                    .float("white", 0.0..=1.0, 1.0)
                     .float("gamma", 0.1..=5.0, 1.0),
             )
             .node(

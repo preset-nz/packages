@@ -4,12 +4,14 @@ import {
   CurveEditor,
   type CurveEditorProps,
   constrainAdsr,
-  constrainGamma,
-  gammaCurve,
-  gammaLine,
-  gammaOf,
+  constrainLevels,
   Histogram,
+  levelsCurve,
+  levelsLine,
+  levelsOf,
 } from "@preset.nz/ux-kit/graphics"
+
+import { useRef } from "react"
 
 import type { Gesture, Row } from "../rhizome"
 import { DOC_PAGE, DocHeader } from "./Header"
@@ -18,8 +20,8 @@ import type { SetValue } from "./index"
 
 /** The ADSR stays inside the editor's two seconds. */
 const ADSR_LIMITS = constrainAdsr(2)
-/** The gamma stays inside levels' range. */
-const GAMMA_LIMITS = constrainGamma(0.1, 5)
+/** Gamma stays inside levels' range. */
+const LEVELS_LIMITS = constrainLevels(0.1, 5)
 const seconds = (x: number) => `${x.toFixed(3)} s`
 
 /** A curve as rhizome hands it back: optional fields may arrive as `null`. */
@@ -60,12 +62,27 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
     onGestureEnd: (committed) => (committed ? gesture.end() : gesture.cancel()),
   })
   const adsr = adsrOf(toCurve(row.values?.adsr))
-  const gamma = typeof row.values?.gamma === "number" ? row.values.gamma : 1
-  const writeGamma: CurveEditorProps["onChange"] = (next, kind) => {
-    const g = gammaOf(next)
-    if (g === null) return
-    if (kind === "gesture") gesture.apply(row.path, "gamma", g)
-    else set(row.path, "gamma", g, kind === "nudge")
+  const num = (key: string, fallback: number) => {
+    const v = row.values?.[key]
+    return typeof v === "number" ? v : fallback
+  }
+  const levels = { black: num("black", 0), white: num("white", 1), gamma: num("gamma", 1) }
+  // A drag moves one thing, an end or the gamma point, and the gesture opens on that key
+  // once the first move shows which.
+  const dragging = useRef<"idle" | "pending" | "open">("idle")
+  const writeLevels: CurveEditorProps["onChange"] = (next, kind) => {
+    const l = levelsOf(next)
+    if (!l) return
+    for (const key of ["black", "white", "gamma"] as const) {
+      if (Math.abs(l[key] - levels[key]) <= 1e-9) continue
+      if (kind === "gesture") {
+        if (dragging.current === "pending") {
+          gesture.begin(row.path, key)
+          dragging.current = "open"
+        }
+        gesture.apply(row.path, key, l[key])
+      } else set(row.path, key, l[key], kind === "nudge")
+    }
   }
 
   return (
@@ -85,19 +102,27 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
             className="aspect-square h-auto max-w-80"
           />
         </Section>
-        <Section title="Gamma, one point">
+        <Section title="Levels: black, white and gamma">
           <CurveEditor
-            value={gammaCurve(gamma)}
-            onChange={writeGamma}
-            onGestureStart={() => gesture.begin(row.path, "gamma")}
-            onGestureEnd={(committed) => (committed ? gesture.end() : gesture.cancel())}
-            constrain={GAMMA_LIMITS}
-            line={gammaLine}
+            value={levelsCurve(levels)}
+            onChange={writeLevels}
+            onGestureStart={() => {
+              dragging.current = "pending"
+            }}
+            onGestureEnd={(committed) => {
+              if (dragging.current === "open") committed ? gesture.end() : gesture.cancel()
+              dragging.current = "idle"
+            }}
+            constrain={LEVELS_LIMITS}
+            line={levelsLine}
             background={<Histogram bins={PHOTO} aria-label="Histogram of a synthetic photo" />}
-            aria-label="Gamma curve"
+            aria-label="Levels curve"
             className="aspect-square h-auto max-w-80"
           />
-          <p className="font-mono text-xs text-muted-foreground">Gamma {gamma.toFixed(2)}</p>
+          <p className="font-mono text-xs text-muted-foreground">
+            Black {levels.black.toFixed(3)} · White {levels.white.toFixed(3)} · Gamma{" "}
+            {levels.gamma.toFixed(2)}
+          </p>
         </Section>
         <Section title="Envelope, free">
           <CurveEditor
