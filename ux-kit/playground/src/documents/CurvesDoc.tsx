@@ -4,6 +4,10 @@ import {
   CurveEditor,
   type CurveEditorProps,
   constrainAdsr,
+  constrainGamma,
+  gammaCurve,
+  gammaLine,
+  gammaOf,
   Histogram,
 } from "@preset.nz/ux-kit/graphics"
 
@@ -14,6 +18,8 @@ import type { SetValue } from "./index"
 
 /** The ADSR stays inside the editor's two seconds. */
 const ADSR_LIMITS = constrainAdsr(2)
+/** The gamma stays inside levels' range. */
+const GAMMA_LIMITS = constrainGamma(0.1, 5)
 const seconds = (x: number) => `${x.toFixed(3)} s`
 
 /** A curve as rhizome hands it back: optional fields may arrive as `null`. */
@@ -54,6 +60,13 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
     onGestureEnd: (committed) => (committed ? gesture.end() : gesture.cancel()),
   })
   const adsr = adsrOf(toCurve(row.values?.adsr))
+  const gamma = typeof row.values?.gamma === "number" ? row.values.gamma : 1
+  const writeGamma: CurveEditorProps["onChange"] = (next, kind) => {
+    const g = gammaOf(next)
+    if (g === null) return
+    if (kind === "gesture") gesture.apply(row.path, "gamma", g)
+    else set(row.path, "gamma", g, kind === "nudge")
+  }
 
   return (
     <div className={DOC_PAGE}>
@@ -71,6 +84,20 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
             background={<Histogram bins={PHOTO} aria-label="Histogram of a synthetic photo" />}
             className="aspect-square h-auto max-w-80"
           />
+        </Section>
+        <Section title="Gamma, one point">
+          <CurveEditor
+            value={gammaCurve(gamma)}
+            onChange={writeGamma}
+            onGestureStart={() => gesture.begin(row.path, "gamma")}
+            onGestureEnd={(committed) => (committed ? gesture.end() : gesture.cancel())}
+            constrain={GAMMA_LIMITS}
+            line={gammaLine}
+            background={<Histogram bins={PHOTO} aria-label="Histogram of a synthetic photo" />}
+            aria-label="Gamma curve"
+            className="aspect-square h-auto max-w-80"
+          />
+          <p className="font-mono text-xs text-muted-foreground">Gamma {gamma.toFixed(2)}</p>
         </Section>
         <Section title="Envelope, free">
           <CurveEditor

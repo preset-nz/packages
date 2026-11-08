@@ -61,6 +61,12 @@ export interface CurveEditorProps {
   /** How an x or y value reads in the point readout. */
   formatX?: (x: number) => string
   formatY?: (y: number) => string
+  /**
+   * The line to draw, when the points stand for a function a spline can't be: a gamma's
+   * `x^(1/g)` (`gammaLine`). It gets the curve being drawn, which during a drag is the
+   * editor's own, so the line never lags the point. Without it the line is math's `evaluate`.
+   */
+  line?: (x: number, curve: Curve) => number
   /** Drawn behind the curve, inside the plot area: a `Histogram` or a `Waveform`. */
   background?: React.ReactNode
   className?: string
@@ -129,6 +135,7 @@ export function CurveEditor({
   constrain,
   formatX = defaultFormat,
   formatY = defaultFormat,
+  line,
   background,
   className,
   "aria-label": ariaLabel = "Curve",
@@ -202,17 +209,18 @@ export function CurveEditor({
       }
 
       if (curve.points.length === 0) return
-      // One sample per device pixel, through math's evaluate.
+      // One sample per device pixel, through math's evaluate or the host's line.
       const dpr = window.devicePixelRatio || 1
       const steps = Math.max(2, Math.ceil((width - 2 * PAD) * dpr))
-      const line = new Path2D()
+      const path = new Path2D()
       for (let k = 0; k <= steps; k++) {
         const px = PAD + ((width - 2 * PAD) * k) / steps
-        const py = sy(evaluate(curve, sx.invert(px)))
-        if (k === 0) line.moveTo(px, py)
-        else line.lineTo(px, py)
+        const x = sx.invert(px)
+        const py = sy(line ? line(x, curve) : evaluate(curve, x))
+        if (k === 0) path.moveTo(px, py)
+        else path.lineTo(px, py)
       }
-      const area = new Path2D(line)
+      const area = new Path2D(path)
       area.lineTo(width - PAD, sy(y0))
       area.lineTo(PAD, sy(y0))
       area.closePath()
@@ -223,9 +231,9 @@ export function CurveEditor({
       ctx.strokeStyle = colours.primary
       ctx.lineWidth = 1.5
       ctx.lineJoin = "round"
-      ctx.stroke(line)
+      ctx.stroke(path)
     },
-    [curve, colours, sx, sy, mode],
+    [curve, colours, sx, sy, mode, line],
   )
 
   const toData = (e: { clientX: number; clientY: number }) => {
