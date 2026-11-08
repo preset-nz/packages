@@ -11,6 +11,7 @@ export {
   tensionForMidpoint,
   toggleSustain,
 } from "./curve-edits"
+export { Histogram, type HistogramBins, type HistogramProps } from "./histogram"
 export { type LinearScale, linearScale } from "./scale"
 export { type Size, useCanvasDraw, useSize } from "./use-canvas"
 export { useTokenColours } from "./use-tokens"

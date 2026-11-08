@@ -25,7 +25,7 @@ export interface Token {
 
 function group(name: string) {
   if (name.startsWith("sidebar")) return "Sidebar"
-  if (name.startsWith("chart")) return "Chart"
+  if (name.startsWith("chart") || name.startsWith("channel")) return "Chart"
   return "Surface and text"
 }
 

@@ -4,10 +4,12 @@ import {
   CurveEditor,
   type CurveEditorProps,
   constrainAdsr,
+  Histogram,
 } from "@preset.nz/ux-kit/graphics"
 
 import type { Gesture, Row } from "../rhizome"
 import { DOC_PAGE, DocHeader } from "./Header"
+import { PHOTO } from "./histograms"
 import type { SetValue } from "./index"
 
 /** The ADSR stays inside the editor's two seconds. */
@@ -62,10 +64,11 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
         cancels a drag; Cmd+Z undoes a whole drag.
       </DocHeader>
       <div className="flex flex-col gap-8">
-        <Section title="Transfer">
+        <Section title="Transfer, over a histogram">
           <CurveEditor
             {...bind("transfer")}
             aria-label="Transfer curve"
+            background={<Histogram bins={PHOTO} aria-label="Histogram of a synthetic photo" />}
             className="aspect-square h-auto max-w-80"
           />
         </Section>

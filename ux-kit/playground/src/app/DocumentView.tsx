@@ -3,6 +3,7 @@ import type { SetValue } from "../documents"
 import { CardDoc } from "../documents/CardDoc"
 import { CurvesDoc } from "../documents/CurvesDoc"
 import { FontsDoc } from "../documents/FontsDoc"
+import { HistogramsDoc } from "../documents/HistogramsDoc"
 import { InspectorsDoc } from "../documents/InspectorsDoc"
 import { MessagesDoc } from "../documents/MessagesDoc"
 import { OpsDoc } from "../documents/OpsDoc"
@@ -41,6 +42,8 @@ export function DocumentView({
       return <InspectorsDoc />
     case "curves":
       return <CurvesDoc row={doc} set={set} gesture={gesture} />
+    case "histograms":
+      return <HistogramsDoc />
     default:
       return (
         <EmptyState

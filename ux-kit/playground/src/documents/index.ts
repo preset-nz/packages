@@ -12,6 +12,7 @@ export const DOCS = [
   { type: "messages", label: "Messages", Icon: Icons.ChatTextIcon },
   { type: "inspectors", label: "Inspectors", Icon: Icons.InfoIcon },
   { type: "curves", label: "Curves", Icon: Icons.BezierCurveIcon },
+  { type: "histograms", label: "Histograms", Icon: Icons.ChartBarIcon },
 ] as const
 
 export const docInfo = (type: string) => DOCS.find((d) => d.type === type)
