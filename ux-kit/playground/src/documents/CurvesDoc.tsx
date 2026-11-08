@@ -66,14 +66,20 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
     const v = row.values?.[key]
     return typeof v === "number" ? v : fallback
   }
-  const levels = { black: num("black", 0), white: num("white", 1), gamma: num("gamma", 1) }
-  // A drag moves one thing, an end or the gamma point, and the gesture opens on that key
+  const levels = {
+    black: num("black", 0),
+    white: num("white", 1),
+    gamma: num("gamma", 1),
+    outBlack: num("outBlack", 0),
+    outWhite: num("outWhite", 1),
+  }
+  // A drag moves one thing, an end (two keys) or the gamma point, and the gesture opens on that key
   // once the first move shows which.
   const dragging = useRef<"idle" | "pending" | "open">("idle")
   const writeLevels: CurveEditorProps["onChange"] = (next, kind) => {
     const l = levelsOf(next)
     if (!l) return
-    for (const key of ["black", "white", "gamma"] as const) {
+    for (const key of ["black", "white", "gamma", "outBlack", "outWhite"] as const) {
       if (Math.abs(l[key] - levels[key]) <= 1e-9) continue
       if (kind === "gesture") {
         if (dragging.current === "pending") {
@@ -121,7 +127,8 @@ export function CurvesDoc({ row, set, gesture }: { row: Row; set: SetValue; gest
           />
           <p className="font-mono text-xs text-muted-foreground">
             Black {levels.black.toFixed(3)} · White {levels.white.toFixed(3)} · Gamma{" "}
-            {levels.gamma.toFixed(2)}
+            {levels.gamma.toFixed(2)} · Output {levels.outBlack.toFixed(3)} to{" "}
+            {levels.outWhite.toFixed(3)}
           </p>
         </Section>
         <Section title="Envelope, free">

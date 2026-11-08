@@ -77,6 +77,8 @@ fn sample_tree() -> Tree {
                     .shaped("adsr", curve_shape())
                     .float("black", 0.0..=1.0, 0.0)
                     .float("white", 0.0..=1.0, 1.0)
+                    .float("outBlack", 0.0..=1.0, 0.0)
+                    .float("outWhite", 0.0..=1.0, 1.0)
                     .float("gamma", 0.1..=5.0, 1.0),
             )
             .node(
