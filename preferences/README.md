@@ -7,11 +7,11 @@ An app declares a schema once, in Rust: sections, preference ids, kinds,
 defaults. The crate owns the file, validates what it reads, saves atomically,
 and exposes three Tauri commands and one change event. The npm package reads
 that schema over the commands and renders the Settings window from it through
-[`@preset.nz/facets`](https://github.com/preset-nz/facets), so an app never
+[`@preset.nz/facets`](https://github.com/preset-nz/packages/tree/main/facets), so an app never
 hand-builds a settings dialog. Backends read values through the same handle
 the commands use.
 
-Two packages, one repo, one version:
+Two packages, one folder of the [packages monorepo](https://github.com/preset-nz/packages), one version:
 
 | Path | Package | What it is |
 |---|---|---|
@@ -23,7 +23,7 @@ package is unbuilt TypeScript that your bundler and `tsc` compile with your
 own code, the same way `facets` works.
 
 **Status:** on crates.io and npm, consumed by Strata. The crate and
-the npm package share one version and one `vX.Y.Z` tag. The TypeScript types
+the npm package share one version and one `preferences/vX.Y.Z` tag. The TypeScript types
 mirror the serde shape by hand, so use matching versions of both.
 
 ---
@@ -58,7 +58,7 @@ theme = "system"
 ```toml
 # src-tauri/Cargo.toml
 [dependencies]
-preset-preferences = { version = "0.1", features = ["tauri"] }
+preset-preferences = { version = "0.2", features = ["tauri"] }
 ```
 
 The `tauri` feature adds the commands and the change event. Without it the
@@ -72,6 +72,7 @@ use preset_preferences::{options, pref, section, Kind, Schema};
 pub fn schema() -> Schema {
     Schema {
         version: 1,
+        pages: vec![],
         sections: vec![section("library", "Library"), section("appearance", "Appearance")],
         prefs: vec![
             pref("library.retention_days", "Keep deleted images for",
@@ -164,7 +165,7 @@ Enable the `tauri` feature, manage the handle as state, register the three
 commands in your own `generate_handler!`:
 
 ```toml
-preset-preferences = { version = "0.1", features = ["tauri"] }
+preset-preferences = { version = "0.2", features = ["tauri"] }
 ```
 
 ```rust
@@ -234,32 +235,37 @@ Nothing else is imported from your app.
 
 ## TypeScript: using
 
-Mount the window once near the root and open it from the native menu:
+The Settings window is its own native window, and `SettingsWindow` fills it
+edge to edge: no modal, no title (the title bar has it). Your Rust menu opens
+a window from its `Settings…` item (`CmdOrCtrl+,`; the accelerator lives on
+the menu item, never as a keydown handler, or it double-fires on macOS), and
+the frontend renders `SettingsWindow` when that window loads. The ux-kit
+playground opens it at `?window=settings`:
 
 ```tsx
-import {
-  onSettingsMenu,
-  SettingsWindow,
-  usePreferencesBootstrap,
-} from "@preset.nz/preferences"
+import { SettingsWindow, usePreferencesBootstrap } from "@preset.nz/preferences"
+import { getCurrentWindow } from "@tauri-apps/api/window"
 
-function App() {
-  usePreferencesBootstrap()           // warm the snapshot before any window opens
-  const [open, setOpen] = useState(false)
-  useEffect(() => onSettingsMenu(() => setOpen(true)), [])
+function Settings() {
+  usePreferencesBootstrap()           // load the snapshot for this window
   return (
-    <>
-      <SettingsWindow open={open} onOpenChange={setOpen} title="Settings" />
-      {/* the rest of the app */}
-    </>
+    <SettingsWindow
+      onClose={() => void getCurrentWindow().close()}   // Escape
+      persistKey="myapp.settings"     // remember the tab and each Advanced row
+    />
   )
+}
+
+export function App() {
+  const which = new URLSearchParams(window.location.search).get("window")
+  return which === "settings" ? <Settings /> : <Main />
 }
 ```
 
-`onSettingsMenu` listens for the event `menu://app/settings`. Your Rust menu
-emits it from a `Settings…` item with the `CmdOrCtrl+,` accelerator; the
-accelerator lives on the menu item, never as a keydown handler, or it
-double-fires on macOS.
+Props, all optional: `onClose` (called on Escape), `persistKey` and
+`extraGroups` (below). `onSettingsMenu` and `SETTINGS_MENU_EVENT`
+(`menu://app/settings`) are still exported for a host that listens for the
+menu event in its own webview.
 
 Read a value anywhere:
 
@@ -274,28 +280,14 @@ const theme = usePreference<string>("appearance.theme", "system")
 `currentPreferences()` is the non-hook read for menu handlers and the like.
 
 The window saves on every change with no Save button, marks changed values
-with a dot on the label, offers a reset per section and for everything, shows
+with a dot on the label, offers Reset all in the footer, shows
 each preference's help text, and prints the file path in its footer. Escape
-closes it. It draws its own modal shell on the same Tailwind tokens facets
-uses, so it needs no dialog primitive from your app.
+closes it through `onClose`.
 
-With pages declared, a row of ux-kit tabs sits under the title. Arrow keys,
-Home and End move between tabs and select as they go. A tab holding a changed value carries the same dot, and
-so does a closed *Advanced* row, so nothing set is out of sight without a
-sign. Two optional props:
-
-```tsx
-<SettingsWindow
-  open={open}
-  onOpenChange={setOpen}
-  persistKey="strata.settings"            // remember the tab and each Advanced row
-  icons={{ general: <Gear />, library: <Images /> }}  // by page id, above the label
-/>
-```
-
-Without `persistKey` the window opens on the first page with every
-disclosure closed. Icons are React nodes from your app's own icon set, so
-the schema carries no icon names.
+With pages declared, tabs sit at the top. A tab holding a changed value
+carries the same dot, and so does a closed *Advanced* row, so nothing set is
+out of sight without a sign. Without `persistKey` the window opens on the
+first page with every disclosure closed. Pages carry no icons.
 
 ### Adding a section the crate doesn't own
 
@@ -372,8 +364,6 @@ pages to document settings. The page format is in the preset-docs README.
   then edit, with provenance. Planned for this crate; not started.
 - **The native menu itself.** Each app builds the `Settings…` item by hand
   until a shared menu package exists.
-- **A separate Tauri window.** The Settings window is a modal in the webview
-  for now.
 
 ## Checks
 
