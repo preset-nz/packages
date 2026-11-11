@@ -11,7 +11,7 @@ Four modules:
 
 ```toml
 [dependencies]
-preset-agent-kit = "0.1"
+preset-agent-kit = "0.2"
 ```
 
 MIT. Part of [preset-nz/packages](https://github.com/preset-nz/packages).
