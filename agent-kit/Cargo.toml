@@ -1,6 +1,6 @@
 [package]
 name = "preset-agent-kit"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 license = "MIT"
 description = "A local-first agent for a desktop app: an OpenAI-compatible streaming client, the tool loop with its limits, commands shown to a model as tools, and a run log."

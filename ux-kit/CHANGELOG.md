@@ -1,3 +1,13 @@
+## 0.1.4 (2026-11-11)
+
+### Features
+
+- the library shell, moved from Strata
+- Histogram, precomputed bins as an area or bars
+- a gamma curve, and CurveEditor draws a host's line
+- the gamma curve becomes a levels curve with sliding ends
+- levels ends move up and down for output black and white
+
 ## 0.1.3 (2026-11-01)
 
 ### Features

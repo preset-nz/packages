@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1 (2026-11-11)
+
+### Fixes
+
+- field help is not selectable
+
 ## 0.3.0 (2026-11-01)
 
 ### Breaking Changes
