@@ -6,7 +6,7 @@ version = 1
 [[inputs]]
 path = "Cargo.lock"
 ecosystem = "cargo"
-sha256 = "38c6985b50ff899d949da22713ab64017ad727f1aca8c18094401074d6e06496"
+sha256 = "62cd4b915a73d6e458fc7e50f42617b390543fe96eb1d0b909fe23d76975c2dc"
 
 [[inputs]]
 path = "Cargo.toml"
@@ -14,7 +14,7 @@ sha256 = "07387cd362c89f540c3a1a6874ef21d46c19166144401e93d73e32b23c2eece4"
 
 [[inputs]]
 path = "agent-kit/Cargo.toml"
-sha256 = "a840ea3738b994c6ee8c88eee9c58e5fc4370d58e03f2d04f3200b5308973126"
+sha256 = "27febc41caa263207f74d2b83024fe3e1f771167a7f9cfb21be17ed3e3222cc7"
 
 [[inputs]]
 path = "app-kit/Cargo.toml"
