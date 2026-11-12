@@ -90,11 +90,34 @@ impl Sampling {
     }
 }
 
+/// The model servers the family knows: a name and an OpenAI-compatible base
+/// URL. The first is the default; apps draw their server dropdown from this.
+pub const KNOWN_SERVERS: &[(&str, &str)] = &[
+    ("oMLX", "http://localhost:8000/v1"),
+    ("LM Studio", "http://localhost:1234/v1"),
+];
+
+/// The address a base URL is at, for a message: host and port, no scheme and
+/// no path (`http://localhost:8000/v1` is `localhost:8000`).
+pub fn address(base_url: &str) -> String {
+    let u = base_url.trim();
+    let u = u.split_once("://").map_or(u, |(_, rest)| rest);
+    u.split('/').next().unwrap_or(u).to_string()
+}
+
+/// " at localhost:8000", or nothing when the address isn't known.
+fn at(base_url: &str) -> String {
+    match address(base_url) {
+        a if a.is_empty() => String::new(),
+        a => format!(" at {a}"),
+    }
+}
+
 impl Default for Settings {
-    /// LM Studio, and whatever model it has loaded.
+    /// oMLX (the first of [`KNOWN_SERVERS`]), and whatever model it has loaded.
     fn default() -> Self {
         Self {
-            base_url: "http://localhost:1234/v1".into(),
+            base_url: KNOWN_SERVERS[0].1.into(),
             model: String::new(),
             sampling: Sampling::default(),
             api_key: String::new(),
@@ -169,6 +192,16 @@ impl Chosen {
 /// since there is no one model to load. With no listing, the named model is
 /// taken on trust.
 pub fn pick_model(listing: Option<&Listing>, configured: &str) -> Result<Chosen, String> {
+    pick_model_at(listing, configured, "")
+}
+
+/// [`pick_model`], with the server's base URL so an error says which server
+/// it asked. With an empty `base_url` the messages leave the address out.
+pub fn pick_model_at(
+    listing: Option<&Listing>,
+    configured: &str,
+    base_url: &str,
+) -> Result<Chosen, String> {
     let configured = configured.trim();
     match listing {
         None if is_auto(configured) => Err(
@@ -176,12 +209,13 @@ pub fn pick_model(listing: Option<&Listing>, configured: &str) -> Result<Chosen,
                 .into(),
         ),
         None => Ok(Chosen::ready(configured)),
-        Some(Listing::LmStudio(l)) => pick_lm_studio(l, configured),
-        Some(Listing::Omlx(l)) => pick_omlx(l, configured),
+        Some(Listing::LmStudio(l)) => pick_lm_studio(l, configured, base_url),
+        Some(Listing::Omlx(l)) => pick_omlx(l, configured, base_url),
     }
 }
 
-fn pick_lm_studio(listing: &Json, configured: &str) -> Result<Chosen, String> {
+fn pick_lm_studio(listing: &Json, configured: &str, base_url: &str) -> Result<Chosen, String> {
+    let at = at(base_url);
     let loaded: Vec<&str> = listing
         .get("data")
         .and_then(Json::as_array)
@@ -193,14 +227,16 @@ fn pick_lm_studio(listing: &Json, configured: &str) -> Result<Chosen, String> {
         .collect();
     if is_auto(configured) {
         return loaded.first().map(|m| Chosen::ready(m)).ok_or_else(|| {
-            "No model loaded in LM Studio. Load one there, then ask again.".to_string()
+            format!(
+                "No model loaded in LM Studio{at}. Load one there, or pick another server in Settings."
+            )
         });
     }
     if loaded.contains(&configured) {
         Ok(Chosen::ready(configured))
     } else {
         Err(format!(
-            "{configured} isn't loaded in LM Studio. Load it there, then ask again."
+            "{configured} isn't loaded in LM Studio{at}. Load it there, or pick another server in Settings."
         ))
     }
 }
@@ -220,7 +256,8 @@ fn omlx_chat_models(listing: &Json) -> impl Iterator<Item = &Json> {
         })
 }
 
-fn pick_omlx(listing: &Json, configured: &str) -> Result<Chosen, String> {
+fn pick_omlx(listing: &Json, configured: &str, base_url: &str) -> Result<Chosen, String> {
+    let at = at(base_url);
     let flag = |m: &Json, k: &str| m.get(k).and_then(Json::as_bool).unwrap_or(false);
     let id = |m: &Json| m.get("id").and_then(Json::as_str).map(str::to_string);
     if is_auto(configured) {
@@ -229,14 +266,14 @@ fn pick_omlx(listing: &Json, configured: &str) -> Result<Chosen, String> {
             .and_then(id)
             .map(|id| Chosen { id, load: None })
             .ok_or_else(|| {
-                "No model is loaded in oMLX. Pick one in Settings, then ask again.".to_string()
+                format!("No model is loaded in oMLX{at}. Pick one in Settings, then ask again.")
             });
     }
     let Some(model) =
         omlx_chat_models(listing).find(|m| m.get("id").and_then(Json::as_str) == Some(configured))
     else {
         return Err(format!(
-            "oMLX has no model called {configured}. Pick one in Settings, then ask again."
+            "oMLX{at} has no model called {configured}. Pick one in Settings, then ask again."
         ));
     };
     // A model that is mid-load is waited for like one that hasn't started.
@@ -655,7 +692,7 @@ pub fn unreachable(base: &str) -> String {
 
 impl Model for Http {
     fn resolve(&mut self, configured: &str) -> Result<Chosen, String> {
-        pick_model(self.listing()?.as_ref(), configured)
+        pick_model_at(self.listing()?.as_ref(), configured, &self.base)
     }
 
     fn turn(
@@ -835,10 +872,11 @@ mod tests {
         assert_eq!(picked("Auto").id, "qwen/qwen3.6-35b-a3b");
         assert_eq!(picked("some/vision").id, "some/vision");
         assert_eq!(picked("some/vision").load, None);
-        let e = pick_model(Some(&l), "prism-ml/bonsai-27b").unwrap_err();
+        let e =
+            pick_model_at(Some(&l), "prism-ml/bonsai-27b", "http://localhost:1234/v1").unwrap_err();
         assert_eq!(
             e,
-            "prism-ml/bonsai-27b isn't loaded in LM Studio. Load it there, then ask again."
+            "prism-ml/bonsai-27b isn't loaded in LM Studio at localhost:1234. Load it there, or pick another server in Settings."
         );
         // An embeddings model is loaded, but it can't chat.
         let none = json!({ "data": [
@@ -846,8 +884,9 @@ mod tests {
             { "id": "prism-ml/bonsai-27b", "type": "llm", "state": "not-loaded" },
         ] });
         assert_eq!(
-            pick_model(Some(&Listing::LmStudio(none)), "").unwrap_err(),
-            "No model loaded in LM Studio. Load one there, then ask again."
+            pick_model_at(Some(&Listing::LmStudio(none)), "", "http://localhost:1234/v1")
+                .unwrap_err(),
+            "No model loaded in LM Studio at localhost:1234. Load one there, or pick another server in Settings."
         );
     }
 
@@ -913,7 +952,7 @@ mod tests {
     #[test]
     fn omlx_asks_a_named_model_loaded_or_not_and_says_what_it_waits_for() {
         let l = Listing::Omlx(omlx());
-        let pick = |c: &str| pick_model(Some(&l), c);
+        let pick = |c: &str| pick_model_at(Some(&l), c, "http://localhost:8000/v1");
         // Loaded: nothing to wait for.
         assert_eq!(pick("qwen-loaded").unwrap(), Chosen::ready("qwen-loaded"));
         // Not loaded: asked anyway, with size x seconds per GB.
@@ -927,7 +966,7 @@ mod tests {
         // A model the server doesn't have, or can't chat with.
         assert_eq!(
             pick("nope").unwrap_err(),
-            "oMLX has no model called nope. Pick one in Settings, then ask again."
+            "oMLX at localhost:8000 has no model called nope. Pick one in Settings, then ask again."
         );
         assert!(pick("embed").is_err());
     }
@@ -957,8 +996,8 @@ mod tests {
             { "id": "m", "loaded": false, "model_type": "llm" },
         ] }));
         assert_eq!(
-            pick_model(Some(&none), "").unwrap_err(),
-            "No model is loaded in oMLX. Pick one in Settings, then ask again."
+            pick_model_at(Some(&none), "", "http://localhost:8000/v1").unwrap_err(),
+            "No model is loaded in oMLX at localhost:8000. Pick one in Settings, then ask again."
         );
     }
 
@@ -1091,6 +1130,30 @@ mod tests {
         ]);
         assert_eq!(seen, vec![Delta::Calling]);
         assert_eq!(turn.calls.len(), 2);
+    }
+
+    #[test]
+    fn the_default_server_is_the_first_known_one_and_omlx() {
+        assert_eq!(Settings::default().base_url, "http://localhost:8000/v1");
+        assert_eq!(KNOWN_SERVERS[0], ("oMLX", "http://localhost:8000/v1"));
+        assert!(KNOWN_SERVERS.contains(&("LM Studio", "http://localhost:1234/v1")));
+    }
+
+    #[test]
+    fn an_address_is_host_and_port_only() {
+        assert_eq!(address("http://localhost:8000/v1"), "localhost:8000");
+        assert_eq!(address(" http://192.168.1.5:1234/v1/ "), "192.168.1.5:1234");
+        assert_eq!(address("localhost:8000"), "localhost:8000");
+        assert_eq!(address(""), "");
+    }
+
+    #[test]
+    fn pick_model_without_an_address_leaves_it_out() {
+        let none = Listing::Omlx(json!({ "models": [] }));
+        assert_eq!(
+            pick_model(Some(&none), "").unwrap_err(),
+            "No model is loaded in oMLX. Pick one in Settings, then ask again."
+        );
     }
 
     #[test]
