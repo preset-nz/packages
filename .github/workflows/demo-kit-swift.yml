@@ -19,7 +19,7 @@ jobs:
   typecheck:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Typecheck every tool
         working-directory: demo-kit
         run: for t in swift/*.swift; do echo "$t"; swiftc -typecheck "$t"; done
